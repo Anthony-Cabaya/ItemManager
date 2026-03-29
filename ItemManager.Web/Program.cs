@@ -1,7 +1,19 @@
+using ItemManager.Core.Interfaces;
+using ItemManager.Infrastructure.Helpers;
+using ItemManager.Infrastructure.Repositories;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+// Register DbHelper
+builder.Services.AddScoped(provider =>
+    new DbHelper(builder.Configuration.GetConnectionString("DefaultConnection")!));
+
+// Register Repositories
+builder.Services.AddScoped<IItemTypeRepository, ItemTypeRepository>();
+builder.Services.AddScoped<IItemRepository, ItemRepository>();
 
 var app = builder.Build();
 
