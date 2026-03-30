@@ -1,0 +1,15 @@
+﻿@model ItemManager.Core.Models.Item
+
+<div class="container mt-4">
+    <h2>Delete Item</h2>
+
+    <p>Are you sure you want to delete the item <strong>@Model.ItemName</strong>?</p>
+
+    <form asp-action="Delete" method="post">
+        <!-- Hidden field for ItemID -->
+        <input type="hidden" name="id" value="@Model.ItemID" />
+
+        <button type="submit" class="btn btn-danger">Yes, Delete</button>
+        <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>

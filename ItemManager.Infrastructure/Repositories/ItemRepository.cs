@@ -27,7 +27,12 @@ namespace ItemManager.Infrastructure.Repositories
             using var connection = _dbHelper.CreateConnection();
             await connection.OpenAsync();
 
-            var query = "SELECT ItemID, ItemName, ItemTypeID, Sort, CreatedBy, CreatedDate, UpdatedBy, UpdatedDate FROM Items ORDER BY Sort";
+            var query = @"SELECT i.ItemID, i.ItemName, i.ItemTypeID, i.Sort, 
+                                 i.CreatedBy, i.CreatedDate, i.UpdatedBy, i.UpdatedDate,
+                                 it.ItemTypeName
+                          FROM Items i
+                          INNER JOIN ItemType it ON i.ItemTypeID = it.ItemTypeID
+                          ORDER BY i.Sort";
 
             using var command = new SqlCommand(query, connection);
             using var reader = await command.ExecuteReaderAsync();
@@ -43,7 +48,11 @@ namespace ItemManager.Infrastructure.Repositories
                     CreatedBy = reader.GetString(4),
                     CreatedDate = reader.GetDateTime(5),
                     UpdatedBy = reader.IsDBNull(6) ? string.Empty : reader.GetString(6),
-                    UpdatedDate = reader.IsDBNull(7) ? default : reader.GetDateTime(7)
+                    UpdatedDate = reader.IsDBNull(7) ? default : reader.GetDateTime(7),
+                    ItemType = new ItemType
+                    {
+                        ItemTypeName = reader.GetString(8)
+                    }
                 });
             }
             return items;

@@ -1,0 +1,40 @@
+﻿@model IEnumerable<ItemManager.Core.Models.ItemType>
+
+@{
+    ViewData["Title"] = "Item Types";
+}
+
+<div class="container mt-4">
+    <h2>Item Types</h2>
+
+    <a asp-controller="ItemType" asp-action="Create" class="btn btn-primary mb-3">
+        Create New
+    </a>
+
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Item Type Name</th>
+                <th>Sort</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.ItemTypeName</td>
+                    <td>@item.Sort</td>
+                    <td>
+                        <a asp-controller="ItemType"
+                           asp-action="Edit"
+                           asp-route-id="@item.ItemTypeID"
+                           class="btn btn-sm btn-warning">
+                            Edit
+                        </a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

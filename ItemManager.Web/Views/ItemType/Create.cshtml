@@ -1,0 +1,30 @@
+﻿@model ItemManager.Web.ViewModels.ItemTypeViewModel
+
+@{
+    ViewData["Title"] = "Create Item Type";
+}
+
+<div class="container mt-4">
+    <h2>Create Item Type</h2>
+
+    <form asp-action="Create" method="post">
+        <div class="mb-3">
+            <label asp-for="ItemTypeName" class="form-label"></label>
+            <input asp-for="ItemTypeName" class="form-control" />
+            <span asp-validation-for="ItemTypeName" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Sort" class="form-label"></label>
+            <input asp-for="Sort" class="form-control" />
+            <span asp-validation-for="Sort" class="text-danger"></span>
+        </div>
+
+        <button type="submit" class="btn btn-success">Create</button>
+        <a asp-action="Index" class="btn btn-secondary ms-2">Back</a>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

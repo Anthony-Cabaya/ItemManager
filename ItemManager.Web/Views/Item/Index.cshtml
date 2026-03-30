@@ -1,0 +1,32 @@
+﻿@model IEnumerable<ItemManager.Core.Models.Item>
+
+<div class="container mt-4">
+    <h2>Items</h2>
+
+    <a asp-action="Create" class="btn btn-primary mb-3">Create New</a>
+
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Item Name</th>
+                <th>Item Type</th>
+                <th>Sort</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.ItemName</td>
+                    <td>@item.ItemType?.ItemTypeName</td>
+                    <td>@item.Sort</td>
+                    <td>
+                        <a asp-action="Edit" asp-route-id="@item.ItemID" class="btn btn-sm btn-warning">Edit</a>
+                        <a asp-action="Delete" asp-route-id="@item.ItemID" class="btn btn-sm btn-danger">Delete</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
