@@ -1,9 +1,10 @@
-﻿@model ItemManager.Web.ViewModels.ItemViewModel
+﻿@model ItemViewModel
 
 <div class="container mt-4">
     <h2>Edit Item</h2>
 
     <form asp-action="Edit" method="post">
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
         <!-- Hidden field for ItemID -->
         <input type="hidden" asp-for="ItemID" />
 

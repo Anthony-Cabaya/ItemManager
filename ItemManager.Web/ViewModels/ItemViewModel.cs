@@ -12,6 +12,7 @@ namespace ItemManager.Web.ViewModels
         [Display(Name = "Item Name")]
         public string ItemName { get; set; } = string.Empty;
 
+        [Required(ErrorMessage = "Please select an Item Type.")]
         [Range(1, int.MaxValue, ErrorMessage = "Please select an Item Type.")]
         [Display(Name = "Item Type")]
         public int ItemTypeID { get; set; }

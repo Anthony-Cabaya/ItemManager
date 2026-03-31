@@ -1,9 +1,10 @@
-﻿@model ItemManager.Web.ViewModels.ItemViewModel
+﻿@model ItemViewModel
 
 <div class="container mt-4">
     <h2>Create Item</h2>
 
     <form asp-action="Create" method="post">
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
         <div class="mb-3">
             <label asp-for="ItemName" class="form-label"></label>
             <input asp-for="ItemName" class="form-control" />
