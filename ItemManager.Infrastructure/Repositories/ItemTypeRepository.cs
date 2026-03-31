@@ -7,7 +7,6 @@ using ItemManager.Core.Interfaces;
 using ItemManager.Core.Models;
 using ItemManager.Infrastructure.Helpers;
 using Microsoft.Data.SqlClient;
-using Microsoft.IdentityModel.Tokens;
 
 namespace ItemManager.Infrastructure.Repositories
 {
@@ -52,7 +51,7 @@ namespace ItemManager.Infrastructure.Repositories
             }
             catch (SqlException sqlEx)
             {
-                throw new Exception("An error occured while fetcing ItemTypes.", sqlEx);
+                throw new Exception("An error occured while fetching ItemTypes.", sqlEx);
             }
             catch (Exception ex)
             {
@@ -95,7 +94,7 @@ namespace ItemManager.Infrastructure.Repositories
             {
                 throw new Exception("An error occurred while fetching ItemType by ID.", sqlEx);
             }
-            catch (Exception Ex)
+            catch (Exception ex)
             {
                 throw new Exception("An unexpected error occurred while fetching ItemType by ID.", ex);
             }
