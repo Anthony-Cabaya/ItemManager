@@ -18,94 +18,150 @@ namespace ItemManager.Web.Controllers
 
         public async Task<IActionResult> Index()
         {
-            var items = await _itemRepository.GetAllAsync();
-            return View(items);
+            try
+            {
+                var items = await _itemRepository.GetAllAsync();
+                return View(items);
+            }
+            catch (Exception ex)
+            {
+                ViewData["ErrorMessage"] = ex.Message;
+                return View("Error");
+            }
         }
 
         [HttpGet]
         public async Task<IActionResult> Create()
         {
-            var viewModel = new ItemViewModel
+            try
             {
-                ItemTypes = (await _itemTypeRepository.GetAllAsync()).ToList()
-            };
-            return View(viewModel);
+                var viewModel = new ItemViewModel
+                {
+                    ItemTypes = (await _itemTypeRepository.GetAllAsync()).ToList()
+                };
+                return View(viewModel);
+            }
+            catch (Exception ex)
+            {
+                ViewData["ErrorMessage"] = ex.Message;
+                return View("Error");
+            }
         }
 
         [HttpPost]
         public async Task<IActionResult> Create(ItemViewModel viewModel)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                viewModel.ItemTypes = (await _itemTypeRepository.GetAllAsync()).ToList();
-                return View(viewModel);
-            }
+                if (!ModelState.IsValid)
+                {
+                    viewModel.ItemTypes = (await _itemTypeRepository.GetAllAsync()).ToList();
+                    return View(viewModel);
+                }
 
-            var item = new Item
+                var item = new Item
+                {
+                    ItemName = viewModel.ItemName,
+                    ItemTypeID = viewModel.ItemTypeID,
+                    Sort = viewModel.Sort,
+                    CreatedBy = "Admin",
+                    CreatedDate = DateTime.Now
+                };
+                await _itemRepository.AddAsync(item);
+                return RedirectToAction(nameof(Index));
+            }
+            catch (Exception ex)
             {
-                ItemName = viewModel.ItemName,
-                ItemTypeID = viewModel.ItemTypeID,
-                Sort = viewModel.Sort,
-                CreatedBy = "Admin",
-                CreatedDate = DateTime.Now
-            };
-            await _itemRepository.AddAsync(item);
-            return RedirectToAction(nameof(Index));
+                ViewData["ErrorMessage"] = ex.Message;
+                return View("Error");
+            }
         }
 
         [HttpGet]
         public async Task<IActionResult> Edit(int id)
         {
-            var item = await _itemRepository.GetByIdAsync(id);
-            if (item == null) return NotFound();
-
-            var viewModel = new ItemViewModel
+            try
             {
-                ItemID = item.ItemID,
-                ItemName = item.ItemName,
-                ItemTypeID = item.ItemTypeID,
-                Sort = item.Sort,
-                ItemTypes = (await _itemTypeRepository.GetAllAsync()).ToList()
-            };
-            return View(viewModel);
+                var item = await _itemRepository.GetByIdAsync(id);
+                if (item == null) return NotFound();
+
+                var viewModel = new ItemViewModel
+                {
+                    ItemID = item.ItemID,
+                    ItemName = item.ItemName,
+                    ItemTypeID = item.ItemTypeID,
+                    Sort = item.Sort,
+                    ItemTypes = (await _itemTypeRepository.GetAllAsync()).ToList()
+                };
+                return View(viewModel);
+            }
+            catch (Exception ex)
+            {
+                ViewData["ErrorMessage"] = ex.Message;
+                return View("Error");
+            }
         }
 
         [HttpPost]
         public async Task<IActionResult> Edit(ItemViewModel viewModel)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                viewModel.ItemTypes = (await _itemTypeRepository.GetAllAsync()).ToList();
-                return View(viewModel);
-            }
+                if (!ModelState.IsValid)
+                {
+                    viewModel.ItemTypes = (await _itemTypeRepository.GetAllAsync()).ToList();
+                    return View(viewModel);
+                }
 
-            var item = new Item
+                var item = new Item
+                {
+                    ItemID = viewModel.ItemID,
+                    ItemName = viewModel.ItemName,
+                    ItemTypeID = viewModel.ItemTypeID,
+                    Sort = viewModel.Sort,
+                    UpdatedBy = "Admin",
+                    UpdatedDate = DateTime.Now
+                };
+                await _itemRepository.UpdateAsync(item);
+                return RedirectToAction(nameof(Index));
+            }
+            catch (Exception ex)
             {
-                ItemID = viewModel.ItemID,
-                ItemName = viewModel.ItemName,
-                ItemTypeID = viewModel.ItemTypeID,
-                Sort = viewModel.Sort,
-                UpdatedBy = "Admin",
-                UpdatedDate = DateTime.Now
-            };
-            await _itemRepository.UpdateAsync(item);
-            return RedirectToAction(nameof(Index));
+                ViewData["ErrorMessage"] = ex.Message;
+                return View("Error");
+            }
         }
 
         [HttpGet]
         public async Task<IActionResult> Delete(int id)
         {
-            var item = await _itemRepository.GetByIdAsync(id);
-            if (item == null) return NotFound();
+            try
+            {
+                var item = await _itemRepository.GetByIdAsync(id);
+                if (item == null) return NotFound();
 
-            return View(item);
+                return View(item);
+            }
+            catch (Exception ex)
+            {
+                ViewData["ErrorMessage"] = ex.Message;
+                return View("Error");
+            }
         }
 
         [HttpPost, ActionName("Delete")]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            await _itemRepository.DeleteAsync(id);
-            return RedirectToAction(nameof(Index));
+            try
+            {
+                await _itemRepository.DeleteAsync(id);
+                return RedirectToAction(nameof(Index));
+            }
+            catch (Exception ex)
+            {
+                ViewData["ErrorMessage"] = ex.Message;
+                return View("Error");
+            }
         }
     }
 }

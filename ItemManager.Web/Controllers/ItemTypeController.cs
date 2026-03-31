@@ -16,69 +16,109 @@ namespace ItemManager.Web.Controllers
 
         public async Task<IActionResult> Index()
         {
-            var itemTypes = await _itemTypeRepository.GetAllAsync();
-            return View(itemTypes);
+            try
+            {
+                var itemTypes = await _itemTypeRepository.GetAllAsync();
+                return View(itemTypes);
+            }
+            catch (Exception ex)
+            {
+                ViewData["ErrorMessage"] = ex.Message;
+                return View("Error");
+            }
         }
 
         [HttpGet]
         public IActionResult Create()
         {
-            var viewModel = new ItemTypeViewModel();
-            return View(viewModel);
+            try
+            {
+                var viewModel = new ItemTypeViewModel();
+                return View(viewModel);
+            }
+            catch (Exception ex)
+            {
+                ViewData["ErrorMessage"] = ex.Message;
+                return View("Error");
+            }
         }
 
         [HttpPost]
         public async Task<IActionResult> Create(ItemTypeViewModel viewModel)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                return View(viewModel);
-            }
+                if (!ModelState.IsValid)
+                {
+                    return View(viewModel);
+                }
 
-            var itemType = new ItemType
+                var itemType = new ItemType
+                {
+                    ItemTypeName = viewModel.ItemTypeName,
+                    Sort = viewModel.Sort,
+                    CreatedBy = "Admin",
+                    CreatedDate = DateTime.Now
+                };
+                await _itemTypeRepository.AddAsync(itemType);
+                return RedirectToAction(nameof(Index));
+            }
+            catch (Exception ex)
             {
-                ItemTypeName = viewModel.ItemTypeName,
-                Sort = viewModel.Sort,
-                CreatedBy = "Admin",
-                CreatedDate = DateTime.Now
-            };
-            await _itemTypeRepository.AddAsync(itemType);
-            return RedirectToAction(nameof(Index));
+                ViewData["ErrorMessage"] = ex.Message;
+                return View("Error");
+            }
         }
 
         [HttpGet]
         public async Task<IActionResult> Edit(int id)
         {
-            var itemType = await _itemTypeRepository.GetByIdAsync(id);
-            if (itemType == null) return NotFound();
-
-            var viewModel = new ItemTypeViewModel
+            try
             {
-                ItemTypeID = itemType.ItemTypeID,
-                ItemTypeName = itemType.ItemTypeName,
-                Sort = itemType.Sort
-            };
-            return View(viewModel);
+                var itemType = await _itemTypeRepository.GetByIdAsync(id);
+                if (itemType == null) return NotFound();
+
+                var viewModel = new ItemTypeViewModel
+                {
+                    ItemTypeID = itemType.ItemTypeID,
+                    ItemTypeName = itemType.ItemTypeName,
+                    Sort = itemType.Sort
+                };
+                return View(viewModel);
+            }
+            catch (Exception ex)
+            {
+                ViewData["ErrorMessage"] = ex.Message;
+                return View("Error");
+            }
         }
 
         [HttpPost]
         public async Task<IActionResult> Edit(ItemTypeViewModel viewModel)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                return View(viewModel);
-            }
+                if (!ModelState.IsValid)
+                {
+                    return View(viewModel);
+                }
 
-            var itemType = new ItemType
+                var itemType = new ItemType
+                {
+                    ItemTypeID = viewModel.ItemTypeID,
+                    ItemTypeName = viewModel.ItemTypeName,
+                    Sort = viewModel.Sort,
+                    UpdatedBy = "Admin",
+                    UpdatedDate = DateTime.Now
+                };
+                await _itemTypeRepository.UpdateAsync(itemType);
+                return RedirectToAction(nameof(Index));
+            }
+            catch (Exception ex)
             {
-                ItemTypeID = viewModel.ItemTypeID,
-                ItemTypeName = viewModel.ItemTypeName,
-                Sort = viewModel.Sort,
-                UpdatedBy = "Admin",
-                UpdatedDate = DateTime.Now
-            };
-            await _itemTypeRepository.UpdateAsync(itemType);
-            return RedirectToAction(nameof(Index));
+                ViewData["ErrorMessage"] = ex.Message;
+                return View("Error");
+            }
         }
     }
 }
