@@ -1,20 +1,52 @@
 ﻿@model IEnumerable<Item>
+@{
+    ViewData["Title"] = "Items";
+}
 
 <div class="container mt-4">
-    <h2>Items</h2>
-
-    <a asp-action="Create" class="btn btn-primary mb-3">Create New</a>
-
-    <table class="table table-striped">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">Items</h2>
+        <a asp-controller="Item" asp-action="Create" class="btn btn-primary">
+            Create New
+        </a>
+    </div>
+    @* Search Box *@
+    <div class="mb-3">
+        <input type="text"
+               id="searchInput"
+               class="form-control"
+               placeholder="Search by name or sort order..." />
+    </div>
+    <table class="table table-bordered table-hover" id="itemTable">
         <thead>
             <tr>
-                <th>Item Name</th>
-                <th>Item Type</th>
-                <th>Sort</th>
+                <th>
+                    Item Name
+                    <span class="sort-btn ms-1" data-col="0" data-dir="asc" title="Sort A→Z">▲</span>
+                    <span class="sort-btn ms-1" data-col="0" data-dir="desc" title="Sort Z→A">▼</span>
+                </th>
+                <th>
+                    Item Type
+                    <select id="itemTypeFilter" class="ms-1 form-select form-select-sm d-inline-block w-auto">
+                        <option value="">All</option>
+                        @foreach (var type in Model.Where(i => i.ItemType != null)
+                                                .Select(i => i.ItemType!.ItemTypeName)
+                                                .Distinct()
+                                                .OrderBy(t => t))
+                        {
+                            <option value="@type">@type</option>
+                        }
+                    </select>
+                </th>
+                <th>
+                    Sort Order
+                    <span class="sort-btn ms-1" data-col="2" data-dir="asc" title="Ascending">▲</span>
+                    <span class="sort-btn ms-1" data-col="2" data-dir="desc" title="Descending">▼</span>
+                </th>
                 <th>Actions</th>
             </tr>
         </thead>
-        <tbody>
+        <tbody id="itemBody">
             @foreach (var item in Model)
             {
                 <tr>
@@ -22,11 +54,90 @@
                     <td>@item.ItemType?.ItemTypeName</td>
                     <td>@item.Sort</td>
                     <td>
-                        <a asp-action="Edit" asp-route-id="@item.ItemID" class="btn btn-sm btn-warning">Edit</a>
-                        <a asp-action="Delete" asp-route-id="@item.ItemID" class="btn btn-sm btn-danger">Delete</a>
+                        <a asp-action="Edit"
+                           asp-route-id="@item.ItemID"
+                           class="btn btn-sm btn-warning">Edit</a>
+                        <a asp-action="Delete"
+                           asp-route-id="@item.ItemID"
+                           class="btn btn-sm btn-danger">Delete</a>
                     </td>
                 </tr>
             }
         </tbody>
     </table>
 </div>
+
+<style>
+    .sort-btn {
+        cursor: pointer;
+        opacity: 0.4;
+    }
+    .sort-btn.active {
+        color: #0d6efd;
+        font-weight: bold;
+        opacity: 1;
+    }
+</style>
+
+@section Scripts {
+    <script>
+        const tbody = document.getElementById('itemBody');
+        const originalRows = Array.from(tbody.querySelectorAll('tr'));
+
+        // SEARCH
+        function applyFilters() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const typeFilter = document.getElementById('itemTypeFilter').value.toLowerCase();
+            const rows = document.querySelectorAll('#itemBody tr');
+
+            rows.forEach(row => {
+                const name = row.cells[0].textContent.toLowerCase();
+                const type = row.cells[1].textContent.toLowerCase();
+                const sort = row.cells[2].textContent.toLowerCase();
+
+                const matchSearch = name.includes(search) || sort.includes(search);
+                const matchType = typeFilter === '' || type === typeFilter;
+
+                row.style.display = (matchSearch && matchType) ? '' : 'none';
+            });
+        }
+
+        document.getElementById('searchInput').addEventListener('input', applyFilters);
+        document.getElementById('itemTypeFilter').addEventListener('change', applyFilters);
+
+        // Sort with Toggle
+        document.querySelectorAll('.sort-btn').forEach(btn => {
+            btn.addEventListener('click', function () {
+
+                const col = parseInt(this.dataset.col);
+                const dir = this.dataset.dir;
+                const isActive = this.classList.toggle('active');
+
+                // Remove active from all other buttons in the same column
+                document.querySelectorAll(`.sort-btn[data-col='${col}']`).forEach(b => {
+                    if (b !== this) b.classList.remove('active');
+                });
+
+                if (!isActive) {
+                    originalRows.forEach(row => tbody.appendChild(row));
+                    return;
+                }
+
+                const rows = Array.from(tbody.querySelectorAll('tr'));
+
+                rows.sort((a, b) => {
+                    const aText = a.cells[col].textContent.trim();
+                    const bText = b.cells[col].textContent.trim();
+                    const aVal = isNaN(aText) ? aText.toLowerCase() : parseFloat(aText);
+                    const bVal = isNaN(bText) ? bText.toLowerCase() : parseFloat(bText);
+
+                    if (aVal < bVal) return dir === 'asc' ? -1 : 1;
+                    if (aVal > bVal) return dir === 'asc' ? 1 : -1;
+                    return 0;
+                });
+
+                rows.forEach(row => tbody.appendChild(row));
+            });
+        });
+    </script>
+}
