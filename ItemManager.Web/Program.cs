@@ -14,6 +14,7 @@ builder.Services.AddScoped(provider =>
 // Register Repositories
 builder.Services.AddScoped<IItemTypeRepository, ItemTypeRepository>();
 builder.Services.AddScoped<IItemRepository, ItemRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
 
 var app = builder.Build();
 
