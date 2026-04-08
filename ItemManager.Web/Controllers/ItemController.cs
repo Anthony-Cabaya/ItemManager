@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ItemManager.Web.Controllers
 {
-    public class ItemController : Controller
+    public class ItemController : BaseController
     {
         private readonly IItemRepository _itemRepository;
         private readonly IItemTypeRepository _itemTypeRepository;

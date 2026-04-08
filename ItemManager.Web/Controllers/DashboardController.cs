@@ -2,7 +2,7 @@
 
 namespace ItemManager.Web.Controllers
 {
-    public class DashboardController : Controller
+    public class DashboardController : BaseController
     {
         public IActionResult Index()
         {
