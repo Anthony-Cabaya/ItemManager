@@ -18,6 +18,9 @@ namespace ItemManager.Web.Controllers
         {
             try
             {
+                if (!IsAdmin)
+                    return RedirectToAction("Index", "Dashboard");
+
                 var itemTypes = await _itemTypeRepository.GetAllAsync();
                 return View(itemTypes);
             }
@@ -33,6 +36,9 @@ namespace ItemManager.Web.Controllers
         {
             try
             {
+                if (!IsAdmin)
+                    return RedirectToAction("Index", "Dashboard");
+
                 var viewModel = new ItemTypeViewModel();
                 return View(viewModel);
             }
@@ -48,6 +54,9 @@ namespace ItemManager.Web.Controllers
         {
             try
             {
+                if (!IsAdmin)
+                    return RedirectToAction("Index", "Dashboard");
+
                 if (!ModelState.IsValid)
                 {
                     return View(viewModel);
@@ -75,6 +84,9 @@ namespace ItemManager.Web.Controllers
         {
             try
             {
+                if (!IsAdmin)
+                    return RedirectToAction("Index", "Dashboard");
+
                 var itemType = await _itemTypeRepository.GetByIdAsync(id);
                 if (itemType == null) return NotFound();
 
@@ -98,6 +110,9 @@ namespace ItemManager.Web.Controllers
         {
             try
             {
+                if (!IsAdmin)
+                    return RedirectToAction("Index", "Dashboard");
+
                 if (!ModelState.IsValid)
                 {
                     return View(viewModel);

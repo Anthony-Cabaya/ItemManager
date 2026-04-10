@@ -137,6 +137,9 @@ namespace ItemManager.Web.Controllers
         {
             try
             {
+                if (!IsAdmin)
+                    return RedirectToAction("Index", "Dashboard");
+
                 var item = await _itemRepository.GetByIdAsync(id);
                 if (item == null) return NotFound();
 
@@ -154,6 +157,9 @@ namespace ItemManager.Web.Controllers
         {
             try
             {
+                if (!IsAdmin)
+                    return RedirectToAction("Index", "Dashboard");
+
                 await _itemRepository.DeleteAsync(id);
                 return RedirectToAction(nameof(Index));
             }
