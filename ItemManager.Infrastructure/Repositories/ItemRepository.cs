@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ItemManager.Core.Helpers;
 using ItemManager.Core.Interfaces;
 using ItemManager.Core.Models;
 using ItemManager.Infrastructure.Helpers;
@@ -199,5 +200,76 @@ namespace ItemManager.Infrastructure.Repositories
                 throw new Exception("An unexpected error occurred while updating Item.", ex);
             }
         }
+
+        // Pagination in Item
+        public async Task<PagedResult<Item>> GetPagedAsync(int pageNumber, int pageSize)
+        {
+            var result = new PagedResult<Item>
+            {
+                PageNumber = pageNumber,
+                PageSize = pageSize
+            };
+
+            try
+            {
+                using var connection = _dbHelper.CreateConnection();
+                await connection.OpenAsync();
+
+                // Query 1 - get total count
+                var countQuery = "SELECT COUNT(*) FROM Items";
+                using var countCommand = new SqlCommand(countQuery, connection);
+                result.TotalCount = (int)await countCommand.ExecuteScalarAsync();
+
+                // Query 2 - get paged data
+                var offset = (pageNumber - 1) * pageSize;
+                var dataQuery = @"SELECT i.ItemID, i.ItemName, i.ItemTypeID, i.Sort, i.CreatedBy,
+                                         i.CreatedDate, i.UpdatedBy, i.UpdatedDate, it.ItemTypeName
+                                  FROM Items i
+                                  INNER JOIN ItemType it ON i.ItemTypeID = it.ItemTypeID
+                                  ORDER BY i.Sort
+                                  OFFSET @Offset ROWS
+                                  FETCH NEXT @PageSize ROWS ONLY";
+
+                using var dataCommand = new SqlCommand(dataQuery, connection);
+                dataCommand.Parameters.AddWithValue("@Offset", offset);
+                dataCommand.Parameters.AddWithValue("@PageSize", pageSize);
+
+                using var reader = await dataCommand.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
+                {
+                    result.Items.Add(new Item
+                    {
+                        ItemID = reader.GetInt32(reader.GetOrdinal("ItemID")),
+                        ItemName = reader.GetString(reader.GetOrdinal("ItemName")),
+                        ItemTypeID = reader.GetInt32(reader.GetOrdinal("ItemTypeID")),
+                        Sort = reader.GetInt32(reader.GetOrdinal("Sort")),
+                        CreatedBy = reader.GetString(reader.GetOrdinal("CreatedBy")),
+                        CreatedDate = reader.GetDateTime(reader.GetOrdinal("CreatedDate")),
+                        UpdatedBy = reader.IsDBNull(reader.GetOrdinal("UpdatedBy"))
+                                        ? string.Empty
+                                        : reader.GetString(reader.GetOrdinal("UpdatedBy")),
+                        UpdatedDate = reader.IsDBNull(reader.GetOrdinal("UpdatedDate"))
+                                        ? default
+                                        : reader.GetDateTime(reader.GetOrdinal("UpdatedDate")),
+
+                        ItemType = new ItemType
+                        {
+                            ItemTypeName = reader.GetString(reader.GetOrdinal("ItemTypeName"))
+                        }
+                    });
+                }
+            }
+            catch (SqlException sqlEx)
+            {
+                throw new Exception("An error occured while fetching paged Items.", sqlEx);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("An unexpected error occured while fetching paged Items.", ex);
+            }
+
+            return result;
+        }
+
     }
 }

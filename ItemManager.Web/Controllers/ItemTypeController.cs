@@ -14,15 +14,15 @@ namespace ItemManager.Web.Controllers
             _itemTypeRepository = itemTypeRepository;
         }
 
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(int page = 1)
         {
             try
             {
                 if (!IsAdmin)
                     return RedirectToAction("Index", "Dashboard");
 
-                var itemTypes = await _itemTypeRepository.GetAllAsync();
-                return View(itemTypes);
+                var result = await _itemTypeRepository.GetPagedAsync(page, 10);
+                return View(result);
             }
             catch (Exception ex)
             {

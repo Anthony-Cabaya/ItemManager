@@ -1,4 +1,4 @@
-﻿@model IEnumerable<Item>
+﻿@model ItemManager.Core.Helpers.PagedResult<Item>
 @{
     ViewData["Title"] = "Items";
 }
@@ -29,7 +29,7 @@
                     Item Type
                     <select id="itemTypeFilter" class="ms-1 form-select form-select-sm d-inline-block w-auto">
                         <option value="">All</option>
-                        @foreach (var type in Model.Where(i => i.ItemType != null)
+                        @foreach (var type in Model.Items.Where(i => i.ItemType != null)
                                                 .Select(i => i.ItemType!.ItemTypeName)
                                                 .Distinct()
                                                 .OrderBy(t => t))
@@ -47,7 +47,7 @@
             </tr>
         </thead>
         <tbody id="itemBody">
-            @foreach (var item in Model)
+            @foreach (var item in Model.Items)
             {
                 <tr>
                     <td>@item.ItemName</td>
@@ -69,6 +69,30 @@
             }
         </tbody>
     </table>
+
+    @* Pagination Controls *@
+    <nav>
+        <ul class="pagination justify-content-center mt-3">
+            <li class="page-item @(!Model.HasPreviousPage ? "disabled" : "")">
+                <a class="page-link" asp-action="Index" asp-route-page="@(Model.PageNumber - 1)">
+                    Previous
+                </a>
+            </li>
+
+            @for (int i = 1; i <= Model.TotalPages; i++)
+            {
+                <li class="page-item @(i == Model.PageNumber ? "active" : "")">
+                    <a class="page-link" asp-action="Index" asp-route-page="@i">@i</a>
+                </li>
+            }
+
+            <li class="page-item @(!Model.HasNextPage ? "disabled" : "")">
+                <a class="page-link" asp-action="Index" asp-route-page="@(Model.PageNumber + 1)">
+                    Next
+                </a>
+            </li>
+        </ul>
+    </nav>
 </div>
 
 <style>

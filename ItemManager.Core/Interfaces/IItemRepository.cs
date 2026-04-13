@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ItemManager.Core.Helpers;
 using ItemManager.Core.Models;
 
 namespace ItemManager.Core.Interfaces
@@ -14,5 +15,6 @@ namespace ItemManager.Core.Interfaces
         Task AddAsync(Item item);
         Task UpdateAsync(Item item);
         Task DeleteAsync(int id);
+        Task<PagedResult<Item>> GetPagedAsync(int pageNumber, int pageSize);
     }
 }

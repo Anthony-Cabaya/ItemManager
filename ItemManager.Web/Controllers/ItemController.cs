@@ -16,12 +16,12 @@ namespace ItemManager.Web.Controllers
             _itemTypeRepository = itemTypeRepository;
         }
 
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(int page = 1)
         {
             try
             {
-                var items = await _itemRepository.GetAllAsync();
-                return View(items);
+                var results = await _itemRepository.GetPagedAsync(page, 10);
+                return View(results);
             }
             catch (Exception ex)
             {

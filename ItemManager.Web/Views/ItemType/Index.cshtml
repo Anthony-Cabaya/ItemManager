@@ -1,4 +1,4 @@
-﻿@model IEnumerable<ItemType>
+﻿@model ItemManager.Core.Helpers.PagedResult<ItemType>
 @{
     ViewData["Title"] = "Item Types";
 }
@@ -37,7 +37,7 @@
             </tr>
         </thead>
         <tbody id="itemTypeBody">
-            @foreach (var item in Model)
+            @foreach (var item in Model.Items)
             {
                 <tr>
                     <td>@item.ItemTypeName</td>
@@ -54,6 +54,30 @@
             }
         </tbody>
     </table>
+
+    @* Pagination Controls *@
+    <nav>
+        <ul class="pagination justify-content-center mt-3">
+            <li class="page-item @(!Model.HasPreviousPage ? "disabled" : "")">
+                <a class="page-link" asp-action="Index" asp-route-page="@(Model.PageNumber - 1)">
+                    Previous
+                </a>
+            </li>
+
+            @for (int i = 1; i <= Model.TotalPages; i++)
+            {
+                <li class="page-item @(i == Model.PageNumber ? "active" : "")">
+                    <a class="page-link" asp-action="Index" asp-route-page="@i">@i</a>
+                </li>
+            }
+
+            <li class="page-item @(!Model.HasNextPage ? "disabled" : "")">
+                <a class="page-link" asp-action="Index" asp-route-page="@(Model.PageNumber + 1)">
+                    Next
+                </a>
+            </li>
+        </ul>
+    </nav>
 </div>
 
 <style>
