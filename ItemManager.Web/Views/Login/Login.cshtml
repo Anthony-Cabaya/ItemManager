@@ -37,4 +37,41 @@
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
+
+    @* Countdown Timer Script *@
+    @if (ViewData["LockoutSeconds"] != null)
+    {
+        <script>
+            let seconds = @ViewData["LockoutSeconds"];
+            const msg = document.querySelector('.validation-summary-errors');
+            const btn = document.querySelector('button[type="submit"]');
+
+            if (btn) btn.disabled = true;
+
+            function updateMessage() {
+                if (msg) {
+                    const li = msg.querySelector('li');
+                    if (li) {
+                        li.textContent =
+                            `Too many failed attempts. Try again in ${seconds} seconds.`;
+                    }
+                }
+            }
+
+            updateMessage();
+
+            const timer = setInterval(() => {
+                seconds--;
+
+                if (seconds <= 0) {
+                    clearInterval(timer);
+                    if (msg) msg.style.display = "none";
+
+                    if (btn) btn.disabled = false;
+                } else {
+                    updateMessage();
+                }
+            }, 1000);
+        </script>
+    }
 }
