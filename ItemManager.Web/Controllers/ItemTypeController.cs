@@ -14,14 +14,25 @@ namespace ItemManager.Web.Controllers
             _itemTypeRepository = itemTypeRepository;
         }
 
-        public async Task<IActionResult> Index(int page = 1)
+        public async Task<IActionResult> Index(
+            int page = 1,
+            string search = "",
+            string sortColumn = "Sort",
+            string sortDirection = "asc")
         {
             try
             {
                 if (!IsAdmin)
                     return RedirectToAction("Index", "Dashboard");
 
-                var result = await _itemTypeRepository.GetPagedAsync(page, 10);
+                var result = await _itemTypeRepository.GetPagedAsync(
+                    page, 10, search, sortColumn, sortDirection);
+
+                // Pass current filter values back to View
+                ViewData["Search"] = search;
+                ViewData["SortColumn"] = sortColumn;
+                ViewData["SortDirection"] = sortDirection;
+
                 return View(result);
             }
             catch (Exception ex)

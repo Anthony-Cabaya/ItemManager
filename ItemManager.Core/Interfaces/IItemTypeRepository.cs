@@ -14,6 +14,11 @@ namespace ItemManager.Core.Interfaces
         Task<ItemType?> GetByIdAsync(int id);
         Task AddAsync(ItemType itemType);
         Task UpdateAsync(ItemType itemType);
-        Task<PagedResult<ItemType>> GetPagedAsync(int pageNumber, int pageSize);
+        Task<PagedResult<ItemType>> GetPagedAsync(
+            int pageNumber,
+            int pageSize,
+            string search = "",
+            string sortColumn = "Sort",
+            string sortDirection = "asc");
     }
 }

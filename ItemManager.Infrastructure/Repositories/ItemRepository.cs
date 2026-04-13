@@ -202,7 +202,13 @@ namespace ItemManager.Infrastructure.Repositories
         }
 
         // Pagination in Item
-        public async Task<PagedResult<Item>> GetPagedAsync(int pageNumber, int pageSize)
+        public async Task<PagedResult<Item>> GetPagedAsync(
+            int pageNumber,
+            int pageSize,
+            string search = "",
+            string sortColumn = "Sort",
+            string sortDirection = "asc",
+            int itemTypeFilter = 0)
         {
             var result = new PagedResult<Item>
             {
@@ -212,25 +218,56 @@ namespace ItemManager.Infrastructure.Repositories
 
             try
             {
+                // Whitelist sort column and direction
+                var allowedColumns = new[] { "ItemName", "Sort", "ItemTypeName" };
+                if (!allowedColumns.Contains(sortColumn))
+                    sortColumn = "Sort";
+
+                var allowedDirections = new[] { "asc", "desc" };
+                if (!allowedDirections.Contains(sortDirection))
+                    sortDirection = "asc";
+
                 using var connection = _dbHelper.CreateConnection();
                 await connection.OpenAsync();
 
                 // Query 1 - get total count
-                var countQuery = "SELECT COUNT(*) FROM Items";
+                var countQuery = @"
+                    SELECT COUNT(*)
+                    FROM Items i
+                    INNER JOIN ItemType it ON i.ItemTypeID = it.ItemTypeID
+                    WHERE (@Search = '' OR 
+                           i.ItemName LIKE @SearchPattern OR
+                           CAST(i.Sort AS VARCHAR) LIKE @SearchPattern)
+                    AND (@ItemTypeFilter = 0 OR i.ItemTypeID = @ItemTypeFilter)";
+
                 using var countCommand = new SqlCommand(countQuery, connection);
+                countCommand.Parameters.AddWithValue("@Search", search);
+                countCommand.Parameters.AddWithValue("@SearchPattern", $"%{search}%");
+                countCommand.Parameters.AddWithValue("@ItemTypeFilter", itemTypeFilter);
+
                 result.TotalCount = (int)await countCommand.ExecuteScalarAsync();
 
                 // Query 2 - get paged data
                 var offset = (pageNumber - 1) * pageSize;
-                var dataQuery = @"SELECT i.ItemID, i.ItemName, i.ItemTypeID, i.Sort, i.CreatedBy,
-                                         i.CreatedDate, i.UpdatedBy, i.UpdatedDate, it.ItemTypeName
-                                  FROM Items i
-                                  INNER JOIN ItemType it ON i.ItemTypeID = it.ItemTypeID
-                                  ORDER BY i.Sort
-                                  OFFSET @Offset ROWS
-                                  FETCH NEXT @PageSize ROWS ONLY";
+
+                var dataQuery = $@"
+                    SELECT i.ItemID, i.ItemName, i.ItemTypeID, i.Sort,
+                           i.CreatedBy, i.CreatedDate, i.UpdatedBy, i.UpdatedDate,
+                           it.ItemTypeName
+                    FROM Items i
+                    INNER JOIN ItemType it ON i.ItemTypeID = it.ItemTypeID
+                    WHERE (@Search = '' OR 
+                           i.ItemName LIKE @SearchPattern OR
+                           CAST(i.Sort AS VARCHAR) LIKE @SearchPattern)
+                    AND (@ItemTypeFilter = 0 OR i.ItemTypeID = @ItemTypeFilter)
+                    ORDER BY {sortColumn} {sortDirection}
+                    OFFSET @Offset ROWS
+                    FETCH NEXT @PageSize ROWS ONLY";
 
                 using var dataCommand = new SqlCommand(dataQuery, connection);
+                dataCommand.Parameters.AddWithValue("@Search", search);
+                dataCommand.Parameters.AddWithValue("@SearchPattern", $"%{search}%");
+                dataCommand.Parameters.AddWithValue("@ItemTypeFilter", itemTypeFilter);
                 dataCommand.Parameters.AddWithValue("@Offset", offset);
                 dataCommand.Parameters.AddWithValue("@PageSize", pageSize);
 

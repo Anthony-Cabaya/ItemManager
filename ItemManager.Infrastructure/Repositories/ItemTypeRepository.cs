@@ -169,7 +169,12 @@ namespace ItemManager.Infrastructure.Repositories
         }
 
         // Pagination in ItemType
-        public async Task<PagedResult<ItemType>> GetPagedAsync(int pageNumber, int pageSize)
+        public async Task<PagedResult<ItemType>> GetPagedAsync(
+            int pageNumber,
+            int pageSize,
+            string search = "",
+            string sortColumn = "Sort",
+            string sortDirection = "asc")
         {
             var result = new PagedResult<ItemType>
             {
@@ -179,24 +184,41 @@ namespace ItemManager.Infrastructure.Repositories
 
             try
             {
+                // Whitelist sort column and direction
+                var allowedColumns = new[] { "ItemTypeName", "Sort" };
+                if (!allowedColumns.Contains(sortColumn))
+                    sortColumn = "Sort";
+
+                var allowedDirections = new[] { "asc", "desc" };
+                if (!allowedDirections.Contains(sortDirection))
+                    sortDirection = "asc";
+
                 using var connection = _dbHelper.CreateConnection();
                 await connection.OpenAsync();
 
-                // Query 1 - get total count
-                var countQuery = "SELECT COUNT(*) FROM ItemType";
+                // Query 1 - get total count with search
+                var countQuery = @"SELECT COUNT(*) FROM ItemType
+                                   WHERE (@Search = '' OR ItemTypeName LIKE @SearchPattern 
+                                                    OR CAST(Sort AS VARCHAR) LIKE @SearchPattern)";
                 using var countCommand = new SqlCommand(countQuery, connection);
+                countCommand.Parameters.AddWithValue("@Search", search);
+                countCommand.Parameters.AddWithValue("@SearchPattern", $"%{search}%");
                 result.TotalCount = (int)await countCommand.ExecuteScalarAsync();
 
                 // Query 2 - get paged data
                 var offset = (pageNumber - 1) * pageSize;
-                var dataQuery = @"SELECT ItemTypeID, ItemTypeName, Sort, CreatedBy,
+                var dataQuery = $@"SELECT ItemTypeID, ItemTypeName, Sort, CreatedBy,
                                          CreatedDate, UpdatedBy, UpdatedDate
                                   FROM ItemType
-                                  ORDER BY Sort
+                                  WHERE (@Search = '' OR ItemTypeName LIKE @SearchPattern 
+                                                   OR CAST(Sort AS VARCHAR) LIKE @SearchPattern)
+                                  ORDER BY {sortColumn} {sortDirection}
                                   OFFSET @Offset ROWS
                                   FETCH NEXT @PageSize ROWS ONLY";
 
                 using var dataCommand = new SqlCommand(dataQuery, connection);
+                dataCommand.Parameters.AddWithValue("@Search", search);
+                dataCommand.Parameters.AddWithValue("@SearchPattern", $"%{search}%");
                 dataCommand.Parameters.AddWithValue("@Offset", offset);
                 dataCommand.Parameters.AddWithValue("@PageSize", pageSize);
 

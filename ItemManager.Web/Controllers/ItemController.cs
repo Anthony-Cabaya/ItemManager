@@ -16,12 +16,27 @@ namespace ItemManager.Web.Controllers
             _itemTypeRepository = itemTypeRepository;
         }
 
-        public async Task<IActionResult> Index(int page = 1)
+        public async Task<IActionResult> Index(
+            int page = 1,
+            string search = "",
+            string sortColumn = "Sort",
+            string sortDirection = "asc",
+            int itemTypeFilter = 0)
         {
             try
             {
-                var results = await _itemRepository.GetPagedAsync(page, 10);
-                return View(results);
+                var itemTypes = await _itemTypeRepository.GetAllAsync();
+                ViewData["ItemTypes"] = itemTypes;
+
+                var result = await _itemRepository.GetPagedAsync(
+                    page, 10, search, sortColumn, sortDirection, itemTypeFilter);
+
+                ViewData["Search"] = search;
+                ViewData["SortColumn"] = sortColumn;
+                ViewData["SortDirection"] = sortDirection;
+                ViewData["ItemTypeFilter"] = itemTypeFilter;
+
+                return View(result);
             }
             catch (Exception ex)
             {
