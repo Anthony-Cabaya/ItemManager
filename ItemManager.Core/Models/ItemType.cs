@@ -18,13 +18,13 @@ namespace ItemManager.Core.Models
         public int Sort { get; set; }
 
         [StringLength(200)]
-        public string CreatedBy { get; set; } = string.Empty;
+        public string? CreatedBy { get; set; }
 
-        public DateTime CreatedDate { get; set; }
+        public DateTime? CreatedDate { get; set; }
 
         [StringLength(200)]
-        public string UpdatedBy { get; set; } = string.Empty;
+        public string? UpdatedBy { get; set; }
 
-        public DateTime UpdatedDate { get; set; }
+        public DateTime? UpdatedDate { get; set; }
     }
 }

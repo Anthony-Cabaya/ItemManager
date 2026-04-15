@@ -50,8 +50,12 @@ namespace ItemManager.Infrastructure.Repositories
                         Sort = reader.GetInt32(3),
                         CreatedBy = reader.GetString(4),
                         CreatedDate = reader.GetDateTime(5),
-                        UpdatedBy = reader.IsDBNull(6) ? string.Empty : reader.GetString(6),
-                        UpdatedDate = reader.IsDBNull(7) ? default : reader.GetDateTime(7),
+                        UpdatedBy = reader.IsDBNull(reader.GetOrdinal("UpdatedBy"))
+                                        ? null
+                                        : reader.GetString(reader.GetOrdinal("UpdatedBy")),
+                        UpdatedDate = reader.IsDBNull(reader.GetOrdinal("UpdatedDate"))
+                                        ? null
+                                        : reader.GetDateTime(reader.GetOrdinal("UpdatedDate")),
                         ItemType = new ItemType
                         {
                             ItemTypeName = reader.GetString(8)
@@ -97,8 +101,12 @@ namespace ItemManager.Infrastructure.Repositories
                         Sort = reader.GetInt32(3),
                         CreatedBy = reader.GetString(4),
                         CreatedDate = reader.GetDateTime(5),
-                        UpdatedBy = reader.IsDBNull(6) ? string.Empty : reader.GetString(6),
-                        UpdatedDate = reader.IsDBNull(7) ? default : reader.GetDateTime(7)
+                        UpdatedBy = reader.IsDBNull(reader.GetOrdinal("UpdatedBy"))
+                                        ? null
+                                        : reader.GetString(reader.GetOrdinal("UpdatedBy")),
+                        UpdatedDate = reader.IsDBNull(reader.GetOrdinal("UpdatedDate"))
+                                        ? null
+                                        : reader.GetDateTime(reader.GetOrdinal("UpdatedDate"))
                     };
                 }
             }
@@ -283,10 +291,10 @@ namespace ItemManager.Infrastructure.Repositories
                         CreatedBy = reader.GetString(reader.GetOrdinal("CreatedBy")),
                         CreatedDate = reader.GetDateTime(reader.GetOrdinal("CreatedDate")),
                         UpdatedBy = reader.IsDBNull(reader.GetOrdinal("UpdatedBy"))
-                                        ? string.Empty
+                                        ? null
                                         : reader.GetString(reader.GetOrdinal("UpdatedBy")),
                         UpdatedDate = reader.IsDBNull(reader.GetOrdinal("UpdatedDate"))
-                                        ? default
+                                        ? null
                                         : reader.GetDateTime(reader.GetOrdinal("UpdatedDate")),
 
                         ItemType = new ItemType

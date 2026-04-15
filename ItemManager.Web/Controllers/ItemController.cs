@@ -79,7 +79,7 @@ namespace ItemManager.Web.Controllers
                     ItemName = viewModel.ItemName,
                     ItemTypeID = viewModel.ItemTypeID,
                     Sort = viewModel.Sort,
-                    CreatedBy = "Admin",
+                    CreatedBy = CurrentUsername,
                     CreatedDate = DateTime.Now
                 };
                 await _itemRepository.AddAsync(item);
@@ -134,7 +134,7 @@ namespace ItemManager.Web.Controllers
                     ItemName = viewModel.ItemName,
                     ItemTypeID = viewModel.ItemTypeID,
                     Sort = viewModel.Sort,
-                    UpdatedBy = "Admin",
+                    UpdatedBy = CurrentUsername,
                     UpdatedDate = DateTime.Now
                 };
                 await _itemRepository.UpdateAsync(item);

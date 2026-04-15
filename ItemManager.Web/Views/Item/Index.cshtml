@@ -68,6 +68,16 @@
                         <span class="text-muted ms-1">▼</span>
                     }
                 </th>
+
+                @* Admin Columns *@
+                @if (Context.Session.GetString("Role") == "Admin")
+                {
+                    <th>Created By</th>
+                    <th>Created Date</th>
+                    <th>Updated By</th>
+                    <th>Updated Date</th>
+                }
+
                 <th>Actions</th>
             </tr>
         </thead>
@@ -78,6 +88,16 @@
                     <td>@item.ItemName</td>
                     <td>@item.Sort</td>
                     <td>@item.ItemType?.ItemTypeName</td>
+
+                    @* Admin Data *@
+                    @if (Context.Session.GetString("Role") == "Admin")
+                    {
+                        <td>@item.CreatedBy</td>
+                        <td>@(item.CreatedDate?.ToString("yyyy-MM-dd HH:mm") ?? "—")</td>
+                        <td>@(item.UpdatedBy ?? "—")</td>
+                        <td>@(item.UpdatedDate?.ToString("yyyy-MM-dd HH:mm") ?? "—")</td>
+                    }
+
                     <td>
                         <a asp-controller="Item" asp-action="Edit" asp-route-id="@item.ItemID" class="btn btn-sm btn-warning">Edit</a>
                         @if (Context.Session.GetString("Role") == "Admin")
