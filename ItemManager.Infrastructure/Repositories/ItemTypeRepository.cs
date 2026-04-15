@@ -182,7 +182,8 @@ namespace ItemManager.Infrastructure.Repositories
             int pageSize,
             string search = "",
             string sortColumn = "Sort",
-            string sortDirection = "asc")
+            string sortDirection = "asc",
+            bool includeAuditSearch = false)
         {
             var result = new PagedResult<ItemType>
             {
@@ -206,27 +207,37 @@ namespace ItemManager.Infrastructure.Repositories
 
                 // Query 1 - get total count with search
                 var countQuery = @"SELECT COUNT(*) FROM ItemType
-                                   WHERE (@Search = '' OR ItemTypeName LIKE @SearchPattern 
-                                                    OR CAST(Sort AS VARCHAR) LIKE @SearchPattern)";
+                           WHERE (@Search = '' OR 
+                                  ItemTypeName LIKE @SearchPattern OR
+                                  CAST(Sort AS VARCHAR) LIKE @SearchPattern OR
+                                  (@IncludeAuditSearch = 1 AND CreatedBy LIKE @SearchPattern) OR
+                                  (@IncludeAuditSearch = 1 AND UpdatedBy LIKE @SearchPattern))";
+
                 using var countCommand = new SqlCommand(countQuery, connection);
                 countCommand.Parameters.AddWithValue("@Search", search);
                 countCommand.Parameters.AddWithValue("@SearchPattern", $"%{search}%");
+                countCommand.Parameters.AddWithValue("@IncludeAuditSearch", includeAuditSearch ? 1 : 0);
+
                 result.TotalCount = (int)await countCommand.ExecuteScalarAsync();
 
                 // Query 2 - get paged data
                 var offset = (pageNumber - 1) * pageSize;
                 var dataQuery = $@"SELECT ItemTypeID, ItemTypeName, Sort, CreatedBy,
-                                         CreatedDate, UpdatedBy, UpdatedDate
-                                  FROM ItemType
-                                  WHERE (@Search = '' OR ItemTypeName LIKE @SearchPattern 
-                                                   OR CAST(Sort AS VARCHAR) LIKE @SearchPattern)
-                                  ORDER BY {sortColumn} {sortDirection}
-                                  OFFSET @Offset ROWS
-                                  FETCH NEXT @PageSize ROWS ONLY";
+                                          CreatedDate, UpdatedBy, UpdatedDate
+                                   FROM ItemType
+                                   WHERE (@Search = '' OR 
+                                         ItemTypeName LIKE @SearchPattern OR
+                                         CAST(Sort AS VARCHAR) LIKE @SearchPattern OR
+                                         (@IncludeAuditSearch = 1 AND CreatedBy LIKE @SearchPattern) OR
+                                         (@IncludeAuditSearch = 1 AND UpdatedBy LIKE @SearchPattern))
+                                   ORDER BY {sortColumn} {sortDirection}
+                                   OFFSET @Offset ROWS
+                                   FETCH NEXT @PageSize ROWS ONLY";
 
                 using var dataCommand = new SqlCommand(dataQuery, connection);
                 dataCommand.Parameters.AddWithValue("@Search", search);
                 dataCommand.Parameters.AddWithValue("@SearchPattern", $"%{search}%");
+                dataCommand.Parameters.AddWithValue("@IncludeAuditSearch", includeAuditSearch ? 1 : 0);
                 dataCommand.Parameters.AddWithValue("@Offset", offset);
                 dataCommand.Parameters.AddWithValue("@PageSize", pageSize);
 

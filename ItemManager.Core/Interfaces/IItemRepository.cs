@@ -21,6 +21,7 @@ namespace ItemManager.Core.Interfaces
             string search = "",
             string sortColumn = "Sort",
             string sortDirection = "asc",
-            int itemTypeFilter = 0);
+            int itemTypeFilter = 0,
+            bool includeAuditSearch = false);
     }
 }

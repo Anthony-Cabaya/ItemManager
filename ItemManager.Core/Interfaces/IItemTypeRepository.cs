@@ -19,6 +19,7 @@ namespace ItemManager.Core.Interfaces
             int pageSize,
             string search = "",
             string sortColumn = "Sort",
-            string sortDirection = "asc");
+            string sortDirection = "asc",
+            bool includeAuditSearch = false);
     }
 }

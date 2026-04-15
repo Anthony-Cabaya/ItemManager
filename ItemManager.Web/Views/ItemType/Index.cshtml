@@ -16,21 +16,33 @@
     </div>
 
     @* Search *@
-    <form asp-action="Index" method="get" class="mb-3">
-        <div class="input-group">
-            <input type="text" name="search" value="@search"
-                   class="form-control"
-                   placeholder="Search by name or sort..." />
+    <form asp-action="Index" method="get" class="mb-3" id="searchForm">
+        <div class="position-relative" style="max-width: 400px;">
+            <input type="text"
+                   name="search"
+                   id="searchInput"
+                   value="@search"
+                   class="form-control pe-4"
+                   placeholder="@(Context.Session.GetString("Role") == "Admin"
+                       ? "Search by name, sort, created by, updated by..."
+                       : "Search by name or sort...")" />
 
             <input type="hidden" name="sortColumn" value="@sortCol" />
             <input type="hidden" name="sortDirection" value="@sortDir" />
 
-            <button type="submit" class="btn btn-outline-secondary">Search</button>
-
-            @if (!string.IsNullOrEmpty(search))
-            {
-                <a asp-action="Index" class="btn btn-outline-danger">Clear</a>
-            }
+            @* X CLEAR BUTTON *@
+            <span id="clearBtn"
+                  style="display:@(!string.IsNullOrEmpty(search) ? "flex" : "none");
+                         position:absolute;
+                         right:10px;
+                         top:50%;
+                         transform:translateY(-50%);
+                         cursor:pointer;
+                         color:#999;
+                         align-items:center;"
+                  title="Clear">
+                &#x2715;
+            </span>
         </div>
     </form>
 
@@ -190,4 +202,45 @@
         font-weight: bold;
         color: #007bff;
     }
+
+    #searchInput::-ms-clear {
+        display: none;
+    }
 </style>
+
+@section Scripts {
+    <script>
+        const searchInput = document.getElementById('searchInput');
+        const clearBtn = document.getElementById('clearBtn');
+        const searchForm = document.getElementById('searchForm');
+
+        let debounceTimer;
+
+        searchInput.addEventListener('input', function () {
+            clearBtn.style.display = this.value.length > 0 ? 'flex' : 'none';
+
+            clearTimeout(debounceTimer);
+
+            debounceTimer = setTimeout(() => {
+                searchForm.submit();
+            }, 400);
+        });
+
+        clearBtn.addEventListener('click', function () {
+            searchInput.value = '';
+            clearBtn.style.display = 'none';
+            searchForm.submit();
+        });
+
+        window.addEventListener('load', () => {
+            if (searchInput.value.length > 0) {
+                searchInput.focus();
+
+                searchInput.setSelectionRange(
+                    searchInput.value.length,
+                    searchInput.value.length
+                );
+            }
+        });
+    </script>
+}

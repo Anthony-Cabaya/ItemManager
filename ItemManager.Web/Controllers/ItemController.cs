@@ -29,7 +29,7 @@ namespace ItemManager.Web.Controllers
                 ViewData["ItemTypes"] = itemTypes;
 
                 var result = await _itemRepository.GetPagedAsync(
-                    page, 10, search, sortColumn, sortDirection, itemTypeFilter);
+                    page, 10, search, sortColumn, sortDirection, itemTypeFilter, IsAdmin);
 
                 ViewData["Search"] = search;
                 ViewData["SortColumn"] = sortColumn;

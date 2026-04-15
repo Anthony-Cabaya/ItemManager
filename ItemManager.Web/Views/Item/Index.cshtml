@@ -16,10 +16,30 @@
     </div>
 
     @* Search Box *@
-    <form asp-action="Index" method="get" class="mb-3">
-        <div class="input-group">
-            <input type="text" name="search" value="@search" class="form-control" placeholder="Search by name or sort order..." />
-            <select name="itemTypeFilter" class="form-select w-auto">
+    <form asp-action="Index" method="get" class="mb-3" id="searchForm">
+        <div class="d-flex gap-2 align-items-center">
+            <div class="position-relative" style="max-width: 400px; flex: 1;">
+                <input type="text" name="search" id="searchInput"
+                       value="@search" class="form-control pe-4"
+                       placeholder="@(Context.Session.GetString("Role") == "Admin"
+                           ? "Search by name, sort, created by, updated by..."
+                           : "Search by name or sort order...")" />
+
+                <input type="hidden" name="sortColumn" value="@sortCol" />
+                <input type="hidden" name="sortDirection" value="@sortDir" />
+
+                <span id="clearBtn"
+                      style="display:@(!string.IsNullOrEmpty(search) ? "flex" : "none");
+                             position:absolute; right:10px; top:50%;
+                             transform:translateY(-50%);
+                             cursor:pointer; color:#999;
+                             align-items:center;"
+                      title="Clear">
+                    &#x2715;
+                </span>
+            </div>
+
+            <select name="itemTypeFilter" id="itemTypeFilter" class="form-select w-auto">
                 <option value="0">All Types</option>
                 @foreach (var type in itemTypes)
                 {
@@ -29,13 +49,6 @@
                     </option>
                 }
             </select>
-            <input type="hidden" name="sortColumn" value="@sortCol" />
-            <input type="hidden" name="sortDirection" value="@sortDir" />
-            <button type="submit" class="btn btn-outline-secondary">Search</button>
-            @if (!string.IsNullOrEmpty(search))
-            {
-                <a asp-action="Index" class="btn btn-outline-danger">Clear</a>
-            }
         </div>
     </form>
 
@@ -140,3 +153,47 @@
         text-decoration: none;
     }
 </style>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const searchInput = document.getElementById('searchInput');
+            const clearBtn = document.getElementById('clearBtn');
+            const searchForm = document.getElementById('searchForm');
+            const itemTypeFilter = document.getElementById('itemTypeFilter');
+
+            if (!searchInput || !clearBtn || !searchForm || !itemTypeFilter) return;
+
+            let debounceTimer;
+
+            searchInput.addEventListener('input', function () {
+                clearBtn.style.display = this.value.length > 0 ? 'flex' : 'none';
+
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => {
+                    searchForm.submit();
+                }, 400);
+            });
+
+            clearBtn.addEventListener('click', function () {
+                searchInput.value = '';
+                clearBtn.style.display = 'none';
+                searchForm.submit();
+            });
+
+            itemTypeFilter.addEventListener('change', function () {
+                searchForm.submit();
+            });
+
+            window.addEventListener('load', () => {
+                if (searchInput.value.length > 0) {
+                    searchInput.focus();
+                    searchInput.setSelectionRange(
+                        searchInput.value.length,
+                        searchInput.value.length
+                    );
+                }
+            });
+        });
+    </script>
+}

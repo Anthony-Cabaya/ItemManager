@@ -26,7 +26,7 @@ namespace ItemManager.Web.Controllers
                     return RedirectToAction("Index", "Dashboard");
 
                 var result = await _itemTypeRepository.GetPagedAsync(
-                    page, 10, search, sortColumn, sortDirection);
+                    page, 10, search, sortColumn, sortDirection, IsAdmin);
 
                 // Pass current filter values back to View
                 ViewData["Search"] = search;

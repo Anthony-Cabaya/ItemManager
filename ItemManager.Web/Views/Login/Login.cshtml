@@ -12,7 +12,7 @@
             <form asp-action="Login" method="post">
                 @Html.AntiForgeryToken()
 
-                <!-- Display general errors like "Invalid username or password" -->
+                @* Display general errors like "Invalid username or password" *@
                 <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
 
                 <div class="form-group mb-3">
