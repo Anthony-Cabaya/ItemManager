@@ -1,13 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using ItemManager.Core.Helpers;
+﻿using ItemManager.Core.Helpers;
 using ItemManager.Core.Interfaces;
 using ItemManager.Core.Models;
 using ItemManager.Infrastructure.Helpers;
 using Microsoft.Data.SqlClient;
+using System.Collections.Generic;
 
 namespace ItemManager.Infrastructure.Repositories
 {
@@ -21,6 +17,46 @@ namespace ItemManager.Infrastructure.Repositories
             _dbHelper = dbHelper;
         }
 
+        private static Item Map(SqlDataReader reader)
+        {
+            return new Item
+            {
+                ItemID = reader.GetInt32(reader.GetOrdinal("ItemID")),
+                ItemName = reader.GetString(reader.GetOrdinal("ItemName")),
+                ItemTypeID = reader.GetInt32(reader.GetOrdinal("ItemTypeID")),
+                ItemSubTypeID = reader.IsDBNull(reader.GetOrdinal("ItemSubTypeID"))
+                    ? null
+                    : reader.GetInt32(reader.GetOrdinal("ItemSubTypeID")),
+                Sort = reader.GetInt32(reader.GetOrdinal("Sort")),
+
+                CreatedBy = reader.IsDBNull(reader.GetOrdinal("CreatedBy"))
+                    ? null
+                    : reader.GetString(reader.GetOrdinal("CreatedBy")),
+
+                CreatedDate = reader.IsDBNull(reader.GetOrdinal("CreatedDate"))
+                    ? null
+                    : reader.GetDateTime(reader.GetOrdinal("CreatedDate")),
+
+                UpdatedBy = reader.IsDBNull(reader.GetOrdinal("UpdatedBy"))
+                    ? null
+                    : reader.GetString(reader.GetOrdinal("UpdatedBy")),
+
+                UpdatedDate = reader.IsDBNull(reader.GetOrdinal("UpdatedDate"))
+                    ? null
+                    : reader.GetDateTime(reader.GetOrdinal("UpdatedDate")),
+
+                ItemType = new ItemType
+                {
+                    ItemTypeName = reader.IsDBNull(reader.GetOrdinal("ItemTypeName"))
+                        ? null
+                        : reader.GetString(reader.GetOrdinal("ItemTypeName"))
+                },
+                ItemSubTypeName = reader.IsDBNull(reader.GetOrdinal("SubTypeName"))
+                        ? null
+                        : reader.GetString(reader.GetOrdinal("SubTypeName"))
+            };
+        }
+
         public async Task<IEnumerable<Item>> GetAllAsync()
         {
             var items = new List<Item>();
@@ -30,37 +66,22 @@ namespace ItemManager.Infrastructure.Repositories
                 using var connection = _dbHelper.CreateConnection();
                 await connection.OpenAsync();
 
-                var query = @"SELECT i.ItemID, i.ItemName, i.ItemTypeID, i.Sort, 
-                                 i.CreatedBy, i.CreatedDate, i.UpdatedBy, i.UpdatedDate,
-                                 it.ItemTypeName
-                          FROM Items i
-                          INNER JOIN ItemType it ON i.ItemTypeID = it.ItemTypeID
-                          ORDER BY i.Sort";
+                var query = @"
+                    SELECT i.ItemID, i.ItemName, i.ItemTypeID, i.ItemSubTypeID, i.Sort, 
+                           i.CreatedBy, i.CreatedDate, i.UpdatedBy, i.UpdatedDate,
+                           it.ItemTypeName,
+                           ist.SubTypeName
+                    FROM Items i
+                    INNER JOIN ItemType it ON i.ItemTypeID = it.ItemTypeID
+                    LEFT JOIN ItemSubType ist ON i.ItemSubTypeID = ist.ItemSubTypeID
+                    ORDER BY i.Sort";
 
                 using var command = new SqlCommand(query, connection);
                 using var reader = await command.ExecuteReaderAsync();
 
                 while (await reader.ReadAsync())
                 {
-                    items.Add(new Item
-                    {
-                        ItemID = reader.GetInt32(0),
-                        ItemName = reader.GetString(1),
-                        ItemTypeID = reader.GetInt32(2),
-                        Sort = reader.GetInt32(3),
-                        CreatedBy = reader.GetString(4),
-                        CreatedDate = reader.GetDateTime(5),
-                        UpdatedBy = reader.IsDBNull(reader.GetOrdinal("UpdatedBy"))
-                                        ? null
-                                        : reader.GetString(reader.GetOrdinal("UpdatedBy")),
-                        UpdatedDate = reader.IsDBNull(reader.GetOrdinal("UpdatedDate"))
-                                        ? null
-                                        : reader.GetDateTime(reader.GetOrdinal("UpdatedDate")),
-                        ItemType = new ItemType
-                        {
-                            ItemTypeName = reader.GetString(8)
-                        }
-                    });
+                    items.Add(Map(reader));
                 }
             }
             catch (SqlException sqlEx)
@@ -82,9 +103,15 @@ namespace ItemManager.Infrastructure.Repositories
                 using var connection = _dbHelper.CreateConnection();
                 await connection.OpenAsync();
 
-                var query = @"SELECT ItemID, ItemName, ItemTypeID, Sort, CreatedBy, CreatedDate, UpdatedBy, UpdatedDate 
-                          FROM Items
-                          WHERE ItemID = @ItemID";
+                var query = @"
+                    SELECT i.ItemID, i.ItemName, i.ItemTypeID, i.ItemSubTypeID, i.Sort,
+                           i.CreatedBy, i.CreatedDate, i.UpdatedBy, i.UpdatedDate,
+                           it.ItemTypeName,
+                           ist.SubTypeName
+                    FROM Items i
+                    INNER JOIN ItemType it ON i.ItemTypeID = it.ItemTypeID
+                    LEFT JOIN ItemSubType ist ON i.ItemSubTypeID = ist.ItemSubTypeID
+                    WHERE i.ItemID = @ItemID";
 
                 using var command = new SqlCommand(query, connection);
                 command.Parameters.AddWithValue("@ItemID", id);
@@ -93,22 +120,10 @@ namespace ItemManager.Infrastructure.Repositories
 
                 if (await reader.ReadAsync())
                 {
-                    return new Item
-                    {
-                        ItemID = reader.GetInt32(0),
-                        ItemName = reader.GetString(1),
-                        ItemTypeID = reader.GetInt32(2),
-                        Sort = reader.GetInt32(3),
-                        CreatedBy = reader.GetString(4),
-                        CreatedDate = reader.GetDateTime(5),
-                        UpdatedBy = reader.IsDBNull(reader.GetOrdinal("UpdatedBy"))
-                                        ? null
-                                        : reader.GetString(reader.GetOrdinal("UpdatedBy")),
-                        UpdatedDate = reader.IsDBNull(reader.GetOrdinal("UpdatedDate"))
-                                        ? null
-                                        : reader.GetDateTime(reader.GetOrdinal("UpdatedDate"))
-                    };
+                    return Map(reader);
                 }
+
+                return null;
             }
             catch (SqlException sqlEx)
             {
@@ -118,7 +133,6 @@ namespace ItemManager.Infrastructure.Repositories
             {
                 throw new Exception("An unexpected error occurred while fetching Item by ID.", ex);
             }
-            return null;
         }
 
         public async Task AddAsync(Item item)
@@ -128,15 +142,19 @@ namespace ItemManager.Infrastructure.Repositories
                 using var connection = _dbHelper.CreateConnection();
                 await connection.OpenAsync();
 
-                var query = @"INSERT INTO Items (ItemName, ItemTypeID, Sort, CreatedBy, CreatedDate)
-                          VALUES (@ItemName, @ItemTypeID, @Sort, @CreatedBy, @CreatedDate)";
+                var query = @"
+                    INSERT INTO Items 
+                    (ItemName, ItemTypeID, ItemSubTypeID, Sort, CreatedBy, CreatedDate)
+                    VALUES 
+                    (@ItemName, @ItemTypeID, @ItemSubTypeID, @Sort, @CreatedBy, @CreatedDate)";
 
                 using var command = new SqlCommand(query, connection);
 
                 command.Parameters.AddWithValue("@ItemName", item.ItemName);
                 command.Parameters.AddWithValue("@ItemTypeID", item.ItemTypeID);
+                command.Parameters.AddWithValue("@ItemSubTypeID", (object?)item.ItemSubTypeID ?? DBNull.Value);
                 command.Parameters.AddWithValue("@Sort", item.Sort);
-                command.Parameters.AddWithValue("@CreatedBy", item.CreatedBy);
+                command.Parameters.AddWithValue("@CreatedBy", item.CreatedBy ?? (object)DBNull.Value);
                 command.Parameters.AddWithValue("@CreatedDate", item.CreatedDate);
 
                 await command.ExecuteNonQueryAsync();
@@ -182,20 +200,25 @@ namespace ItemManager.Infrastructure.Repositories
                 using var connection = _dbHelper.CreateConnection();
                 await connection.OpenAsync();
 
-                var query = @"UPDATE Items
-                          SET ItemName = @ItemName,
-                              Sort = @Sort,
-                              UpdatedBy = @UpdatedBy,
-                              UpdatedDate = @UpdatedDate
-                          WHERE ItemID = @ItemID";
+                var query = @"
+                    UPDATE Items
+                    SET ItemName = @ItemName,
+                        ItemTypeID = @ItemTypeID,
+                        ItemSubTypeID = @ItemSubTypeID,
+                        Sort = @Sort,
+                        UpdatedBy = @UpdatedBy,
+                        UpdatedDate = @UpdatedDate
+                    WHERE ItemID = @ItemID";
 
                 using var command = new SqlCommand(query, connection);
 
                 command.Parameters.AddWithValue("@ItemID", item.ItemID);
                 command.Parameters.AddWithValue("@ItemName", item.ItemName);
+                command.Parameters.AddWithValue("@ItemTypeID", item.ItemTypeID);
+                command.Parameters.AddWithValue("@ItemSubTypeID", (object?)item.ItemSubTypeID ?? DBNull.Value);
                 command.Parameters.AddWithValue("@Sort", item.Sort);
-                command.Parameters.AddWithValue("@UpdatedBy", item.UpdatedBy);
-                command.Parameters.AddWithValue("@UpdatedDate", item.UpdatedDate);
+                command.Parameters.AddWithValue("@UpdatedBy", item.UpdatedBy ?? (object)DBNull.Value);
+                command.Parameters.AddWithValue("@UpdatedDate", item.UpdatedDate ?? (object)DBNull.Value);
 
                 await command.ExecuteNonQueryAsync();
             }
@@ -240,15 +263,16 @@ namespace ItemManager.Infrastructure.Repositories
                 await connection.OpenAsync();
 
                 // Query 1 - get total count
-                var countQuery = @"SELECT COUNT(*)
-                                   FROM Items i
-                                   INNER JOIN ItemType it ON i.ItemTypeID = it.ItemTypeID
-                                   WHERE (@Search = '' OR 
-                                          i.ItemName LIKE @SearchPattern OR
-                                          CAST(i.Sort AS VARCHAR) LIKE @SearchPattern OR
-                                          (@IncludeAuditSearch = 1 AND i.CreatedBy LIKE @SearchPattern) OR
-                                          (@IncludeAuditSearch = 1 AND i.UpdatedBy LIKE @SearchPattern))
-                                   AND (@ItemTypeFilter = 0 OR i.ItemTypeID = @ItemTypeFilter)";
+                var countQuery = @"
+                    SELECT COUNT(*)
+                    FROM Items i
+                    INNER JOIN ItemType it ON i.ItemTypeID = it.ItemTypeID
+                    WHERE (@Search = '' OR 
+                           i.ItemName LIKE @SearchPattern OR
+                           CAST(i.Sort AS VARCHAR) LIKE @SearchPattern OR
+                           (@IncludeAuditSearch = 1 AND i.CreatedBy LIKE @SearchPattern) OR
+                           (@IncludeAuditSearch = 1 AND i.UpdatedBy LIKE @SearchPattern))
+                    AND (@ItemTypeFilter = 0 OR i.ItemTypeID = @ItemTypeFilter)";
 
                 using var countCommand = new SqlCommand(countQuery, connection);
                 countCommand.Parameters.AddWithValue("@Search", search);
@@ -261,20 +285,23 @@ namespace ItemManager.Infrastructure.Repositories
                 // Query 2 - get paged data
                 var offset = (pageNumber - 1) * pageSize;
 
-                var dataQuery = $@"SELECT i.ItemID, i.ItemName, i.ItemTypeID, i.Sort,
-                                          i.CreatedBy, i.CreatedDate, i.UpdatedBy, i.UpdatedDate,
-                                          it.ItemTypeName
-                                   FROM Items i
-                                   INNER JOIN ItemType it ON i.ItemTypeID = it.ItemTypeID
-                                   WHERE (@Search = '' OR 
-                                          i.ItemName LIKE @SearchPattern OR
-                                          CAST(i.Sort AS VARCHAR) LIKE @SearchPattern OR
-                                          (@IncludeAuditSearch = 1 AND i.CreatedBy LIKE @SearchPattern) OR
-                                          (@IncludeAuditSearch = 1 AND i.UpdatedBy LIKE @SearchPattern))
-                                   AND (@ItemTypeFilter = 0 OR i.ItemTypeID = @ItemTypeFilter)
-                                   ORDER BY {sortColumn} {sortDirection}
-                                   OFFSET @Offset ROWS
-                                   FETCH NEXT @PageSize ROWS ONLY";
+                var dataQuery = $@"
+                    SELECT i.ItemID, i.ItemName, i.ItemTypeID, i.ItemSubTypeID, i.Sort,
+                           i.CreatedBy, i.CreatedDate, i.UpdatedBy, i.UpdatedDate,
+                           it.ItemTypeName,
+                           ist.SubTypeName
+                    FROM Items i
+                    INNER JOIN ItemType it ON i.ItemTypeID = it.ItemTypeID
+                    LEFT JOIN ItemSubType ist ON i.ItemSubTypeID = ist.ItemSubTypeID
+                    WHERE (@Search = '' OR 
+                           i.ItemName LIKE @SearchPattern OR
+                           CAST(i.Sort AS VARCHAR) LIKE @SearchPattern OR
+                           (@IncludeAuditSearch = 1 AND i.CreatedBy LIKE @SearchPattern) OR
+                           (@IncludeAuditSearch = 1 AND i.UpdatedBy LIKE @SearchPattern))
+                    AND (@ItemTypeFilter = 0 OR i.ItemTypeID = @ItemTypeFilter)
+                    ORDER BY {sortColumn} {sortDirection}
+                    OFFSET @Offset ROWS
+                    FETCH NEXT @PageSize ROWS ONLY";
 
                 using var dataCommand = new SqlCommand(dataQuery, connection);
                 dataCommand.Parameters.AddWithValue("@Search", search);
@@ -287,26 +314,7 @@ namespace ItemManager.Infrastructure.Repositories
                 using var reader = await dataCommand.ExecuteReaderAsync();
                 while (await reader.ReadAsync())
                 {
-                    result.Items.Add(new Item
-                    {
-                        ItemID = reader.GetInt32(reader.GetOrdinal("ItemID")),
-                        ItemName = reader.GetString(reader.GetOrdinal("ItemName")),
-                        ItemTypeID = reader.GetInt32(reader.GetOrdinal("ItemTypeID")),
-                        Sort = reader.GetInt32(reader.GetOrdinal("Sort")),
-                        CreatedBy = reader.GetString(reader.GetOrdinal("CreatedBy")),
-                        CreatedDate = reader.GetDateTime(reader.GetOrdinal("CreatedDate")),
-                        UpdatedBy = reader.IsDBNull(reader.GetOrdinal("UpdatedBy"))
-                                        ? null
-                                        : reader.GetString(reader.GetOrdinal("UpdatedBy")),
-                        UpdatedDate = reader.IsDBNull(reader.GetOrdinal("UpdatedDate"))
-                                        ? null
-                                        : reader.GetDateTime(reader.GetOrdinal("UpdatedDate")),
-
-                        ItemType = new ItemType
-                        {
-                            ItemTypeName = reader.GetString(reader.GetOrdinal("ItemTypeName"))
-                        }
-                    });
+                    result.Items.Add(Map(reader));
                 }
             }
             catch (SqlException sqlEx)

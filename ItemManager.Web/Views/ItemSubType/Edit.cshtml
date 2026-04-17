@@ -1,0 +1,49 @@
+﻿@model ItemManager.Web.ViewModels.ItemSubTypeViewModel
+
+@{
+    ViewData["Title"] = "Edit Item Sub Type";
+}
+
+<div class="container mt-4">
+    <h2>Edit Item Sub Type</h2>
+
+    <form asp-action="Edit" method="post" asp-antiforgery="true">
+
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+        @* Hidden ID *@
+        <input type="hidden" asp-for="ItemSubTypeID" />
+
+        @* Item Type Dropdown *@
+        <div class="mb-3">
+            <label asp-for="ItemTypeID" class="form-label"></label>
+            <select asp-for="ItemTypeID"
+                    asp-items="Model.ItemTypeList"
+                    class="form-select">
+            </select>
+            <span asp-validation-for="ItemTypeID" class="text-danger"></span>
+        </div>
+
+        @* Sub Type Name *@
+        <div class="mb-3">
+            <label asp-for="ItemSubTypeName" class="form-label"></label>
+            <input asp-for="ItemSubTypeName" class="form-control" />
+            <span asp-validation-for="ItemSubTypeName" class="text-danger"></span>
+        </div>
+
+        @* Sort *@
+        <div class="mb-3">
+            <label asp-for="Sort" class="form-label"></label>
+            <input asp-for="Sort" class="form-control" />
+            <span asp-validation-for="Sort" class="text-danger"></span>
+        </div>
+
+        <button type="submit" class="btn btn-success">Save Changes</button>
+        <a asp-action="Index" class="btn btn-secondary ms-2">Back</a>
+
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

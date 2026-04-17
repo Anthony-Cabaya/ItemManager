@@ -1,0 +1,111 @@
+﻿@model List<ItemManager.Web.ViewModels.ItemSubTypeViewModel>
+
+@{
+    ViewData["Title"] = "Item Sub Types";
+    var selectedType = ViewBag.ItemTypeFilter as int? ?? 0;
+    var itemTypes = ViewBag.ItemTypes as List<SelectListItem>;
+}
+
+<div class="container mt-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">Item Sub Types</h2>
+        <a asp-action="Create" class="btn btn-primary">Create New</a>
+    </div>
+
+    @* FILTER *@
+    <form asp-action="Index" method="get" id="filterForm" class="mb-3">
+        <div style="max-width: 300px;">
+            <select name="itemTypeFilter"
+                    class="form-select"
+                    onchange="document.getElementById('filterForm').submit();">
+
+                <option value="0">All Item Types</option>
+
+                @foreach (var type in itemTypes)
+                {
+                    <option value="@type.Value"
+                            selected="@(selectedType.ToString() == type.Value ? "selected" : null)">
+                        @type.Text
+                    </option>
+                }
+            </select>
+        </div>
+    </form>
+
+    <table class="table table-bordered table-hover">
+        <thead>
+            <tr>
+                <th>Item Type</th>
+                <th>Sub Type</th>
+                <th>Sort</th>
+
+                @if (Context.Session.GetString("Role") == "Admin")
+                {
+                    <th>Created By</th>
+                    <th>Created Date</th>
+                    <th>Updated By</th>
+                    <th>Updated Date</th>
+                }
+
+                <th>Actions</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            @if (!Model.Any())
+            {
+                <tr>
+                    <td colspan="20" class="text-center text-muted">
+                        No sub types found.
+                    </td>
+                </tr>
+            }
+            else
+            {
+                foreach (var item in Model)
+                {
+                    <tr>
+                        <td>@item.ItemTypeName</td>
+                        <td>@item.ItemSubTypeName</td>
+                        <td>@item.Sort</td>
+
+                        @if (Context.Session.GetString("Role") == "Admin")
+                        {
+                            <td>@item.CreatedBy</td>
+                            <td>@(item.CreatedDate?.ToString("yyyy-MM-dd HH:mm") ?? "—")</td>
+                            <td>@item.UpdatedBy</td>
+                            <td>@(item.UpdatedDate?.ToString("yyyy-MM-dd HH:mm") ?? "—")</td>
+                        }
+
+                        <td>
+                            <a asp-action="Edit"
+                               asp-route-id="@item.ItemSubTypeID"
+                               class="btn btn-sm btn-warning">
+                                Edit
+                            </a>
+
+                            <form asp-action="Delete"
+                                  asp-route-id="@item.ItemSubTypeID"
+                                  method="post"
+                                  style="display:inline"
+                                  onsubmit="return confirm('Delete this item sub type?');">
+
+                                <button type="submit" class="btn btn-sm btn-danger">
+                                    Delete
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+
+</div>
+
+<style>
+    a {
+        text-decoration: none;
+    }
+</style>

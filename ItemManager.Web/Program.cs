@@ -15,6 +15,7 @@ builder.Services.AddScoped(provider =>
 builder.Services.AddScoped<IItemTypeRepository, ItemTypeRepository>();
 builder.Services.AddScoped<IItemRepository, ItemRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IItemSubTypeRepository, ItemSubTypeRepository>();
 
 // Add Session
 builder.Services.AddSession(options =>
