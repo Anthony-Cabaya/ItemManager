@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using ItemManager.Core.Helpers;
+﻿using ItemManager.Core.Helpers;
 using ItemManager.Core.Models;
 
 namespace ItemManager.Core.Interfaces
@@ -22,6 +17,7 @@ namespace ItemManager.Core.Interfaces
             string sortColumn = "Sort",
             string sortDirection = "asc",
             int itemTypeFilter = 0,
+            int itemSubTypeFilter = 0,
             bool includeAuditSearch = false);
     }
 }

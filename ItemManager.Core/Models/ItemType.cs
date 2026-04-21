@@ -12,7 +12,7 @@ namespace ItemManager.Core.Models
         public int ItemTypeID { get; set; }
 
         [Required, StringLength(200)]
-        public string ItemTypeName { get; set; } = string.Empty;
+        public string? ItemTypeName { get; set; } = string.Empty;
 
         [Range(0, 9999)]
         public int Sort { get; set; }

@@ -1,13 +1,16 @@
 ﻿@model ItemManager.Core.Helpers.PagedResult<Item>
+
 @{
     var search = ViewData["Search"]?.ToString() ?? "";
     var sortCol = ViewData["SortColumn"]?.ToString() ?? "Sort";
     var sortDir = ViewData["SortDirection"]?.ToString() ?? "asc";
     var itemTypeFilter = (int)(ViewData["ItemTypeFilter"] ?? 0);
+    var itemSubTypeFilter = (int)(ViewData["ItemSubTypeFilter"] ?? 0);
     var itemTypes = ViewData["ItemTypes"] as IEnumerable<ItemType> ?? new List<ItemType>();
 }
 
 <div class="container mt-4">
+
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h2 class="mb-0">Items</h2>
         <a asp-controller="Item" asp-action="Create" class="btn btn-primary">
@@ -15,15 +18,20 @@
         </a>
     </div>
 
-    @* Search Box *@
+    @* SEARCH FORM *@
     <form asp-action="Index" method="get" class="mb-3" id="searchForm">
+
         <div class="d-flex gap-2 align-items-center">
+
             <div class="position-relative" style="max-width: 400px; flex: 1;">
-                <input type="text" name="search" id="searchInput"
-                       value="@search" class="form-control pe-4"
+                <input type="text"
+                       name="search"
+                       id="searchInput"
+                       value="@search"
+                       class="form-control pe-4"
                        placeholder="@(Context.Session.GetString("Role") == "Admin"
-                           ? "Search by name, sort, created by, updated by..."
-                           : "Search by name or sort order...")" />
+                                                                         ? "Search by name, sort, created by, updated by..."
+                                                                         : "Search by name or sort order...")" />
 
                 <input type="hidden" name="sortColumn" value="@sortCol" />
                 <input type="hidden" name="sortDirection" value="@sortDir" />
@@ -32,14 +40,14 @@
                       style="display:@(!string.IsNullOrEmpty(search) ? "flex" : "none");
                              position:absolute; right:10px; top:50%;
                              transform:translateY(-50%);
-                             cursor:pointer; color:#999;
-                             align-items:center;"
-                      title="Clear">
-                    &#x2715;
+                             cursor:pointer; color:#999;">
+                    ✕
                 </span>
             </div>
 
-            <select name="itemTypeFilter" id="itemTypeFilter" class="form-select w-auto">
+            <select name="itemTypeFilter"
+                    id="itemTypeFilter"
+                    class="form-select w-auto">
                 <option value="0">All Types</option>
                 @foreach (var type in itemTypes)
                 {
@@ -49,31 +57,95 @@
                     </option>
                 }
             </select>
+
+            <select name="itemSubTypeFilter"
+                    id="itemSubTypeFilter"
+                    class="form-select w-auto"
+                    data-selected-subtype="@itemSubTypeFilter"
+                    disabled>
+                <option value="0">All SubTypes</option>
+            </select>
+
         </div>
     </form>
 
-    @* Item Table *@
-    <table class="table table-bordered table-hover">
-        <thead>
+    @* TABLE *@
+    <table class="table table-hover table-bordered align-middle dashboard-table">
+        <thead class="table-light">
             <tr>
-                <th>
-                    <span class="@(sortCol == "ItemName" ? "fw-bold text-primary" : "")">Item Name</span>
-                    <a asp-action="Index" asp-route-search="@search" asp-route-sortColumn="ItemName" asp-route-sortDirection="asc" asp-route-itemTypeFilter="@itemTypeFilter" class="ms-1 @(sortCol == "ItemName" && sortDir == "asc" ? "text-primary fw-bold" : "text-secondary")">▲</a>
-                    <a asp-action="Index" asp-route-search="@search" asp-route-sortColumn="ItemName" asp-route-sortDirection="desc" asp-route-itemTypeFilter="@itemTypeFilter" class="ms-1 @(sortCol == "ItemName" && sortDir == "desc" ? "text-primary fw-bold" : "text-secondary")">▼</a>
-                </th>
-                <th>
-                    <span class="@(sortCol == "Sort" ? "fw-bold text-primary" : "")">Sort Order</span>
-                    <a asp-action="Index" asp-route-search="@search" asp-route-sortColumn="Sort" asp-route-sortDirection="asc" asp-route-itemTypeFilter="@itemTypeFilter" class="ms-1 @(sortCol == "Sort" && sortDir == "asc" ? "text-primary fw-bold" : "text-secondary")">▲</a>
-                    <a asp-action="Index" asp-route-search="@search" asp-route-sortColumn="Sort" asp-route-sortDirection="desc" asp-route-itemTypeFilter="@itemTypeFilter" class="ms-1 @(sortCol == "Sort" && sortDir == "desc" ? "text-primary fw-bold" : "text-secondary")">▼</a>
-                </th>
-                <th>
-                    <span class="@(sortCol == "ItemTypeName" ? "fw-bold text-primary" : "")">Item Type</span>
 
-                    @* Only show sorting arrows if no filter is applied (i.e., "All Types" is selected) *@
+                <th>
+                    Item Name
+                    <a asp-action="Index"
+                       asp-route-search="@search"
+                       asp-route-sortColumn="ItemName"
+                       asp-route-sortDirection="asc"
+                       asp-route-itemTypeFilter="@itemTypeFilter"
+                       asp-route-itemSubTypeFilter="@itemSubTypeFilter"
+                       class="ms-1 @(sortCol == "ItemName" && sortDir == "asc" ? "text-primary fw-bold" : "text-secondary")">
+                        ▲
+                    </a>
+
+                    <a asp-action="Index"
+                       asp-route-search="@search"
+                       asp-route-sortColumn="ItemName"
+                       asp-route-sortDirection="desc"
+                       asp-route-itemTypeFilter="@itemTypeFilter"
+                       asp-route-itemSubTypeFilter="@itemSubTypeFilter"
+                       class="ms-1 @(sortCol == "ItemName" && sortDir == "desc" ? "text-primary fw-bold" : "text-secondary")">
+                        ▼
+                    </a>
+                </th>
+
+                <th>
+                    Sort
+                    <a asp-action="Index"
+                       asp-route-search="@search"
+                       asp-route-sortColumn="Sort"
+                       asp-route-sortDirection="asc"
+                       asp-route-itemTypeFilter="@itemTypeFilter"
+                       asp-route-itemSubTypeFilter="@itemSubTypeFilter"
+                       class="ms-1 @(sortCol == "Sort" && sortDir == "asc" ? "text-primary fw-bold" : "text-secondary")">
+                        ▲
+                    </a>
+
+                    <a asp-action="Index"
+                       asp-route-search="@search"
+                       asp-route-sortColumn="Sort"
+                       asp-route-sortDirection="desc"
+                       asp-route-itemTypeFilter="@itemTypeFilter"
+                       asp-route-itemSubTypeFilter="@itemSubTypeFilter"
+                       class="ms-1 @(sortCol == "Sort" && sortDir == "desc" ? "text-primary fw-bold" : "text-secondary")">
+                        ▼
+                    </a>
+                </th>
+
+                <th>
+                    <span class="@(sortCol == "ItemTypeName" ? "fw-bold text-primary" : "")">
+                        Category
+                    </span>
+
                     @if (itemTypeFilter == 0)
                     {
-                        <a asp-action="Index" asp-route-search="@search" asp-route-sortColumn="ItemTypeName" asp-route-sortDirection="asc" asp-route-itemTypeFilter="@itemTypeFilter" class="ms-1 @(sortCol == "ItemTypeName" && sortDir == "asc" ? "text-primary fw-bold" : "text-secondary")">▲</a>
-                        <a asp-action="Index" asp-route-search="@search" asp-route-sortColumn="ItemTypeName" asp-route-sortDirection="desc" asp-route-itemTypeFilter="@itemTypeFilter" class="ms-1 @(sortCol == "ItemTypeName" && sortDir == "desc" ? "text-primary fw-bold" : "text-secondary")">▼</a>
+                        <a asp-action="Index"
+                           asp-route-search="@search"
+                           asp-route-sortColumn="ItemTypeName"
+                           asp-route-sortDirection="asc"
+                           asp-route-itemTypeFilter="@itemTypeFilter"
+                           asp-route-itemSubTypeFilter="@itemSubTypeFilter"
+                           class="ms-1 @(sortCol == "ItemTypeName" && sortDir == "asc" ? "text-primary fw-bold" : "text-secondary")">
+                            ▲
+                        </a>
+
+                        <a asp-action="Index"
+                           asp-route-search="@search"
+                           asp-route-sortColumn="ItemTypeName"
+                           asp-route-sortDirection="desc"
+                           asp-route-itemTypeFilter="@itemTypeFilter"
+                           asp-route-itemSubTypeFilter="@itemSubTypeFilter"
+                           class="ms-1 @(sortCol == "ItemTypeName" && sortDir == "desc" ? "text-primary fw-bold" : "text-secondary")">
+                            ▼
+                        </a>
                     }
                     else
                     {
@@ -82,92 +154,206 @@
                     }
                 </th>
 
-                @* Admin Columns *@
                 @if (Context.Session.GetString("Role") == "Admin")
                 {
-                    <th>Created By</th>
-                    <th>Created Date</th>
-                    <th>Updated By</th>
-                    <th>Updated Date</th>
+                    <th class="d-none d-md-table-cell">Created By</th>
+                    <th class="d-none d-md-table-cell">Created Date</th>
+                    <th class="d-none d-md-table-cell">Updated By</th>
+                    <th class="d-none d-md-table-cell">Updated Date</th>
                 }
 
                 <th>Actions</th>
+
             </tr>
         </thead>
+
         <tbody>
             @foreach (var item in Model.Items)
             {
                 <tr>
-                    <td>@item.ItemName</td>
-                    <td>@item.Sort</td>
-                    <td>@item.ItemType?.ItemTypeName</td>
 
-                    @* Admin Data *@
+                    <td>
+                        <div class="fw-semibold">@item.ItemName</div>
+                    </td>
+
+                    <td>@item.Sort</td>
+
+                    <td>
+                        <div class="small">
+                            <div class="fw-semibold">@item.ItemType?.ItemTypeName</div>
+                            <div class="text-muted">@item.ItemSubTypeName</div>
+                        </div>
+                    </td>
+
                     @if (Context.Session.GetString("Role") == "Admin")
                     {
-                        <td>@item.CreatedBy</td>
-                        <td>@(item.CreatedDate?.ToString("yyyy-MM-dd HH:mm") ?? "—")</td>
-                        <td>@(item.UpdatedBy ?? "—")</td>
-                        <td>@(item.UpdatedDate?.ToString("yyyy-MM-dd HH:mm") ?? "—")</td>
+                        <td class="d-none d-md-table-cell">@item.CreatedBy</td>
+                        <td class="d-none d-md-table-cell">
+                            @(item.CreatedDate?.ToString("yyyy-MM-dd HH:mm") ?? "—")
+                        </td>
+                        <td class="d-none d-md-table-cell">
+                            @(item.UpdatedBy ?? "—")
+                        </td>
+                        <td class="d-none d-md-table-cell">
+                            @(item.UpdatedDate?.ToString("yyyy-MM-dd HH:mm") ?? "—")
+                        </td>
                     }
 
                     <td>
-                        <a asp-controller="Item" asp-action="Edit" asp-route-id="@item.ItemID" class="btn btn-sm btn-warning">Edit</a>
+                        <a asp-controller="Item"
+                           asp-action="Edit"
+                           asp-route-id="@item.ItemID"
+                           class="btn btn-sm btn-warning">
+                            Edit
+                        </a>
+
                         @if (Context.Session.GetString("Role") == "Admin")
                         {
-                            <a asp-controller="Item" asp-action="Delete" asp-route-id="@item.ItemID" class="btn btn-sm btn-danger">Delete</a>
+                            <a asp-controller="Item"
+                               asp-action="Delete"
+                               asp-route-id="@item.ItemID"
+                               class="btn btn-sm btn-danger">
+                                Delete
+                            </a>
                         }
                     </td>
+
                 </tr>
             }
         </tbody>
     </table>
 
-    @* Pagination *@
+    @* PAGINATION *@
     <nav>
         <ul class="pagination justify-content-center mt-3">
+
             <li class="page-item @(!Model.HasPreviousPage ? "disabled" : "")">
-                <a class="page-link" asp-action="Index" asp-route-page="@(Model.PageNumber - 1)" asp-route-search="@search" asp-route-sortColumn="@sortCol" asp-route-sortDirection="@sortDir" asp-route-itemTypeFilter="@itemTypeFilter">Previous</a>
+                <a class="page-link"
+                   asp-action="Index"
+                   asp-route-page="@(Model.PageNumber - 1)"
+                   asp-route-search="@search"
+                   asp-route-sortColumn="@sortCol"
+                   asp-route-sortDirection="@sortDir"
+                   asp-route-itemTypeFilter="@itemTypeFilter"
+                   asp-route-itemSubTypeFilter="@itemSubTypeFilter">
+                    Previous
+                </a>
             </li>
 
             @for (int i = 1; i <= Model.TotalPages; i++)
             {
                 <li class="page-item @(i == Model.PageNumber ? "active" : "")">
-                    <a class="page-link" asp-action="Index" asp-route-page="@i" asp-route-search="@search" asp-route-sortColumn="@sortCol" asp-route-sortDirection="@sortDir" asp-route-itemTypeFilter="@itemTypeFilter">@i</a>
+                    <a class="page-link"
+                       asp-action="Index"
+                       asp-route-page="@i"
+                       asp-route-search="@search"
+                       asp-route-sortColumn="@sortCol"
+                       asp-route-sortDirection="@sortDir"
+                       asp-route-itemTypeFilter="@itemTypeFilter"
+                       asp-route-itemSubTypeFilter="@itemSubTypeFilter">
+                        @i
+                    </a>
                 </li>
             }
 
             <li class="page-item @(!Model.HasNextPage ? "disabled" : "")">
-                <a class="page-link" asp-action="Index" asp-route-page="@(Model.PageNumber + 1)" asp-route-search="@search" asp-route-sortColumn="@sortCol" asp-route-sortDirection="@sortDir" asp-route-itemTypeFilter="@itemTypeFilter">Next</a>
+                <a class="page-link"
+                   asp-action="Index"
+                   asp-route-page="@(Model.PageNumber + 1)"
+                   asp-route-search="@search"
+                   asp-route-sortColumn="@sortCol"
+                   asp-route-sortDirection="@sortDir"
+                   asp-route-itemTypeFilter="@itemTypeFilter"
+                   asp-route-itemSubTypeFilter="@itemSubTypeFilter">
+                    Next
+                </a>
             </li>
+
         </ul>
     </nav>
 
-    <p class="text-muted text-center">
-        Showing page @Model.PageNumber of @Model.TotalPages (@Model.TotalCount total records)
+    <p class="text-muted text-center mt-2">
+        Showing page @Model.PageNumber of @Model.TotalPages
+        (@Model.TotalCount total records)
     </p>
+
 </div>
 
 <style>
     a {
         text-decoration: none;
     }
+
+    /* prevents column shifting */
+    .dashboard-table {
+        table-layout: fixed;
+        width: 100%;
+    }
+
+        .dashboard-table th,
+        .dashboard-table td {
+            vertical-align: middle;
+        }
 </style>
 
 @section Scripts {
     <script>
         document.addEventListener("DOMContentLoaded", function () {
-            const searchInput = document.getElementById('searchInput');
-            const clearBtn = document.getElementById('clearBtn');
-            const searchForm = document.getElementById('searchForm');
-            const itemTypeFilter = document.getElementById('itemTypeFilter');
 
-            if (!searchInput || !clearBtn || !searchForm || !itemTypeFilter) return;
+            const searchForm = document.getElementById("searchForm");
+            const searchInput = document.getElementById("searchInput");
+            const clearBtn = document.getElementById("clearBtn");
+
+            const itemTypeFilter = document.getElementById("itemTypeFilter");
+            const itemSubTypeFilter = document.getElementById("itemSubTypeFilter");
+
+            const url = '@Url.Action("GetSubTypesByItemType", "Item")';
+            const selectedSubType = itemSubTypeFilter.dataset.selectedSubtype || "0";
 
             let debounceTimer;
 
-            searchInput.addEventListener('input', function () {
-                clearBtn.style.display = this.value.length > 0 ? 'flex' : 'none';
+            function resetSubType(submit = false) {
+                itemSubTypeFilter.innerHTML = '<option value="0">All SubTypes</option>';
+                itemSubTypeFilter.disabled = true;
+                itemSubTypeFilter.value = "0";
+
+                if (submit) searchForm.submit();
+            }
+
+            function loadSubTypes(itemTypeId, callback) {
+
+                if (!itemTypeId || itemTypeId === "0") {
+                    resetSubType();
+                    if (callback) callback();
+                    return;
+                }
+
+                fetch(`${url}?itemTypeId=${itemTypeId}`)
+                    .then(r => r.json())
+                    .then(data => {
+
+                        itemSubTypeFilter.innerHTML = '<option value="0">All SubTypes</option>';
+
+                        if (!data || data.length === 0) {
+                            itemSubTypeFilter.disabled = true;
+                            itemSubTypeFilter.value = "0";
+                            if (callback) callback();
+                            return;
+                        }
+
+                        data.forEach(x => {
+                            itemSubTypeFilter.append(new Option(x.text, x.value));
+                        });
+
+                        itemSubTypeFilter.disabled = false;
+                        itemSubTypeFilter.value = selectedSubType;
+
+                        if (callback) callback();
+                    });
+            }
+
+            searchInput.addEventListener("input", function () {
+                clearBtn.style.display = this.value.length > 0 ? "flex" : "none";
 
                 clearTimeout(debounceTimer);
                 debounceTimer = setTimeout(() => {
@@ -175,17 +361,34 @@
                 }, 400);
             });
 
-            clearBtn.addEventListener('click', function () {
-                searchInput.value = '';
-                clearBtn.style.display = 'none';
+            clearBtn.addEventListener("click", function () {
+                searchInput.value = "";
+                clearBtn.style.display = "none";
                 searchForm.submit();
             });
 
-            itemTypeFilter.addEventListener('change', function () {
+            itemTypeFilter.addEventListener("change", function () {
+                const value = this.value;
+
+                if (value === "0") {
+                    resetSubType(true);
+                    return;
+                }
+
+                loadSubTypes(value, () => searchForm.submit());
+            });
+
+            itemSubTypeFilter.addEventListener("change", function () {
                 searchForm.submit();
             });
 
-            window.addEventListener('load', () => {
+            if (itemTypeFilter.value !== "0") {
+                loadSubTypes(itemTypeFilter.value);
+            } else {
+                resetSubType();
+            }
+
+            window.addEventListener("load", () => {
                 if (searchInput.value.length > 0) {
                     searchInput.focus();
                     searchInput.setSelectionRange(
@@ -194,6 +397,7 @@
                     );
                 }
             });
+
         });
     </script>
 }

@@ -240,6 +240,7 @@ namespace ItemManager.Infrastructure.Repositories
             string sortColumn = "Sort",
             string sortDirection = "asc",
             int itemTypeFilter = 0,
+            int itemSubTypeFilter = 0,
             bool includeAuditSearch = false)
         {
             var result = new PagedResult<Item>
@@ -272,15 +273,18 @@ namespace ItemManager.Infrastructure.Repositories
                            CAST(i.Sort AS VARCHAR) LIKE @SearchPattern OR
                            (@IncludeAuditSearch = 1 AND i.CreatedBy LIKE @SearchPattern) OR
                            (@IncludeAuditSearch = 1 AND i.UpdatedBy LIKE @SearchPattern))
-                    AND (@ItemTypeFilter = 0 OR i.ItemTypeID = @ItemTypeFilter)";
+                           AND (@ItemTypeFilter = 0 OR i.ItemTypeID = @ItemTypeFilter)
+                           AND (@ItemSubTypeFilter = 0 OR i.ItemSubTypeID = @ItemSubTypeFilter)";
 
                 using var countCommand = new SqlCommand(countQuery, connection);
                 countCommand.Parameters.AddWithValue("@Search", search);
                 countCommand.Parameters.AddWithValue("@SearchPattern", $"%{search}%");
                 countCommand.Parameters.AddWithValue("@ItemTypeFilter", itemTypeFilter);
                 countCommand.Parameters.AddWithValue("@IncludeAuditSearch", includeAuditSearch ? 1 : 0);
+                countCommand.Parameters.AddWithValue("@ItemSubTypeFilter", itemSubTypeFilter);
 
-                result.TotalCount = (int)await countCommand.ExecuteScalarAsync();
+                var countResult = await countCommand.ExecuteScalarAsync();
+                result.TotalCount = countResult != null ? Convert.ToInt32(countResult) : 0;
 
                 // Query 2 - get paged data
                 var offset = (pageNumber - 1) * pageSize;
@@ -298,7 +302,8 @@ namespace ItemManager.Infrastructure.Repositories
                            CAST(i.Sort AS VARCHAR) LIKE @SearchPattern OR
                            (@IncludeAuditSearch = 1 AND i.CreatedBy LIKE @SearchPattern) OR
                            (@IncludeAuditSearch = 1 AND i.UpdatedBy LIKE @SearchPattern))
-                    AND (@ItemTypeFilter = 0 OR i.ItemTypeID = @ItemTypeFilter)
+                           AND (@ItemTypeFilter = 0 OR i.ItemTypeID = @ItemTypeFilter)
+                           AND (@ItemSubTypeFilter = 0 OR i.ItemSubTypeID = @ItemSubTypeFilter)
                     ORDER BY {sortColumn} {sortDirection}
                     OFFSET @Offset ROWS
                     FETCH NEXT @PageSize ROWS ONLY";
@@ -310,6 +315,7 @@ namespace ItemManager.Infrastructure.Repositories
                 dataCommand.Parameters.AddWithValue("@IncludeAuditSearch", includeAuditSearch ? 1 : 0);
                 dataCommand.Parameters.AddWithValue("@Offset", offset);
                 dataCommand.Parameters.AddWithValue("@PageSize", pageSize);
+                dataCommand.Parameters.AddWithValue("@ItemSubTypeFilter", itemSubTypeFilter);
 
                 using var reader = await dataCommand.ExecuteReaderAsync();
                 while (await reader.ReadAsync())

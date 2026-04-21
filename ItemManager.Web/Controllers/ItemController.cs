@@ -28,7 +28,8 @@ namespace ItemManager.Web.Controllers
             string search = "",
             string sortColumn = "Sort",
             string sortDirection = "asc",
-            int itemTypeFilter = 0)
+            int itemTypeFilter = 0,
+            int itemSubTypeFilter = 0)
         {
             try
             {
@@ -36,12 +37,16 @@ namespace ItemManager.Web.Controllers
                 ViewData["ItemTypes"] = itemTypes;
 
                 var result = await _itemRepository.GetPagedAsync(
-                    page, 10, search, sortColumn, sortDirection, itemTypeFilter, IsAdmin);
+                    page, 10, search, sortColumn, sortDirection,
+                    itemTypeFilter,
+                    itemSubTypeFilter,
+                    IsAdmin);
 
                 ViewData["Search"] = search;
                 ViewData["SortColumn"] = sortColumn;
                 ViewData["SortDirection"] = sortDirection;
                 ViewData["ItemTypeFilter"] = itemTypeFilter;
+                ViewData["ItemSubTypeFilter"] = itemSubTypeFilter;
 
                 return View(result);
             }
