@@ -1,5 +1,6 @@
 ﻿using ItemManager.Core.Models;
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace ItemManager.Web.ViewModels
 {
@@ -22,6 +23,11 @@ namespace ItemManager.Web.ViewModels
         public int Sort { get; set; }
 
         // Dropdown
-        public List<ItemType> ItemTypes { get; set; } = new List<ItemType>();
+        public List<SelectListItem> ItemTypeOptions { get; set; } = new();
+        public List<SelectListItem> SubTypeOptions { get; set; } = new();
+
+        [Display(Name = "Item Sub Type")]
+        public int? ItemSubTypeID { get; set; }
+
     }
 }

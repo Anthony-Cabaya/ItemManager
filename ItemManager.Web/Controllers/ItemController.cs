@@ -3,6 +3,7 @@ using ItemManager.Core.Models;
 using ItemManager.Infrastructure.Repositories;
 using ItemManager.Web.ViewModels;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace ItemManager.Web.Controllers
 {
@@ -56,9 +57,14 @@ namespace ItemManager.Web.Controllers
         {
             try
             {
+                var itemTypes = await _itemTypeRepository.GetAllAsync();
                 var viewModel = new ItemViewModel
                 {
-                    ItemTypes = (await _itemTypeRepository.GetAllAsync()).ToList()
+                    ItemTypeOptions = itemTypes.Select(it => new SelectListItem
+                    {
+                        Value = it.ItemTypeID.ToString(),
+                        Text = it.ItemTypeName
+                    }).ToList()
                 };
                 return View(viewModel);
             }
@@ -76,7 +82,23 @@ namespace ItemManager.Web.Controllers
             {
                 if (!ModelState.IsValid)
                 {
-                    viewModel.ItemTypes = (await _itemTypeRepository.GetAllAsync()).ToList();
+                    var itemTypes = await _itemTypeRepository.GetAllAsync();
+
+                    viewModel.ItemTypeOptions = itemTypes.Select(it => new SelectListItem
+                    {
+                        Value = it.ItemTypeID.ToString(),
+                        Text = it.ItemTypeName
+                    }).ToList();
+
+                    var subTypes = await _itemSubTypeRepository
+                        .GetByItemTypeIdAsync(viewModel.ItemTypeID);
+
+                    viewModel.SubTypeOptions = subTypes.Select(st => new SelectListItem
+                    {
+                        Value = st.ItemSubTypeID.ToString(),
+                        Text = st.ItemSubTypeName
+                    }).ToList();
+
                     return View(viewModel);
                 }
 
@@ -84,6 +106,7 @@ namespace ItemManager.Web.Controllers
                 {
                     ItemName = viewModel.ItemName,
                     ItemTypeID = viewModel.ItemTypeID,
+                    ItemSubTypeID = viewModel.ItemSubTypeID,
                     Sort = viewModel.Sort,
                     CreatedBy = CurrentUsername,
                     CreatedDate = DateTime.Now
@@ -106,14 +129,32 @@ namespace ItemManager.Web.Controllers
                 var item = await _itemRepository.GetByIdAsync(id);
                 if (item == null) return NotFound();
 
+                var itemTypes = await _itemTypeRepository.GetAllAsync();
+
+                var subTypes = await _itemSubTypeRepository
+                    .GetByItemTypeIdAsync(item.ItemTypeID);
+
                 var viewModel = new ItemViewModel
                 {
                     ItemID = item.ItemID,
                     ItemName = item.ItemName,
                     ItemTypeID = item.ItemTypeID,
+                    ItemSubTypeID = item.ItemSubTypeID,
                     Sort = item.Sort,
-                    ItemTypes = (await _itemTypeRepository.GetAllAsync()).ToList()
+
+                    ItemTypeOptions = itemTypes.Select(it => new SelectListItem
+                    {
+                        Value = it.ItemTypeID.ToString(),
+                        Text = it.ItemTypeName
+                    }).ToList(),
+
+                    SubTypeOptions = subTypes.Select(st => new SelectListItem
+                    {
+                        Value = st.ItemSubTypeID.ToString(),
+                        Text = st.ItemSubTypeName
+                    }).ToList()
                 };
+
                 return View(viewModel);
             }
             catch (Exception ex)
@@ -130,7 +171,22 @@ namespace ItemManager.Web.Controllers
             {
                 if (!ModelState.IsValid)
                 {
-                    viewModel.ItemTypes = (await _itemTypeRepository.GetAllAsync()).ToList();
+                    var itemTypes = await _itemTypeRepository.GetAllAsync();
+                    var subTypes = await _itemSubTypeRepository
+                        .GetByItemTypeIdAsync(viewModel.ItemTypeID);
+
+                    viewModel.ItemTypeOptions = itemTypes.Select(it => new SelectListItem
+                    {
+                        Value = it.ItemTypeID.ToString(),
+                        Text = it.ItemTypeName
+                    }).ToList();
+
+                    viewModel.SubTypeOptions = subTypes.Select(st => new SelectListItem
+                    {
+                        Value = st.ItemSubTypeID.ToString(),
+                        Text = st.ItemSubTypeName
+                    }).ToList();
+
                     return View(viewModel);
                 }
 
@@ -139,6 +195,7 @@ namespace ItemManager.Web.Controllers
                     ItemID = viewModel.ItemID,
                     ItemName = viewModel.ItemName,
                     ItemTypeID = viewModel.ItemTypeID,
+                    ItemSubTypeID = viewModel.ItemSubTypeID,
                     Sort = viewModel.Sort,
                     UpdatedBy = CurrentUsername,
                     UpdatedDate = DateTime.Now
@@ -200,8 +257,8 @@ namespace ItemManager.Web.Controllers
 
                 var result = subTypes.Select(st => new
                 {
-                    id = st.ItemSubTypeID,
-                    name = st.ItemSubTypeName
+                    value = st.ItemSubTypeID,
+                    text = st.ItemSubTypeName
                 });
 
                 return Json(result);
