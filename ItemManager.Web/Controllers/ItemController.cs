@@ -1,5 +1,6 @@
 ﻿using ItemManager.Core.Interfaces;
 using ItemManager.Core.Models;
+using ItemManager.Infrastructure.Repositories;
 using ItemManager.Web.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,11 +10,16 @@ namespace ItemManager.Web.Controllers
     {
         private readonly IItemRepository _itemRepository;
         private readonly IItemTypeRepository _itemTypeRepository;
+        private readonly IItemSubTypeRepository _itemSubTypeRepository;
 
-        public ItemController(IItemRepository itemRepository, IItemTypeRepository itemTypeRepository)
+        public ItemController(
+            IItemRepository itemRepository,
+            IItemTypeRepository itemTypeRepository,
+            IItemSubTypeRepository itemSubTypeRepository)
         {
             _itemRepository = itemRepository;
             _itemTypeRepository = itemTypeRepository;
+            _itemSubTypeRepository = itemSubTypeRepository;
         }
 
         public async Task<IActionResult> Index(
@@ -184,5 +190,27 @@ namespace ItemManager.Web.Controllers
                 return View("Error");
             }
         }
+
+        [HttpGet]
+        public async Task<JsonResult> GetSubTypesByItemType(int itemTypeId)
+        {
+            try
+            {
+                var subTypes = await _itemSubTypeRepository.GetByItemTypeIdAsync(itemTypeId);
+
+                var result = subTypes.Select(st => new
+                {
+                    id = st.ItemSubTypeID,
+                    name = st.ItemSubTypeName
+                });
+
+                return Json(result);
+            }
+            catch (Exception)
+            {
+                return Json(new List<object>());
+            }
+        }
+
     }
 }
