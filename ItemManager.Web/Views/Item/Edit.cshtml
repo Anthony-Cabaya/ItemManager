@@ -5,7 +5,7 @@
 
     <form asp-action="Edit" method="post">
         <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
-        <!-- Hidden field for ItemID -->
+
         <input type="hidden" asp-for="ItemID" />
 
         <div class="mb-3">
@@ -22,11 +22,26 @@
 
         <div class="mb-3">
             <label asp-for="ItemTypeID" class="form-label">Item Type</label>
-            <select asp-for="ItemTypeID" class="form-select"
-                    asp-items="@(new SelectList(Model.ItemTypes, "ItemTypeID", "ItemTypeName"))">
+            <select asp-for="ItemTypeID" class="form-select" id="itemTypeDropdown"
+                    asp-items="Model.ItemTypeOptions">
                 <option value="">-- Select Item Type --</option>
             </select>
             <span asp-validation-for="ItemTypeID" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="ItemSubTypeID" class="form-label"></label>
+            @{
+                var disableSubType = !Model.SubTypeOptions.Any() ? "disabled" : null;
+            }
+
+            <select asp-for="ItemSubTypeID"
+                    class="form-select"
+                    id="subTypeDropdown"
+                    asp-items="Model.SubTypeOptions"
+                    disabled="@disableSubType">
+                <option value="">-- Select Sub Type --</option>
+            </select>
         </div>
 
         <button type="submit" class="btn btn-primary">Save Changes</button>
@@ -36,4 +51,38 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        const url = '@Url.Action("GetSubTypesByItemType", "Item")';
+
+        $("#itemTypeDropdown").change(function () {
+            var selectedId = $(this).val();
+            var $sub = $("#subTypeDropdown");
+
+            $sub.empty();
+
+            if (!selectedId) {
+                $sub.append('<option value="">-- Select Sub Type --</option>');
+                return;
+            }
+
+            fetch(`${url}?itemTypeId=${selectedId}`)
+                .then(res => res.json())
+                .then(data => {
+
+                    if (!data || data.length === 0) {
+                        $sub.append('<option value="">-- No Subcategories Available --</option>');
+                        $sub.prop('disabled', true);
+                        return;
+                    }
+
+                    $sub.prop('disabled', false);
+                    $sub.append('<option value="">-- Select Sub Type --</option>');
+
+                    data.forEach(item => {
+                        $sub.append(new Option(item.text, item.value));
+                    });
+                });
+        });
+    </script>
 }
