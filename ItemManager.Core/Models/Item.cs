@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace ItemManager.Core.Models
 {
@@ -33,6 +28,13 @@ namespace ItemManager.Core.Models
         public int? ItemSubTypeID { get; set; }
 
         public string? ItemSubTypeName { get; set; }
+
+        // Unit fields
+        public int? BaseUnitID { get; set; }
+        public int? DisplayUnitID { get; set; }
+
+        public string? BaseUnitAbbreviation { get; set; }
+        public string? DisplayUnitAbbreviation { get; set; }
 
     }
 }
