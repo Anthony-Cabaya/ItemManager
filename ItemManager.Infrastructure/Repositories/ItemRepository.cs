@@ -3,7 +3,6 @@ using ItemManager.Core.Interfaces;
 using ItemManager.Core.Models;
 using ItemManager.Infrastructure.Helpers;
 using Microsoft.Data.SqlClient;
-using System.Collections.Generic;
 
 namespace ItemManager.Infrastructure.Repositories
 {
@@ -17,6 +16,22 @@ namespace ItemManager.Infrastructure.Repositories
             _dbHelper = dbHelper;
         }
 
+        // Base Select
+        private const string BaseSelect = @"
+            SELECT i.ItemID, i.ItemName, i.ItemTypeID, i.ItemSubTypeID,
+                   i.BaseUnitID, i.DisplayUnitID,
+                   i.Sort,
+                   i.CreatedBy, i.CreatedDate, i.UpdatedBy, i.UpdatedDate,
+                   it.ItemTypeName,
+                   ist.SubTypeName,
+                   bu.Abbreviation AS BaseUnitAbbreviation,
+                   du.Abbreviation AS DisplayUnitAbbreviation
+            FROM Items i
+            INNER JOIN ItemType it ON i.ItemTypeID = it.ItemTypeID
+            LEFT JOIN ItemSubType ist ON i.ItemSubTypeID = ist.ItemSubTypeID
+            LEFT JOIN Units bu ON i.BaseUnitID = bu.UnitID
+            LEFT JOIN Units du ON i.DisplayUnitID = du.UnitID";
+
         private static Item Map(SqlDataReader reader)
         {
             return new Item
@@ -27,6 +42,15 @@ namespace ItemManager.Infrastructure.Repositories
                 ItemSubTypeID = reader.IsDBNull(reader.GetOrdinal("ItemSubTypeID"))
                     ? null
                     : reader.GetInt32(reader.GetOrdinal("ItemSubTypeID")),
+
+                BaseUnitID = reader.IsDBNull(reader.GetOrdinal("BaseUnitID"))
+                    ? null
+                    : reader.GetInt32(reader.GetOrdinal("BaseUnitID")),
+
+                DisplayUnitID = reader.IsDBNull(reader.GetOrdinal("DisplayUnitID"))
+                    ? null
+                    : reader.GetInt32(reader.GetOrdinal("DisplayUnitID")),
+
                 Sort = reader.GetInt32(reader.GetOrdinal("Sort")),
 
                 CreatedBy = reader.IsDBNull(reader.GetOrdinal("CreatedBy"))
@@ -51,185 +75,146 @@ namespace ItemManager.Infrastructure.Repositories
                         ? null
                         : reader.GetString(reader.GetOrdinal("ItemTypeName"))
                 },
+
                 ItemSubTypeName = reader.IsDBNull(reader.GetOrdinal("SubTypeName"))
-                        ? null
-                        : reader.GetString(reader.GetOrdinal("SubTypeName"))
+                    ? null
+                    : reader.GetString(reader.GetOrdinal("SubTypeName")),
+
+                BaseUnitAbbreviation = reader.IsDBNull(reader.GetOrdinal("BaseUnitAbbreviation"))
+                    ? null
+                    : reader.GetString(reader.GetOrdinal("BaseUnitAbbreviation")),
+
+                DisplayUnitAbbreviation = reader.IsDBNull(reader.GetOrdinal("DisplayUnitAbbreviation"))
+                    ? null
+                    : reader.GetString(reader.GetOrdinal("DisplayUnitAbbreviation")),
             };
         }
 
-        public async Task<IEnumerable<Item>> GetAllAsync()
+        // Generic Executor
+        private async Task<List<Item>> ExecuteQueryAsync(string query, Action<SqlCommand>? paramBuilder = null)
         {
-            var items = new List<Item>();
+            var list = new List<Item>();
 
             try
             {
                 using var connection = _dbHelper.CreateConnection();
                 await connection.OpenAsync();
 
-                var query = @"
-                    SELECT i.ItemID, i.ItemName, i.ItemTypeID, i.ItemSubTypeID, i.Sort, 
-                           i.CreatedBy, i.CreatedDate, i.UpdatedBy, i.UpdatedDate,
-                           it.ItemTypeName,
-                           ist.SubTypeName
-                    FROM Items i
-                    INNER JOIN ItemType it ON i.ItemTypeID = it.ItemTypeID
-                    LEFT JOIN ItemSubType ist ON i.ItemSubTypeID = ist.ItemSubTypeID
-                    ORDER BY i.Sort";
-
                 using var command = new SqlCommand(query, connection);
+                paramBuilder?.Invoke(command);
+
                 using var reader = await command.ExecuteReaderAsync();
 
                 while (await reader.ReadAsync())
                 {
-                    items.Add(Map(reader));
+                    list.Add(Map(reader));
                 }
             }
-            catch (SqlException sqlEx)
+            catch (SqlException ex)
             {
-                throw new Exception("An error occurred while fetching Items.", sqlEx);
+                throw new Exception("Database error occurred.", ex);
             }
-            catch (Exception ex)
-            {
-                throw new Exception("An unexpected error occurred while fetching Items.", ex);
-            }
-            
-            return items;
+
+            return list;
+        }
+
+        public async Task<IEnumerable<Item>> GetAllAsync()
+        {
+            var query = $"{BaseSelect} ORDER BY i.Sort";
+            return await ExecuteQueryAsync(query);
         }
 
         public async Task<Item?> GetByIdAsync(int id)
         {
-            try
+            var query = $"{BaseSelect} WHERE i.ItemID = @ItemID";
+
+            var result = await ExecuteQueryAsync(query, cmd =>
             {
-                using var connection = _dbHelper.CreateConnection();
-                await connection.OpenAsync();
+                cmd.Parameters.AddWithValue("@ItemID", id);
+            });
 
-                var query = @"
-                    SELECT i.ItemID, i.ItemName, i.ItemTypeID, i.ItemSubTypeID, i.Sort,
-                           i.CreatedBy, i.CreatedDate, i.UpdatedBy, i.UpdatedDate,
-                           it.ItemTypeName,
-                           ist.SubTypeName
-                    FROM Items i
-                    INNER JOIN ItemType it ON i.ItemTypeID = it.ItemTypeID
-                    LEFT JOIN ItemSubType ist ON i.ItemSubTypeID = ist.ItemSubTypeID
-                    WHERE i.ItemID = @ItemID";
+            return result.FirstOrDefault();
+        }
 
-                using var command = new SqlCommand(query, connection);
-                command.Parameters.AddWithValue("@ItemID", id);
+        // Get By Type
+        public async Task<IEnumerable<Item>> GetByItemTypeIdAsync(int itemTypeId)
+        {
+            var query = $"{BaseSelect} WHERE i.ItemTypeID = @ItemTypeID ORDER BY i.Sort";
 
-                using var reader = await command.ExecuteReaderAsync();
-
-                if (await reader.ReadAsync())
-                {
-                    return Map(reader);
-                }
-
-                return null;
-            }
-            catch (SqlException sqlEx)
+            return await ExecuteQueryAsync(query, cmd =>
             {
-                throw new Exception("An error occurred while fetching Item by ID.", sqlEx);
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("An unexpected error occurred while fetching Item by ID.", ex);
-            }
+                cmd.Parameters.AddWithValue("@ItemTypeID", itemTypeId);
+            });
         }
 
         public async Task AddAsync(Item item)
         {
-            try
-            {
-                using var connection = _dbHelper.CreateConnection();
-                await connection.OpenAsync();
+            var query = @"
+                INSERT INTO Items
+                (ItemName, ItemTypeID, ItemSubTypeID, BaseUnitID, DisplayUnitID, Sort, CreatedBy, CreatedDate)
+                VALUES
+                (@ItemName, @ItemTypeID, @ItemSubTypeID, @BaseUnitID, @DisplayUnitID, @Sort, @CreatedBy, @CreatedDate)";
 
-                var query = @"
-                    INSERT INTO Items 
-                    (ItemName, ItemTypeID, ItemSubTypeID, Sort, CreatedBy, CreatedDate)
-                    VALUES 
-                    (@ItemName, @ItemTypeID, @ItemSubTypeID, @Sort, @CreatedBy, @CreatedDate)";
+            using var connection = _dbHelper.CreateConnection();
+            await connection.OpenAsync();
 
-                using var command = new SqlCommand(query, connection);
+            using var command = new SqlCommand(query, connection);
 
-                command.Parameters.AddWithValue("@ItemName", item.ItemName);
-                command.Parameters.AddWithValue("@ItemTypeID", item.ItemTypeID);
-                command.Parameters.AddWithValue("@ItemSubTypeID", (object?)item.ItemSubTypeID ?? DBNull.Value);
-                command.Parameters.AddWithValue("@Sort", item.Sort);
-                command.Parameters.AddWithValue("@CreatedBy", item.CreatedBy ?? (object)DBNull.Value);
-                command.Parameters.AddWithValue("@CreatedDate", item.CreatedDate);
+            command.Parameters.AddWithValue("@ItemName", item.ItemName);
+            command.Parameters.AddWithValue("@ItemTypeID", item.ItemTypeID);
+            command.Parameters.AddWithValue("@ItemSubTypeID", (object?)item.ItemSubTypeID ?? DBNull.Value);
+            command.Parameters.AddWithValue("@BaseUnitID", (object?)item.BaseUnitID ?? DBNull.Value);
+            command.Parameters.AddWithValue("@DisplayUnitID", (object?)item.DisplayUnitID ?? DBNull.Value);
+            command.Parameters.AddWithValue("@Sort", item.Sort);
+            command.Parameters.AddWithValue("@CreatedBy", (object?)item.CreatedBy ?? DBNull.Value);
+            command.Parameters.AddWithValue("@CreatedDate", (object?)item.CreatedDate ?? DBNull.Value);
 
-                await command.ExecuteNonQueryAsync();
-            }
-            catch (SqlException sqlEx)
-            {
-                throw new Exception("An error occurred while adding Item.", sqlEx);
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("An unexpected error occurred while adding Item.", ex);
-            }
-        }
-
-        public async Task DeleteAsync(int id)
-        {
-            try
-            {
-                using var connection = _dbHelper.CreateConnection();
-                await connection.OpenAsync();
-
-                var query = "DELETE FROM Items WHERE ItemID = @ItemID";
-
-                using var command = new SqlCommand(query, connection);
-                command.Parameters.AddWithValue("@ItemID", id);
-
-                await command.ExecuteNonQueryAsync();
-            }
-            catch (SqlException sqlEx)
-            {
-                throw new Exception("An error occurred while deleting Item.", sqlEx);
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("An unexpected error occurred while deleting Item.", ex);
-            }
+            await command.ExecuteNonQueryAsync();
         }
 
         public async Task UpdateAsync(Item item)
         {
-            try
-            {
-                using var connection = _dbHelper.CreateConnection();
-                await connection.OpenAsync();
+            var query = @"
+                UPDATE Items
+                SET ItemName = @ItemName,
+                    ItemTypeID = @ItemTypeID,
+                    ItemSubTypeID = @ItemSubTypeID,
+                    BaseUnitID = @BaseUnitID,
+                    DisplayUnitID = @DisplayUnitID,
+                    Sort = @Sort,
+                    UpdatedBy = @UpdatedBy,
+                    UpdatedDate = @UpdatedDate
+                WHERE ItemID = @ItemID";
 
-                var query = @"
-                    UPDATE Items
-                    SET ItemName = @ItemName,
-                        ItemTypeID = @ItemTypeID,
-                        ItemSubTypeID = @ItemSubTypeID,
-                        Sort = @Sort,
-                        UpdatedBy = @UpdatedBy,
-                        UpdatedDate = @UpdatedDate
-                    WHERE ItemID = @ItemID";
+            using var connection = _dbHelper.CreateConnection();
+            await connection.OpenAsync();
 
-                using var command = new SqlCommand(query, connection);
+            using var command = new SqlCommand(query, connection);
 
-                command.Parameters.AddWithValue("@ItemID", item.ItemID);
-                command.Parameters.AddWithValue("@ItemName", item.ItemName);
-                command.Parameters.AddWithValue("@ItemTypeID", item.ItemTypeID);
-                command.Parameters.AddWithValue("@ItemSubTypeID", (object?)item.ItemSubTypeID ?? DBNull.Value);
-                command.Parameters.AddWithValue("@Sort", item.Sort);
-                command.Parameters.AddWithValue("@UpdatedBy", item.UpdatedBy ?? (object)DBNull.Value);
-                command.Parameters.AddWithValue("@UpdatedDate", item.UpdatedDate ?? (object)DBNull.Value);
+            command.Parameters.AddWithValue("@ItemID", item.ItemID);
+            command.Parameters.AddWithValue("@ItemName", item.ItemName);
+            command.Parameters.AddWithValue("@ItemTypeID", item.ItemTypeID);
+            command.Parameters.AddWithValue("@ItemSubTypeID", (object?)item.ItemSubTypeID ?? DBNull.Value);
+            command.Parameters.AddWithValue("@BaseUnitID", (object?)item.BaseUnitID ?? DBNull.Value);
+            command.Parameters.AddWithValue("@DisplayUnitID", (object?)item.DisplayUnitID ?? DBNull.Value);
+            command.Parameters.AddWithValue("@Sort", item.Sort);
+            command.Parameters.AddWithValue("@UpdatedBy", (object?)item.UpdatedBy ?? DBNull.Value);
+            command.Parameters.AddWithValue("@UpdatedDate", (object?)item.UpdatedDate ?? DBNull.Value);
 
-                await command.ExecuteNonQueryAsync();
-            }
-            catch (SqlException sqlEx)
-            {
-                throw new Exception("An error occurred while updating Item.", sqlEx);
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("An unexpected error occurred while updating Item.", ex);
-            }
+            await command.ExecuteNonQueryAsync();
+        }
+
+        public async Task DeleteAsync(int id)
+        {
+            var query = "DELETE FROM Items WHERE ItemID = @ItemID";
+
+            using var connection = _dbHelper.CreateConnection();
+            await connection.OpenAsync();
+
+            using var command = new SqlCommand(query, connection);
+            command.Parameters.AddWithValue("@ItemID", id);
+
+            await command.ExecuteNonQueryAsync();
         }
 
         // Pagination in Item
@@ -290,13 +275,19 @@ namespace ItemManager.Infrastructure.Repositories
                 var offset = (pageNumber - 1) * pageSize;
 
                 var dataQuery = $@"
-                    SELECT i.ItemID, i.ItemName, i.ItemTypeID, i.ItemSubTypeID, i.Sort,
+                    SELECT i.ItemID, i.ItemName, i.ItemTypeID, i.ItemSubTypeID,
+                           i.BaseUnitID, i.DisplayUnitID,
+                           i.Sort,
                            i.CreatedBy, i.CreatedDate, i.UpdatedBy, i.UpdatedDate,
                            it.ItemTypeName,
-                           ist.SubTypeName
+                           ist.SubTypeName,
+                           bu.Abbreviation AS BaseUnitAbbreviation,
+                           du.Abbreviation AS DisplayUnitAbbreviation
                     FROM Items i
                     INNER JOIN ItemType it ON i.ItemTypeID = it.ItemTypeID
                     LEFT JOIN ItemSubType ist ON i.ItemSubTypeID = ist.ItemSubTypeID
+                    LEFT JOIN Units bu ON i.BaseUnitID = bu.UnitID
+                    LEFT JOIN Units du ON i.DisplayUnitID = du.UnitID
                     WHERE (@Search = '' OR 
                            i.ItemName LIKE @SearchPattern OR
                            CAST(i.Sort AS VARCHAR) LIKE @SearchPattern OR

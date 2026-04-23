@@ -8,14 +8,21 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 
 // Register DbHelper
-builder.Services.AddScoped(provider =>
-    new DbHelper(builder.Configuration.GetConnectionString("DefaultConnection")!));
+builder.Services.AddScoped<DbHelper>(provider =>
+{
+    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+        ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+
+    return new DbHelper(connectionString);
+});
 
 // Register Repositories (Dependency)
 builder.Services.AddScoped<IItemTypeRepository, ItemTypeRepository>();
 builder.Services.AddScoped<IItemRepository, ItemRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IItemSubTypeRepository, ItemSubTypeRepository>();
+builder.Services.AddScoped<IUnitCategoryRepository, UnitCategoryRepository>();
+builder.Services.AddScoped<IUnitRepository, UnitRepository>();
 
 // Add Session
 builder.Services.AddSession(options =>

@@ -19,5 +19,6 @@ namespace ItemManager.Core.Interfaces
             int itemTypeFilter = 0,
             int itemSubTypeFilter = 0,
             bool includeAuditSearch = false);
+        Task<IEnumerable<Item>> GetByItemTypeIdAsync(int itemTypeId);
     }
 }
