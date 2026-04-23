@@ -19,7 +19,11 @@ namespace ItemManager.Web.Controllers
             _itemTypeRepository = itemTypeRepository;
         }
 
-        public async Task<IActionResult> Index(int itemTypeFilter = 0)
+        public async Task<IActionResult> Index(
+            int itemTypeFilter = 0,
+            string search = "",
+            string sortColumn = "Sort",
+            string sortDirection = "asc")
         {
             try
             {
@@ -28,11 +32,56 @@ namespace ItemManager.Web.Controllers
 
                 ViewBag.ItemTypes = await GetItemTypeDropdown();
                 ViewBag.ItemTypeFilter = itemTypeFilter;
+                ViewBag.Search = search;
+                ViewBag.SortColumn = sortColumn;
+                ViewBag.SortDirection = sortDirection;
 
                 IEnumerable<ItemSubType> subTypes =
                     itemTypeFilter > 0
                         ? await _itemSubTypeRepository.GetByItemTypeIdAsync(itemTypeFilter)
                         : await _itemSubTypeRepository.GetAllAsync();
+
+                if (!string.IsNullOrWhiteSpace(search))
+                {
+                    search = search.Trim().ToLower();
+
+                    subTypes = subTypes.Where(x =>
+                        (!string.IsNullOrEmpty(x.ItemSubTypeName) &&
+                         x.ItemSubTypeName.ToLower().Contains(search))
+
+                        ||
+
+                        (!string.IsNullOrEmpty(x.CreatedBy) &&
+                         x.CreatedBy.ToLower().Contains(search))
+
+                        ||
+
+                        (!string.IsNullOrEmpty(x.UpdatedBy) &&
+                         x.UpdatedBy.ToLower().Contains(search))
+                    );
+
+                }
+
+                subTypes = sortColumn switch
+                {
+                    "ItemSubTypeName" => sortDirection == "asc"
+                        ? subTypes.OrderBy(x => x.ItemSubTypeName)
+                        : subTypes.OrderByDescending(x => x.ItemSubTypeName),
+
+                    "Sort" => sortDirection == "asc"
+                        ? subTypes.OrderBy(x => x.Sort)
+                        : subTypes.OrderByDescending(x => x.Sort),
+
+                    "CreatedBy" => sortDirection == "asc"
+                        ? subTypes.OrderBy(x => x.CreatedBy)
+                        : subTypes.OrderByDescending(x => x.CreatedBy),
+
+                    "UpdatedBy" => sortDirection == "asc"
+                        ? subTypes.OrderBy(x => x.UpdatedBy)
+                        : subTypes.OrderByDescending(x => x.UpdatedBy),
+
+                    _ => subTypes.OrderBy(x => x.ItemSubTypeName)
+                };
 
                 var viewModel = subTypes.Select(x => new ItemSubTypeViewModel
                 {
@@ -187,7 +236,7 @@ namespace ItemManager.Web.Controllers
             }
         }
 
-        private async Task<ItemSubTypeViewModel> GetById(int id)
+        private async Task<ItemSubTypeViewModel?> GetById(int id)
         {
             var subType = await _itemSubTypeRepository.GetByIdAsync(id);
             if (subType == null) return null;
@@ -212,5 +261,6 @@ namespace ItemManager.Web.Controllers
                 Text = x.ItemTypeName
             }).ToList();
         }
+
     }
 }

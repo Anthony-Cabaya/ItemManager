@@ -12,15 +12,18 @@ namespace ItemManager.Web.Controllers
         private readonly IItemRepository _itemRepository;
         private readonly IItemTypeRepository _itemTypeRepository;
         private readonly IItemSubTypeRepository _itemSubTypeRepository;
+        private readonly IUnitRepository _unitRepository;
 
         public ItemController(
             IItemRepository itemRepository,
             IItemTypeRepository itemTypeRepository,
-            IItemSubTypeRepository itemSubTypeRepository)
+            IItemSubTypeRepository itemSubTypeRepository,
+            IUnitRepository unitRepository)
         {
             _itemRepository = itemRepository;
             _itemTypeRepository = itemTypeRepository;
             _itemSubTypeRepository = itemSubTypeRepository;
+            _unitRepository = unitRepository;
         }
 
         public async Task<IActionResult> Index(
@@ -63,14 +66,18 @@ namespace ItemManager.Web.Controllers
             try
             {
                 var itemTypes = await _itemTypeRepository.GetAllAsync();
+
                 var viewModel = new ItemViewModel
                 {
                     ItemTypeOptions = itemTypes.Select(it => new SelectListItem
                     {
                         Value = it.ItemTypeID.ToString(),
                         Text = it.ItemTypeName
-                    }).ToList()
+                    }).ToList(),
+
+                    UnitList = await GetUnitDropdown()
                 };
+
                 return View(viewModel);
             }
             catch (Exception ex)
@@ -104,6 +111,8 @@ namespace ItemManager.Web.Controllers
                         Text = st.ItemSubTypeName
                     }).ToList();
 
+                    viewModel.UnitList = await GetUnitDropdown();
+
                     return View(viewModel);
                 }
 
@@ -112,6 +121,10 @@ namespace ItemManager.Web.Controllers
                     ItemName = viewModel.ItemName,
                     ItemTypeID = viewModel.ItemTypeID,
                     ItemSubTypeID = viewModel.ItemSubTypeID,
+
+                    BaseUnitID = viewModel.BaseUnitID,
+                    DisplayUnitID = viewModel.DisplayUnitID,
+
                     Sort = viewModel.Sort,
                     CreatedBy = CurrentUsername,
                     CreatedDate = DateTime.Now
@@ -147,6 +160,9 @@ namespace ItemManager.Web.Controllers
                     ItemSubTypeID = item.ItemSubTypeID,
                     Sort = item.Sort,
 
+                    BaseUnitID = item.BaseUnitID,
+                    DisplayUnitID = item.DisplayUnitID,
+
                     ItemTypeOptions = itemTypes.Select(it => new SelectListItem
                     {
                         Value = it.ItemTypeID.ToString(),
@@ -157,7 +173,9 @@ namespace ItemManager.Web.Controllers
                     {
                         Value = st.ItemSubTypeID.ToString(),
                         Text = st.ItemSubTypeName
-                    }).ToList()
+                    }).ToList(),
+
+                    UnitList = await GetUnitDropdown()
                 };
 
                 return View(viewModel);
@@ -192,6 +210,8 @@ namespace ItemManager.Web.Controllers
                         Text = st.ItemSubTypeName
                     }).ToList();
 
+                    viewModel.UnitList = await GetUnitDropdown();
+
                     return View(viewModel);
                 }
 
@@ -201,6 +221,10 @@ namespace ItemManager.Web.Controllers
                     ItemName = viewModel.ItemName,
                     ItemTypeID = viewModel.ItemTypeID,
                     ItemSubTypeID = viewModel.ItemSubTypeID,
+
+                    BaseUnitID = viewModel.BaseUnitID,
+                    DisplayUnitID = viewModel.DisplayUnitID,
+
                     Sort = viewModel.Sort,
                     UpdatedBy = CurrentUsername,
                     UpdatedDate = DateTime.Now
@@ -272,6 +296,17 @@ namespace ItemManager.Web.Controllers
             {
                 return Json(new List<object>());
             }
+        }
+
+        private async Task<List<SelectListItem>> GetUnitDropdown()
+        {
+            var units = await _unitRepository.GetAllAsync();
+
+            return units.Select(x => new SelectListItem
+            {
+                Value = x.UnitID.ToString(),
+                Text = $"{x.UnitName} ({x.Abbreviation})"
+            }).ToList();
         }
 
     }

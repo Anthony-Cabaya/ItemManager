@@ -1,0 +1,246 @@
+﻿@model List<ItemManager.Web.ViewModels.UnitViewModel>
+
+@{
+    ViewData["Title"] = "Units";
+
+    var search = ViewData["Search"]?.ToString() ?? "";
+    var sortCol = ViewData["SortColumn"]?.ToString() ?? "Sort";
+    var sortDir = ViewData["SortDirection"]?.ToString() ?? "asc";
+    var categoryFilter = (int)(ViewBag.CategoryFilter ?? 0);
+    var categories = ViewBag.Categories as List<SelectListItem> ?? new();
+}
+
+<div class="container mt-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">Units</h2>
+
+        <a asp-action="Create" class="btn btn-primary">
+            Create New Unit
+        </a>
+    </div>
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger">
+            @TempData["ErrorMessage"]
+        </div>
+    }
+
+    <!-- SEARCH + FILTER -->
+    <form asp-action="Index" method="get" id="searchForm" class="mb-3">
+
+        <div class="d-flex gap-2 align-items-center">
+
+            <div class="position-relative" style="max-width: 400px; flex:1;">
+
+                <input type="text"
+                       name="search"
+                       id="searchInput"
+                       class="form-control pe-4"
+                       placeholder="Search by Unit Name..."
+                       value="@search" />
+
+                <span id="clearBtn"
+                      style="display:@(!string.IsNullOrEmpty(search) ? "block" : "none");
+                             position:absolute;
+                             right:10px;
+                             top:50%;
+                             transform:translateY(-50%);
+                             cursor:pointer;
+                             color:#999;">
+                    ✕
+                </span>
+
+                <input type="hidden" name="sortColumn" value="@sortCol" />
+                <input type="hidden" name="sortDirection" value="@sortDir" />
+
+            </div>
+
+            <select name="categoryFilter"
+                    id="categoryFilter"
+                    class="form-select w-auto">
+
+                <option value="0">-- All Categories --</option>
+
+                @foreach (var c in categories)
+                {
+                    <option value="@c.Value"
+                            selected="@(categoryFilter.ToString() == c.Value)">
+                        @c.Text
+                    </option>
+                }
+            </select>
+
+        </div>
+    </form>
+
+    <!-- TABLE -->
+    <table class="table table-hover table-bordered align-middle dashboard-table">
+        <thead class="table-light">
+            <tr>
+                <th>
+                    Unit Name
+                    <a asp-action="Index"
+                       asp-route-search="@search"
+                       asp-route-categoryFilter="@categoryFilter"
+                       asp-route-sortColumn="UnitName"
+                       asp-route-sortDirection="asc"
+                       class="ms-1 @(sortCol == "UnitName" && sortDir == "asc" ? "text-primary fw-bold" : "text-secondary")">
+                        ▲
+                    </a>
+                    <a asp-action="Index"
+                       asp-route-search="@search"
+                       asp-route-categoryFilter="@categoryFilter"
+                       asp-route-sortColumn="UnitName"
+                       asp-route-sortDirection="desc"
+                       class="ms-1 @(sortCol == "UnitName" && sortDir == "desc" ? "text-primary fw-bold" : "text-secondary")">
+                        ▼
+                    </a>
+                </th>
+
+                <th>Abbreviation</th>
+                <th>Category</th>
+
+                <th>
+                    Sort
+                    <a asp-action="Index"
+                       asp-route-search="@search"
+                       asp-route-categoryFilter="@categoryFilter"
+                       asp-route-sortColumn="Sort"
+                       asp-route-sortDirection="asc"
+                       class="ms-1 @(sortCol == "Sort" && sortDir == "asc" ? "text-primary fw-bold" : "text-secondary")">
+                        ▲
+                    </a>
+                    <a asp-action="Index"
+                       asp-route-search="@search"
+                       asp-route-categoryFilter="@categoryFilter"
+                       asp-route-sortColumn="Sort"
+                       asp-route-sortDirection="desc"
+                       class="ms-1 @(sortCol == "Sort" && sortDir == "desc" ? "text-primary fw-bold" : "text-secondary")">
+                        ▼
+                    </a>
+                </th>
+
+                <th>System</th>
+
+                @if (Context.Session.GetString("Role") == "Admin")
+                {
+                    <th class="d-none d-md-table-cell">Created By</th>
+                    <th class="d-none d-md-table-cell">Created Date</th>
+                    <th class="d-none d-md-table-cell">Updated By</th>
+                    <th class="d-none d-md-table-cell">Updated Date</th>
+                }
+
+                <th>Actions</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            @if (!Model.Any())
+            {
+                <tr>
+                    <td colspan="10" class="text-center text-muted py-4">
+                        No units found.
+                    </td>
+                </tr>
+            }
+            else
+            {
+                foreach (var u in Model)
+                {
+                    <tr>
+                        <td>@u.UnitName</td>
+                        <td>@u.Abbreviation</td>
+                        <td>@u.UnitCategoryName</td>
+                        <td>@u.Sort</td>
+
+                        <td>
+                            @if (u.IsSystem)
+                            {
+                                <span class="badge bg-primary">System</span>
+                            }
+                        </td>
+
+                        @if (Context.Session.GetString("Role") == "Admin")
+                        {
+                            <td>@u.CreatedBy</td>
+                            <td>@u.CreatedDate?.ToString("yyyy-MM-dd HH:mm")</td>
+                            <td>@u.UpdatedBy</td>
+                            <td>@u.UpdatedDate?.ToString("yyyy-MM-dd HH:mm")</td>
+                        }
+
+                        <td>
+                            <a asp-action="Edit"
+                               asp-route-id="@u.UnitID"
+                               class="btn btn-sm btn-warning">
+                                Edit
+                            </a>
+
+                            @if (!u.IsSystem)
+                            {
+                                <form asp-action="Delete"
+                                      asp-route-id="@u.UnitID"
+                                      method="post"
+                                      class="d-inline"
+                                      onsubmit="return confirm('Delete this unit?');">
+                                    <button type="submit" class="btn btn-sm btn-danger">
+                                        Delete
+                                    </button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+<style>
+    a {
+        text-decoration: none;
+    }
+</style>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+
+            const searchForm = document.getElementById("searchForm");
+            const searchInput = document.getElementById("searchInput");
+            const clearBtn = document.getElementById("clearBtn");
+            const categoryFilter = document.getElementById("categoryFilter");
+
+            let timer;
+
+            searchInput.addEventListener("input", function () {
+                clearBtn.style.display = this.value.length > 0 ? "block" : "none";
+
+                clearTimeout(timer);
+                timer = setTimeout(() => {
+                    searchForm.submit();
+                }, 400);
+            });
+
+            clearBtn.addEventListener("click", function () {
+                searchInput.value = "";
+                clearBtn.style.display = "none";
+                searchForm.submit();
+            });
+
+            categoryFilter.addEventListener("change", function () {
+                searchForm.submit();
+            });
+
+            window.addEventListener("load", () => {
+                if (searchInput.value.length > 0) {
+                    searchInput.focus();
+                    const len = searchInput.value.length;
+                    searchInput.setSelectionRange(len, len);
+                }
+            });
+
+        });
+    </script>
+}

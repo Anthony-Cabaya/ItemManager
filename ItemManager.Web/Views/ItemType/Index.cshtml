@@ -1,4 +1,5 @@
 ﻿@model ItemManager.Core.Helpers.PagedResult<ItemType>
+
 @{
     ViewData["Title"] = "Item Types";
 
@@ -8,29 +9,30 @@
 }
 
 <div class="container mt-4">
+
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h2 class="mb-0">Item Types</h2>
-        <a asp-controller="ItemType" asp-action="Create" class="btn btn-primary">
+
+        <a asp-action="Create" class="btn btn-primary">
             Create New
         </a>
     </div>
 
-    @* Search *@
+    @* SEARCH *@
     <form asp-action="Index" method="get" class="mb-3" id="searchForm">
+
         <div class="position-relative" style="max-width: 400px;">
+
             <input type="text"
                    name="search"
                    id="searchInput"
                    value="@search"
                    class="form-control pe-4"
-                   placeholder="@(Context.Session.GetString("Role") == "Admin"
-                       ? "Search by name, sort, created by, updated by..."
-                       : "Search by name or sort...")" />
+                   placeholder="Search item type name..."  />
 
             <input type="hidden" name="sortColumn" value="@sortCol" />
             <input type="hidden" name="sortDirection" value="@sortDir" />
 
-            @* X CLEAR BUTTON *@
             <span id="clearBtn"
                   style="display:@(!string.IsNullOrEmpty(search) ? "flex" : "none");
                          position:absolute;
@@ -38,29 +40,25 @@
                          top:50%;
                          transform:translateY(-50%);
                          cursor:pointer;
-                         color:#999;
-                         align-items:center;"
-                  title="Clear">
-                &#x2715;
+                         color:#999;">
+                ✕
             </span>
+
         </div>
     </form>
 
-    <table class="table table-bordered table-hover">
-        <thead>
+    @* TABLE *@
+    <table class="table table-hover table-bordered align-middle dashboard-table">
+        <thead class="table-light">
             <tr>
 
-                @* Item type name *@
                 <th>
-                    <span class="@(sortCol == "ItemTypeName" ? "fw-bold text-primary" : "")">
-                        Item Type Name
-                    </span>
+                    Item Type Name
 
                     <a asp-action="Index"
                        asp-route-search="@search"
                        asp-route-sortColumn="ItemTypeName"
                        asp-route-sortDirection="asc"
-                       asp-route-page="1"
                        class="ms-1 @(sortCol == "ItemTypeName" && sortDir == "asc" ? "text-primary fw-bold" : "text-secondary")">
                         ▲
                     </a>
@@ -69,23 +67,18 @@
                        asp-route-search="@search"
                        asp-route-sortColumn="ItemTypeName"
                        asp-route-sortDirection="desc"
-                       asp-route-page="1"
                        class="ms-1 @(sortCol == "ItemTypeName" && sortDir == "desc" ? "text-primary fw-bold" : "text-secondary")">
                         ▼
                     </a>
                 </th>
 
-                @* Sort order *@
                 <th>
-                    <span class="@(sortCol == "Sort" ? "fw-bold text-primary" : "")">
-                        Sort Order
-                    </span>
+                    Sort
 
                     <a asp-action="Index"
                        asp-route-search="@search"
                        asp-route-sortColumn="Sort"
                        asp-route-sortDirection="asc"
-                       asp-route-page="1"
                        class="ms-1 @(sortCol == "Sort" && sortDir == "asc" ? "text-primary fw-bold" : "text-secondary")">
                         ▲
                     </a>
@@ -94,19 +87,18 @@
                        asp-route-search="@search"
                        asp-route-sortColumn="Sort"
                        asp-route-sortDirection="desc"
-                       asp-route-page="1"
                        class="ms-1 @(sortCol == "Sort" && sortDir == "desc" ? "text-primary fw-bold" : "text-secondary")">
                         ▼
                     </a>
                 </th>
 
-                @* Admin Columns *@
+                @* ADMIN ONLY *@
                 @if (Context.Session.GetString("Role") == "Admin")
                 {
-                    <th>Created By</th>
-                    <th>Created Date</th>
-                    <th>Updated By</th>
-                    <th>Updated Date</th>
+                    <th class="d-none d-md-table-cell">Created By</th>
+                    <th class="d-none d-md-table-cell">Created Date</th>
+                    <th class="d-none d-md-table-cell">Updated By</th>
+                    <th class="d-none d-md-table-cell">Updated Date</th>
                 }
 
                 <th>Actions</th>
@@ -117,32 +109,41 @@
             @foreach (var item in Model.Items)
             {
                 <tr>
-                    <td>@item.ItemTypeName</td>
-                    <td>@item.Sort</td>
 
-                    @* Admin Data *@
+                    <td class="fw-semibold">
+                        @item.ItemTypeName
+                    </td>
+
+                    <td>
+                        @item.Sort
+                    </td>
+
                     @if (Context.Session.GetString("Role") == "Admin")
                     {
-                        <td>@item.CreatedBy</td>
-                        <td>@(item.CreatedDate?.ToString("yyyy-MM-dd HH:mm") ?? "—")</td>
-                        <td>@(item.UpdatedBy ?? "—")</td>
-                        <td>@(item.UpdatedDate?.ToString("yyyy-MM-dd HH:mm") ?? "—")</td>
+                        <td class="d-none d-md-table-cell">@item.CreatedBy</td>
+                        <td class="d-none d-md-table-cell">
+                            @(item.CreatedDate?.ToString("yyyy-MM-dd HH:mm") ?? "—")
+                        </td>
+                        <td class="d-none d-md-table-cell">@item.UpdatedBy</td>
+                        <td class="d-none d-md-table-cell">
+                            @(item.UpdatedDate?.ToString("yyyy-MM-dd HH:mm") ?? "—")
+                        </td>
                     }
 
                     <td>
-                        <a asp-controller="ItemType"
-                           asp-action="Edit"
+                        <a asp-action="Edit"
                            asp-route-id="@item.ItemTypeID"
                            class="btn btn-sm btn-warning">
                             Edit
                         </a>
                     </td>
+
                 </tr>
             }
         </tbody>
     </table>
 
-    @* Pagination *@
+    @* PAGINATION *@
     <nav>
         <ul class="pagination justify-content-center mt-3">
 
@@ -185,26 +186,11 @@
         </ul>
     </nav>
 
-    <p class="text-muted text-center">
-        Showing page @Model.PageNumber of @Model.TotalPages
-        (@Model.TotalCount total records)
-    </p>
-
 </div>
 
 <style>
     a {
         text-decoration: none;
-    }
-
-    /* Active sort column highlighting */
-    a.active {
-        font-weight: bold;
-        color: #007bff;
-    }
-
-    #searchInput::-ms-clear {
-        display: none;
     }
 </style>
 
@@ -220,7 +206,6 @@
             clearBtn.style.display = this.value.length > 0 ? 'flex' : 'none';
 
             clearTimeout(debounceTimer);
-
             debounceTimer = setTimeout(() => {
                 searchForm.submit();
             }, 400);
@@ -230,17 +215,6 @@
             searchInput.value = '';
             clearBtn.style.display = 'none';
             searchForm.submit();
-        });
-
-        window.addEventListener('load', () => {
-            if (searchInput.value.length > 0) {
-                searchInput.focus();
-
-                searchInput.setSelectionRange(
-                    searchInput.value.length,
-                    searchInput.value.length
-                );
-            }
         });
     </script>
 }

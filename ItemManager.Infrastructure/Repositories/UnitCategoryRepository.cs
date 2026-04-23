@@ -37,7 +37,8 @@ namespace ItemManager.Infrastructure.Repositories
 
                 UpdatedDate = reader.IsDBNull(reader.GetOrdinal("UpdatedDate"))
                                 ? null
-                                : reader.GetDateTime(reader.GetOrdinal("UpdatedDate"))
+                                : reader.GetDateTime(reader.GetOrdinal("UpdatedDate")),
+                IsSystem = reader.GetBoolean(reader.GetOrdinal("IsSystem"))
             };
         }
 
@@ -51,7 +52,8 @@ namespace ItemManager.Infrastructure.Repositories
                 await connection.OpenAsync();
 
                 var query = @"SELECT UnitCategoryID, CategoryName, Sort,
-                                     CreatedBy, CreatedDate, UpdatedBy, UpdatedDate
+                                     CreatedBy, CreatedDate, UpdatedBy, UpdatedDate,
+                                     IsSystem
                               FROM UnitCategory
                               ORDER BY Sort";
 
@@ -83,7 +85,8 @@ namespace ItemManager.Infrastructure.Repositories
                 await connection.OpenAsync();
 
                 var query = @"SELECT UnitCategoryID, CategoryName, Sort,
-                                     CreatedBy, CreatedDate, UpdatedBy, UpdatedDate
+                                     CreatedBy, CreatedDate, UpdatedBy, UpdatedDate,
+                                     IsSystem
                               FROM UnitCategory
                               WHERE UnitCategoryID = @UnitCategoryID";
 

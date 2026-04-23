@@ -1,0 +1,30 @@
+﻿@model ItemManager.Web.ViewModels.UnitCategoryViewModel
+
+@{
+    ViewData["Title"] = "Create Unit Category";
+}
+
+<h2>Create Unit Category</h2>
+
+<form asp-action="Create" method="post">
+
+    <div class="form-group mb-3">
+        <label asp-for="CategoryName"></label>
+        <input asp-for="CategoryName" class="form-control" />
+        <span asp-validation-for="CategoryName" class="text-danger"></span>
+    </div>
+
+    <div class="form-group mb-3">
+        <label asp-for="Sort"></label>
+        <input asp-for="Sort" class="form-control" />
+        <span asp-validation-for="Sort" class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-success">Save</button>
+    <a href="@Url.Action("Index")" class="btn btn-secondary">Cancel</a>
+
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

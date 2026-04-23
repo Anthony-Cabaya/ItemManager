@@ -2,50 +2,131 @@
 
 @{
     ViewData["Title"] = "Item Sub Types";
+
     var selectedType = ViewBag.ItemTypeFilter as int? ?? 0;
-    var itemTypes = ViewBag.ItemTypes as List<SelectListItem>;
+    var itemTypes = ViewBag.ItemTypes as List<SelectListItem> ?? new();
+
+    var search = ViewBag.Search?.ToString() ?? "";
+    var sortCol = ViewBag.SortColumn?.ToString() ?? "ItemSubTypeName";
+    var sortDir = ViewBag.SortDirection?.ToString() ?? "asc";
 }
 
 <div class="container mt-4">
 
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h2 class="mb-0">Item Sub Types</h2>
-        <a asp-action="Create" class="btn btn-primary">Create New</a>
+
+        <a asp-action="Create" class="btn btn-primary">
+            Create New
+        </a>
     </div>
 
-    @* FILTER *@
-    <form asp-action="Index" method="get" id="filterForm" class="mb-3">
-        <div style="max-width: 300px;">
+    @* FILTER + SEARCH *@
+    <form asp-action="Index" method="get" id="searchForm" class="mb-3">
+
+        <div class="d-flex gap-2 align-items-center">
+
+            <div class="position-relative" style="max-width: 350px; flex: 1;">
+
+                <input type="text"
+                       name="search"
+                       id="searchInput"
+                       class="form-control pe-4"
+                       placeholder="Search sub type, created by, or updated by..."
+                       value="@search" />
+
+                <span id="clearBtn"
+                      style="display:@(!string.IsNullOrEmpty(search) ? "block" : "none");
+                             position:absolute;
+                             right:10px;
+                             top:50%;
+                             transform:translateY(-50%);
+                             cursor:pointer;
+                             color:#999;">
+                    ✕
+                </span>
+            </div>
+
             <select name="itemTypeFilter"
-                    class="form-select"
-                    onchange="document.getElementById('filterForm').submit();">
+                    id="itemTypeFilter"
+                    class="form-select w-auto">
 
                 <option value="0">All Item Types</option>
 
                 @foreach (var type in itemTypes)
                 {
                     <option value="@type.Value"
-                            selected="@(selectedType.ToString() == type.Value ? "selected" : null)">
+                            selected="@(selectedType.ToString() == type.Value)">
                         @type.Text
                     </option>
                 }
             </select>
+
+            <input type="hidden" name="sortColumn" value="@sortCol" />
+            <input type="hidden" name="sortDirection" value="@sortDir" />
+
         </div>
     </form>
 
-    <table class="table table-bordered table-hover">
-        <thead>
+    @* TABLE *@
+    <table class="table table-hover table-bordered align-middle dashboard-table">
+        <thead class="table-light">
             <tr>
+
                 <th>Item Type</th>
-                <th>Sub Type</th>
-                <th>Sort</th>
+
+                @* SUB TYPE (SORTABLE) *@
+                <th>
+                    Sub Type
+
+                    <a asp-action="Index"
+                       asp-route-search="@ViewBag.Search"
+                       asp-route-itemTypeFilter="@selectedType"
+                       asp-route-sortColumn="ItemSubTypeName"
+                       asp-route-sortDirection="asc"
+                       class="ms-1 @(ViewBag.SortColumn == "ItemSubTypeName" && ViewBag.SortDirection == "asc" ? "text-primary fw-bold" : "text-secondary")">
+                        ▲
+                    </a>
+
+                    <a asp-action="Index"
+                       asp-route-search="@ViewBag.Search"
+                       asp-route-itemTypeFilter="@selectedType"
+                       asp-route-sortColumn="ItemSubTypeName"
+                       asp-route-sortDirection="desc"
+                       class="ms-1 @(ViewBag.SortColumn == "ItemSubTypeName" && ViewBag.SortDirection == "desc" ? "text-primary fw-bold" : "text-secondary")">
+                        ▼
+                    </a>
+                </th>
+
+                @* SORT (SORTABLE) *@
+                <th>
+                    Sort
+
+                    <a asp-action="Index"
+                       asp-route-search="@ViewBag.Search"
+                       asp-route-itemTypeFilter="@selectedType"
+                       asp-route-sortColumn="Sort"
+                       asp-route-sortDirection="asc"
+                       class="ms-1 @(ViewBag.SortColumn == "Sort" && ViewBag.SortDirection == "asc" ? "text-primary fw-bold" : "text-secondary")">
+                        ▲
+                    </a>
+
+                    <a asp-action="Index"
+                       asp-route-search="@ViewBag.Search"
+                       asp-route-itemTypeFilter="@selectedType"
+                       asp-route-sortColumn="Sort"
+                       asp-route-sortDirection="desc"
+                       class="ms-1 @(ViewBag.SortColumn == "Sort" && ViewBag.SortDirection == "desc" ? "text-primary fw-bold" : "text-secondary")">
+                        ▼
+                    </a>
+                </th>
 
                 @if (Context.Session.GetString("Role") == "Admin")
                 {
-                    <th>Created By</th>
-                    <th>Created Date</th>
-                    <th>Updated By</th>
-                    <th>Updated Date</th>
+                    <th class="d-none d-md-table-cell">Created By</th>
+                    <th class="d-none d-md-table-cell">Created Date</th>
+                    <th class="d-none d-md-table-cell">Updated By</th>
+                    <th class="d-none d-md-table-cell">Updated Date</th>
                 }
 
                 <th>Actions</th>
@@ -56,7 +137,7 @@
             @if (!Model.Any())
             {
                 <tr>
-                    <td colspan="20" class="text-center text-muted">
+                    <td colspan="10" class="text-center text-muted py-4">
                         No sub types found.
                     </td>
                 </tr>
@@ -66,16 +147,16 @@
                 foreach (var item in Model)
                 {
                     <tr>
-                        <td>@item.ItemTypeName</td>
+                        <td class="fw-semibold">@item.ItemTypeName</td>
                         <td>@item.ItemSubTypeName</td>
                         <td>@item.Sort</td>
 
                         @if (Context.Session.GetString("Role") == "Admin")
                         {
                             <td>@item.CreatedBy</td>
-                            <td>@(item.CreatedDate?.ToString("yyyy-MM-dd HH:mm") ?? "—")</td>
+                            <td>@item.CreatedDate?.ToString("yyyy-MM-dd HH:mm")</td>
                             <td>@item.UpdatedBy</td>
-                            <td>@(item.UpdatedDate?.ToString("yyyy-MM-dd HH:mm") ?? "—")</td>
+                            <td>@item.UpdatedDate?.ToString("yyyy-MM-dd HH:mm")</td>
                         }
 
                         <td>
@@ -88,14 +169,15 @@
                             <form asp-action="Delete"
                                   asp-route-id="@item.ItemSubTypeID"
                                   method="post"
-                                  style="display:inline"
-                                  onsubmit="return confirm('Delete this item sub type?');">
+                                  class="d-inline"
+                                  onsubmit="return confirm('Delete this sub type?');">
 
                                 <button type="submit" class="btn btn-sm btn-danger">
                                     Delete
                                 </button>
                             </form>
                         </td>
+
                     </tr>
                 }
             }

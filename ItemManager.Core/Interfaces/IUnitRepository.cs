@@ -15,5 +15,6 @@ namespace ItemManager.Core.Interfaces
         Task UpdateAsync(Unit model);
 
         Task DeleteAsync(int id);
+
     }
 }

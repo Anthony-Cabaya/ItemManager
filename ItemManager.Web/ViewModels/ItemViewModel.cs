@@ -29,5 +29,17 @@ namespace ItemManager.Web.ViewModels
         [Display(Name = "Item Sub Type")]
         public int? ItemSubTypeID { get; set; }
 
+        [Display(Name = "Base Unit")]
+        public int? BaseUnitID { get; set; }
+
+        [Display(Name = "Display Unit")]
+        public int? DisplayUnitID { get; set; }
+
+        public string? BaseUnitAbbreviation { get; set; }
+
+        public string? DisplayUnitAbbreviation { get; set; }
+
+        public List<SelectListItem> UnitList { get; set; } = new();
+
     }
 }

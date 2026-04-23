@@ -1,0 +1,86 @@
+﻿@model ItemManager.Web.ViewModels.UnitViewModel
+
+@{
+    ViewData["Title"] = "Edit Unit";
+}
+
+<h2>Edit Unit</h2>
+
+@if (Model.IsSystem)
+{
+    <div class="alert alert-warning">
+        This is a system unit. Only Sort Order can be modified.
+    </div>
+}
+
+<form asp-action="Edit" method="post">
+
+    <input type="hidden" asp-for="UnitID" />
+    <input type="hidden" asp-for="IsSystem" />
+
+    <div class="form-group mb-3">
+        <label asp-for="UnitName"></label>
+
+        @if (Model.IsSystem)
+        {
+            <input asp-for="UnitName" class="form-control" disabled />
+        }
+        else
+        {
+            <input asp-for="UnitName" class="form-control" />
+        }
+
+        <span asp-validation-for="UnitName" class="text-danger"></span>
+    </div>
+
+    <div class="form-group mb-3">
+        <label asp-for="Abbreviation"></label>
+
+        @if (Model.IsSystem)
+        {
+            <input asp-for="Abbreviation" class="form-control" disabled />
+        }
+        else
+        {
+            <input asp-for="Abbreviation" class="form-control" />
+        }
+
+        <span asp-validation-for="Abbreviation" class="text-danger"></span>
+    </div>
+
+    <div class="form-group mb-3">
+        <label>Category</label>
+
+        @if (Model.IsSystem)
+        {
+            <select asp-for="UnitCategoryID"
+                    asp-items="Model.UnitCategoryList"
+                    class="form-control"
+                    disabled>
+            </select>
+        }
+        else
+        {
+            <select asp-for="UnitCategoryID"
+                    asp-items="Model.UnitCategoryList"
+                    class="form-control">
+            </select>
+        }
+
+        <span asp-validation-for="UnitCategoryID" class="text-danger"></span>
+    </div>
+
+    <div class="form-group mb-3">
+        <label asp-for="Sort"></label>
+        <input asp-for="Sort" class="form-control" />
+        <span asp-validation-for="Sort" class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-success">Update</button>
+    <a href="@Url.Action("Index")" class="btn btn-secondary">Cancel</a>
+
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
