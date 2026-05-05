@@ -4,105 +4,54 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - ItemManager.Web</title>
+
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/ItemManager.Web.styles.css" asp-append-version="true" />
 </head>
 <body>
-    <header>
-        @if (ViewContext.RouteData.Values["Controller"]?.ToString() != "Login")
-        {
-            <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-                <div class="container-fluid">
-                    <a class="navbar-brand" asp-controller="Dashboard" asp-action="Index">ItemManager.Web</a>
 
-                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse"
-                            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-                        <span class="navbar-toggler-icon"></span>
-                    </button>
-
-                    <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                        <ul class="navbar-nav flex-grow-1">
-
-                            @if (Context.Session.GetString("Username") != null)
-                            {
-                                <li class="nav-item">
-                                    <a class="nav-link text-dark" asp-controller="Dashboard" asp-action="Index">
-                                        Dashboard
-                                    </a>
-                                </li>
-
-                                @* ADMIN MENU *@
-                                @if (Context.Session.GetString("Role") == "Admin")
-                                {
-                                    <li class="nav-item">
-                                        <a class="nav-link text-dark" asp-controller="ItemType" asp-action="Index">
-                                            Item Type
-                                        </a>
-                                    </li>
-
-                                    <li class="nav-item">
-                                        <a class="nav-link text-dark" asp-controller="ItemSubType" asp-action="Index">
-                                            Item Sub Type
-                                        </a>
-                                    </li>
-
-                                    <li class="nav-item">
-                                        <a class="nav-link text-dark" asp-controller="UnitCategory" asp-action="Index">
-                                            Unit Category
-                                        </a>
-                                    </li>
-
-                                    <li class="nav-item">
-                                        <a class="nav-link text-dark" asp-controller="Unit" asp-action="Index">
-                                            Unit
-                                        </a>
-                                    </li>
-                                }
-
-                                @* ITEM MENU *@
-                                <li class="nav-item">
-                                    <a class="nav-link text-dark" asp-controller="Item" asp-action="Index">
-                                        Item
-                                    </a>
-                                </li>
-                            }
-
-                        </ul>
-
-                        @if (Context.Session.GetString("Username") != null)
-                        {
-                            <div class="d-flex align-items-center gap-2">
-                                <span class="navbar-text me-2">
-                                    👤 @Context.Session.GetString("Username")
-                                    (@Context.Session.GetString("Role"))
-                                </span>
-
-                                <form asp-controller="Login" asp-action="Logout" method="post">
-                                    @Html.AntiForgeryToken()
-                                    <button type="submit" class="btn btn-sm btn-outline-danger">
-                                        Logout
-                                    </button>
-                                </form>
-                            </div>
-                        }
-
-                    </div>
-                </div>
-            </nav>
-        }
-    </header>
-
-    <div class="container">
-        <main role="main" class="pb-3">
+    @if (ViewContext.RouteData.Values["controller"]?.ToString() == "Login")
+    {
+        <main class="p-4">
             @RenderBody()
         </main>
-    </div>
+    }
+    else
+    {
+        <div id="appWrapper">
 
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+            @await Html.PartialAsync("_SidebarPartial")
+
+            <div id="mainContent">
+
+                <header class="topbar">
+                    <button id="hamburger" class="btn btn-outline-secondary btn-sm">
+                        ☰
+                    </button>
+
+                    <span class="fw-semibold">
+                        @ViewData["Title"]
+                    </span>
+                </header>
+
+                <main class="p-4">
+                    @RenderBody()
+                </main>
+
+            </div>
+
+        </div>
+    }
+
+    <!-- Mobile overlay -->
+    <div id="sidebarOverlay"></div>
+
+    <!-- Scripts -->
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/js/sidebar.js" asp-append-version="true"></script>
 
     @await RenderSectionAsync("Scripts", required: false)
+
 </body>
 </html>

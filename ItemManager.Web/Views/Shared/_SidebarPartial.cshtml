@@ -1,0 +1,99 @@
+﻿@{
+    var ctrl = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+    var username = Context.Session.GetString("Username") ?? "";
+    var role = Context.Session.GetString("Role") ?? "";
+
+    var avatar = username.Length >= 2
+        ? username.Substring(0, 2).ToUpper()
+        : username.ToUpper();
+}
+
+<aside id="sidebar" class="d-flex flex-column">
+
+    <!-- HEADER -->
+    <div class="sb-header d-flex align-items-center justify-content-between px-3 py-2">
+        <div class="d-flex align-items-center gap-2">
+            <span>📦</span>
+            <span class="sb-logo-text fw-semibold">ItemManager</span>
+        </div>
+
+        <button id="sidebarToggle" class="btn btn-sm btn-outline-secondary">
+            ◀
+        </button>
+    </div>
+
+    <!-- NAV -->
+    <nav class="sb-nav flex-grow-1">
+
+        <!-- Dashboard -->
+        <a asp-controller="Dashboard" asp-action="Index"
+           class="nav-item @(ctrl == "Dashboard" ? "active" : "")">
+            <span class="nav-icon">📊</span>
+            <span class="nav-label">Dashboard</span>
+        </a>
+
+        <div class="sb-divider"></div>
+
+        <!-- Items -->
+        <a asp-controller="Item" asp-action="Index"
+           class="nav-item @(ctrl == "Item" ? "active" : "")">
+            <span class="nav-icon">📦</span>
+            <span class="nav-label">Items</span>
+        </a>
+
+        <div class="sb-divider"></div>
+
+        @if (role == "Admin")
+        {
+            <div class="nav-section-label px-3 mt-2 mb-1 text-muted small">
+                Configuration
+            </div>
+
+            <a asp-controller="ItemType" asp-action="Index"
+               class="nav-item @(ctrl == "ItemType" ? "active" : "")">
+                <span class="nav-icon">🏷️</span>
+                <span class="nav-label">Item Types</span>
+            </a>
+
+            <a asp-controller="ItemSubType" asp-action="Index"
+               class="nav-item @(ctrl == "ItemSubType" ? "active" : "")">
+                <span class="nav-icon">🔖</span>
+                <span class="nav-label">Sub Types</span>
+            </a>
+
+            <a asp-controller="Unit" asp-action="Index"
+               class="nav-item @(ctrl == "Unit" ? "active" : "")">
+                <span class="nav-icon">⚖️</span>
+                <span class="nav-label">Units</span>
+            </a>
+
+            <div class="sb-divider"></div>
+        }
+
+    </nav>
+
+    <!-- FOOTER -->
+    <div class="sb-footer border-top p-3">
+
+        <div class="d-flex align-items-center gap-2 sb-footer-info">
+            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center"
+                 style="width:32px;height:32px;font-size:12px;">
+                @avatar
+            </div>
+
+            <div>
+                <div class="fw-semibold small">@username</div>
+                <div class="text-muted small">@role</div>
+            </div>
+        </div>
+
+        <form asp-controller="Login" asp-action="Logout" method="post" class="mt-2">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn btn-sm btn-outline-danger w-100 sb-logout">
+                Logout
+            </button>
+        </form>
+
+    </div>
+
+</aside>

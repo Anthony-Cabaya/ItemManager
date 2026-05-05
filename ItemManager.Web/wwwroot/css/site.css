@@ -8,7 +8,8 @@ html {
   }
 }
 
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
+.btn:focus, .btn:active:focus, .btn-link.nav-link:focus,
+.form-control:focus, .form-check-input:focus {
   box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
 }
 
@@ -18,5 +19,168 @@ html {
 }
 
 body {
-  margin-bottom: 60px;
+  margin: 0;
+  overflow: hidden;
+}
+
+/* LAYOUT WRAPPER */
+
+#appWrapper {
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* MAIN CONTENT */
+#mainContent {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* INNER CONTENT SCROLL */
+#mainContent main {
+    overflow-y: auto;
+    flex: 1;
+}
+
+/* SIDEBAR BASE */
+
+#sidebar {
+    width: 220px;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    border-right: 1px solid #dee2e6;
+    transition: width 0.22s ease;
+    overflow: hidden;
+}
+
+/* COLLAPSED STATE */
+#sidebar.collapsed {
+    width: 56px;
+}
+
+/* NAV ITEMS */
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin: 2px 6px;
+    cursor: pointer;
+    color: #6c757d;
+    text-decoration: none;
+    transition: all 0.15s ease;
+}
+
+.nav-item:hover {
+    background: #f8f9fa;
+    color: #212529;
+}
+
+.nav-item.active {
+    background: #cfe2ff;
+    color: #084298;
+    font-weight: 500;
+}
+
+/* ICON */
+.nav-icon {
+    font-size: 18px;
+    width: 22px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+/* LABEL */
+.nav-label {
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+/* COLLAPSED STATE BEHAVIOR */
+
+#sidebar.collapsed .nav-label,
+#sidebar.collapsed .sb-logo-text,
+#sidebar.collapsed .nav-section-label,
+#sidebar.collapsed .sb-footer-info {
+    opacity: 0;
+    width: 0;
+    height: 0;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+/* hide logout button text area */
+#sidebar.collapsed .sb-logout {
+    display: none;
+}
+
+/* TOPBAR */
+.topbar {
+    background: #fff;
+    border-bottom: 1px solid #dee2e6;
+    padding: 10px 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* hamburger hidden on desktop */
+#hamburger {
+    display: none;
+}
+
+/* OVERLAY */
+#sidebarOverlay {
+    display: none;
+}
+
+/* MOBILE VIEW */
+@media (max-width: 768px) {
+
+    #sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 1050;
+        transform: translateX(-100%);
+        transition: transform 0.22s ease;
+    }
+
+    #sidebar.mobile-open {
+        transform: translateX(0);
+    }
+
+    #mainContent {
+        margin-left: 0 !important;
+    }
+
+    #hamburger {
+        display: block;
+    }
+
+    #sidebarOverlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.4);
+        z-index: 1049;
+        display: none;
+    }
+
+    #sidebarOverlay.active {
+        display: block;
+    }
+}
+
+.sb-divider {
+    height: 1px;
+    background: #dee2e6;
+    margin: 6px 10px;
 }
