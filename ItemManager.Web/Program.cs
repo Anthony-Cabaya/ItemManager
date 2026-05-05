@@ -23,6 +23,7 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IItemSubTypeRepository, ItemSubTypeRepository>();
 builder.Services.AddScoped<IUnitCategoryRepository, UnitCategoryRepository>();
 builder.Services.AddScoped<IUnitRepository, UnitRepository>();
+builder.Services.AddScoped<IDashboardRepository, DashboardRepository>();
 
 // Add Session
 builder.Services.AddSession(options =>

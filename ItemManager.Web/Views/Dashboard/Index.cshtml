@@ -1,40 +1,68 @@
-﻿@{
+﻿@model ItemManager.Web.ViewModels.DashboardViewModel
+@{
     ViewData["Title"] = "Dashboard";
 }
+
 <div class="container mt-4">
-    <h2>Welcome to Item Manager</h2>
-    <p class="text-muted">Select an option below to get started.</p>
-    <div class="row mt-4">
+    <h2>Dashboard</h2>
 
-        @if (Context.Session.GetString("Role") == "Admin")
-        {
-            <div class="col-md-6">
-                <div class="card mb-3">
-                    <div class="card-body">
-                        <h5 class="card-title">Item Types</h5>
-                        <p class="card-text">Manage your item categories.</p>
-                        <a asp-controller="ItemType"
-                           asp-action="Index"
-                           class="btn btn-primary">
-                            Go to Item Types
-                        </a>
-                    </div>
-                </div>
-            </div>
-        }
+    <div class="row row-cols-1 row-cols-md-3 g-3 mt-3">
 
-        <div class="col-md-6">
-            <div class="card mb-3">
+        <!-- Row 1 -->
+        <div class="col">
+            <div class="card h-100 text-center shadow-sm">
                 <div class="card-body">
-                    <h5 class="card-title">Items</h5>
-                    <p class="card-text">Manage your items.</p>
-                    <a asp-controller="Item"
-                       asp-action="Index"
-                       class="btn btn-primary">
-                        Go to Items
-                    </a>
+                    <div class="display-6 fw-bold text-primary">@Model.TotalItems</div>
+                    <div class="text-muted mt-1">Total Items</div>
                 </div>
             </div>
         </div>
+
+        <div class="col">
+            <div class="card h-100 text-center shadow-sm">
+                <div class="card-body">
+                    <div class="display-6 fw-bold text-primary">@Model.ItemsThisMonth</div>
+                    <div class="text-muted mt-1">Items Added This Month</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col">
+            <div class="card h-100 text-center shadow-sm">
+                <div class="card-body">
+                    <div class="display-6 fw-bold @Model.ItemsWithoutUnitCssClass">@Model.ItemsWithoutUnit</div>
+                    <div class="text-muted mt-1">Items Without Unit</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Row 2 -->
+        <div class="col">
+            <div class="card h-100 text-center shadow-sm">
+                <div class="card-body">
+                    <div class="display-6 fw-bold @Model.ItemsWithoutSubTypeCssClass">@Model.ItemsWithoutSubType</div>
+                    <div class="text-muted mt-1">Items Without SubType</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col">
+            <div class="card h-100 text-center shadow-sm">
+                <div class="card-body">
+                    <div class="display-6 fw-bold text-primary">@Model.TotalUnits</div>
+                    <div class="text-muted mt-1">Total Units</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col">
+            <div class="card h-100 text-center shadow-sm">
+                <div class="card-body">
+                    <div class="display-6 fw-bold text-primary">@Model.TotalUnitCategories</div>
+                    <div class="text-muted mt-1">Total Unit Categories</div>
+                </div>
+            </div>
+        </div>
+
     </div>
 </div>
