@@ -42,6 +42,32 @@
             </select>
         </div>
 
+        <div class="mb-3">
+            <label asp-for="BaseUnitID" class="form-label"></label>
+
+            <select asp-for="BaseUnitID"
+                    class="form-select"
+                    id="baseUnitDropdown"
+                    asp-items="Model.UnitList">
+                <option value="">-- No Unit --</option>
+            </select>
+
+            <span asp-validation-for="BaseUnitID" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="DisplayUnitID" class="form-label"></label>
+
+            <select asp-for="DisplayUnitID"
+                    class="form-select"
+                    id="displayUnitDropdown"
+                    asp-items="Model.UnitList">
+                <option value="">-- No Unit --</option>
+            </select>
+
+            <span asp-validation-for="DisplayUnitID" class="text-danger"></span>
+        </div>
+
         <button type="submit" class="btn btn-primary">Create</button>
         <a asp-action="Index" class="btn btn-secondary">Back</a>
     </form>
@@ -51,37 +77,52 @@
     <partial name="_ValidationScriptsPartial" />
 
     <script>
-        const url = '@Url.Action("GetSubTypesByItemType", "Item")';
+        $(function () {
 
-        $("#itemTypeDropdown").change(function () {
-            var selectedId = $(this).val();
-            var $sub = $("#subTypeDropdown");
+            const url = '@Url.Action("GetSubTypesByItemType", "Item")';
 
-            $sub.empty();
+            $("#itemTypeDropdown").on("change", function () {
 
-            if (!selectedId) {
-                $sub.append('<option value="">-- Select Sub Type --</option>');
-                $sub.prop('disabled', true);
-                return;
-            }
+                var selectedId = $(this).val();
+                var $sub = $("#subTypeDropdown");
 
-            fetch(`${url}?itemTypeId=${selectedId}`)
-                .then(res => res.json())
-                .then(data => {
+                $sub.empty();
 
-                    if (!data || data.length === 0) {
-                        $sub.append('<option value="">-- No Subcategories Available --</option>');
-                        $sub.prop('disabled', true);
-                        return;
-                    }
-
-                    $sub.prop('disabled', false);
+                if (!selectedId) {
                     $sub.append('<option value="">-- Select Sub Type --</option>');
+                    $sub.prop('disabled', true);
+                    return;
+                }
 
-                    data.forEach(item => {
-                        $sub.append(new Option(item.text, item.value));
+                fetch(`${url}?itemTypeId=${selectedId}`)
+                    .then(res => res.json())
+                    .then(data => {
+
+                        if (!data || data.length === 0) {
+                            $sub.append('<option value="">-- No Subcategories Available --</option>');
+                            $sub.prop('disabled', true);
+                            return;
+                        }
+
+                        $sub.prop('disabled', false);
+                        $sub.append('<option value="">-- Select Sub Type --</option>');
+
+                        data.forEach(item => {
+                            $sub.append(new Option(item.text, item.value));
+                        });
                     });
-                });
+            });
+
+            $("#baseUnitDropdown").on("change", function () {
+
+                const baseValue = $(this).val();
+                const display = $("#displayUnitDropdown");
+
+                if (!display.val()) {
+                    display.val(baseValue);
+                }
+            });
+
         });
     </script>
 }

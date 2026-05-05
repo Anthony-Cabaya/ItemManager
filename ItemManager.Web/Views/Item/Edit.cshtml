@@ -44,6 +44,32 @@
             </select>
         </div>
 
+        <div class="mb-3">
+            <label asp-for="BaseUnitID" class="form-label"></label>
+
+            <select asp-for="BaseUnitID"
+                    class="form-select"
+                    id="baseUnitDropdown"
+                    asp-items="Model.UnitList">
+                <option value="">-- No Unit --</option>
+            </select>
+
+            <span asp-validation-for="BaseUnitID" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="DisplayUnitID" class="form-label"></label>
+
+            <select asp-for="DisplayUnitID"
+                    class="form-select"
+                    id="displayUnitDropdown"
+                    asp-items="Model.UnitList">
+                <option value="">-- No Unit --</option>
+            </select>
+
+            <span asp-validation-for="DisplayUnitID" class="text-danger"></span>
+        </div>
+
         <button type="submit" class="btn btn-primary">Save Changes</button>
         <a asp-action="Index" class="btn btn-secondary">Back</a>
     </form>
@@ -56,6 +82,7 @@
         const url = '@Url.Action("GetSubTypesByItemType", "Item")';
 
         $("#itemTypeDropdown").change(function () {
+
             var selectedId = $(this).val();
             var $sub = $("#subTypeDropdown");
 
@@ -83,6 +110,16 @@
                         $sub.append(new Option(item.text, item.value));
                     });
                 });
+        });
+
+        $("#baseUnitDropdown").on("change", function () {
+
+            const baseValue = $(this).val();
+            const display = $("#displayUnitDropdown");
+
+            if (!display.val()) {
+                display.val(baseValue);
+            }
         });
     </script>
 }

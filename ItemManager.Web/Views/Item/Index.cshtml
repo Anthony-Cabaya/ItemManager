@@ -154,6 +154,8 @@
                     }
                 </th>
 
+                <th>Base Unit</th>
+
                 @if (Context.Session.GetString("Role") == "Admin")
                 {
                     <th class="d-none d-md-table-cell">Created By</th>
@@ -184,6 +186,8 @@
                             <div class="text-muted">@item.ItemSubTypeName</div>
                         </div>
                     </td>
+
+                    <td>@(item.BaseUnitAbbreviation ?? "—")</td>
 
                     @if (Context.Session.GetString("Role") == "Admin")
                     {
