@@ -1,0 +1,54 @@
+﻿@model IEnumerable<ItemManager.Core.Models.Unit>
+@{
+    Layout = null;
+}
+
+<table class="table table-hover table-bordered align-middle dashboard-table">
+    <thead class="table-light">
+        <tr>
+            <th>Unit Name</th>
+            <th>Abbreviation</th>
+            <th>IsSystem</th>
+            <th>Sort</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Model != null && Model.Any())
+        {
+            foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.UnitName</td>
+                    <td>@item.Abbreviation</td>
+                    <td>
+                        @if (item.IsSystem)
+                        {
+                            <span class="badge bg-primary">System</span>
+                        }
+                        else
+                        {
+                            @Html.Raw("—")
+                        }
+                    </td>
+                    <td>@item.Sort</td>
+                    <td>
+                        <a asp-action="Edit" asp-route-id="@item.UnitID" class="btn btn-sm btn-warning">Edit</a>
+                        @if (!item.IsSystem)
+                        {
+                            <a asp-action="Delete" asp-route-id="@item.UnitID" class="btn btn-sm btn-danger">Delete</a>
+                        }
+                    </td>
+                </tr>
+            }
+        }
+        else
+        {
+            <tr>
+                <td colspan="5" class="text-center text-muted py-4">
+                    No units in this category.
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

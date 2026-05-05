@@ -285,5 +285,29 @@ namespace ItemManager.Web.Controllers
             }).ToList();
         }
 
+        [HttpGet]
+        public async Task<IActionResult> GetUnitsByCategory(int categoryId)
+        {
+            try
+            {
+                var units = await _unitRepository.GetByCategoryIdAsync(categoryId);
+                return PartialView("_UnitTablePartial", units);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> MasterDetail()
+        {
+            if (!IsAdmin)
+                return RedirectToAction("Index", "Dashboard");
+
+            var categories = await _unitCategoryRepository.GetAllAsync();
+            return View(categories);
+        }
+
     }
 }

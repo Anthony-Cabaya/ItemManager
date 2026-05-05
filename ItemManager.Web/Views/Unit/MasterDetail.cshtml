@@ -1,0 +1,77 @@
+﻿@model IEnumerable<ItemManager.Core.Models.UnitCategory>
+@{
+    ViewData["Title"] = "Units Management";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">Units Management</h2>
+    <a asp-action="Create" class="btn btn-primary">Add Unit</a>
+</div>
+
+<div class="row">
+    <!-- Left Panel: Categories -->
+    <div class="col-md-4">
+        <div class="card mb-3">
+            <div class="card-header">Unit Categories</div>
+            <div class="list-group list-group-flush">
+                @foreach (var cat in Model)
+                {
+                    <button type="button"
+                            class="list-group-item list-group-item-action category-item"
+                            data-id="@cat.UnitCategoryID"
+                            data-name="@cat.CategoryName">
+                        @cat.CategoryName
+                    </button>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Panel: Units -->
+    <div class="col-md-8">
+        <div class="card mb-3">
+            <div class="card-header" id="rightPanelHeader">Units</div>
+            <div class="card-body" id="unitTableContainer">
+                <p class="text-muted">Select a category to view units.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const categoryItems = document.querySelectorAll(".category-item");
+            const unitTableContainer = document.getElementById("unitTableContainer");
+            const rightPanelHeader = document.getElementById("rightPanelHeader");
+
+            categoryItems.forEach(item => {
+                item.addEventListener("click", async () => {
+                    // Remove active from all
+                    categoryItems.forEach(i => i.classList.remove("active"));
+
+                    // Add active to clicked
+                    item.classList.add("active");
+
+                    const categoryId = item.dataset.id;
+                    const categoryName = item.dataset.name;
+
+                    // Update header
+                    rightPanelHeader.textContent = categoryName;
+
+                    // Fetch units for this category
+                    try {
+                        const res = await fetch(`/Unit/GetUnitsByCategory?categoryId=${categoryId}`);
+                        if (!res.ok) throw new Error("Error fetching units");
+
+                        const html = await res.text();
+                        unitTableContainer.innerHTML = html;
+                    } catch (err) {
+                        unitTableContainer.innerHTML = `<p class="text-danger">Failed to load units.</p>`;
+                        console.error(err);
+                    }
+                });
+            });
+        });
+    </script>
+}
