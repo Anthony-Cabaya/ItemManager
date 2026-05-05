@@ -6,70 +6,92 @@
     <form asp-action="Create" method="post">
         <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
-        <div class="mb-3">
-            <label asp-for="ItemName" class="form-label"></label>
-            <input asp-for="ItemName" class="form-control" />
-            <span asp-validation-for="ItemName" class="text-danger"></span>
+        <!-- CARD 1: Basic Info -->
+        <div class="card mb-3">
+            <div class="card-header fw-semibold">Basic Info</div>
+            <div class="card-body">
+
+                <div class="mb-3">
+                    <label asp-for="ItemName" class="form-label"></label>
+                    <input asp-for="ItemName" class="form-control" />
+                    <span asp-validation-for="ItemName" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Sort" class="form-label"></label>
+                    <input asp-for="Sort" type="number" class="form-control" />
+                    <span asp-validation-for="Sort" class="text-danger"></span>
+                </div>
+
+            </div>
         </div>
 
-        <div class="mb-3">
-            <label asp-for="Sort" class="form-label"></label>
-            <input asp-for="Sort" type="number" class="form-control" />
-            <span asp-validation-for="Sort" class="text-danger"></span>
+        <!-- CARD 2: Classification -->
+        <div class="card mb-3">
+            <div class="card-header fw-semibold">Classification</div>
+            <div class="card-body">
+
+                <div class="mb-3">
+                    <label asp-for="ItemTypeID" class="form-label">Item Type</label>
+                    <select asp-for="ItemTypeID" class="form-select" id="itemTypeDropdown"
+                            asp-items="Model.ItemTypeOptions">
+                        <option value="">-- Select Item Type --</option>
+                    </select>
+                    <span asp-validation-for="ItemTypeID" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="ItemSubTypeID" class="form-label"></label>
+                    @{
+                        var disableSubType = !Model.SubTypeOptions.Any() ? "disabled" : null;
+                    }
+                    <select asp-for="ItemSubTypeID"
+                            class="form-select"
+                            id="subTypeDropdown"
+                            disabled="@disableSubType">
+                        <option value="">-- Select Sub Type --</option>
+                    </select>
+                </div>
+
+            </div>
         </div>
 
-        <div class="mb-3">
-            <label asp-for="ItemTypeID" class="form-label">Item Type</label>
-            <select asp-for="ItemTypeID" class="form-select" id="itemTypeDropdown"
-                    asp-items="Model.ItemTypeOptions">
-                <option value="">-- Select Item Type --</option>
-            </select>
-            <span asp-validation-for="ItemTypeID" class="text-danger"></span>
+        <!-- CARD 3: Measurement -->
+        <div class="card mb-3">
+            <div class="card-header fw-semibold">Measurement</div>
+            <div class="card-body">
+
+                <div class="mb-3">
+                    <label asp-for="BaseUnitID" class="form-label"></label>
+                    <select asp-for="BaseUnitID"
+                            class="form-select"
+                            id="baseUnitDropdown"
+                            asp-items="Model.UnitList">
+                        <option value="">-- No Unit --</option>
+                    </select>
+                    <span asp-validation-for="BaseUnitID" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="DisplayUnitID" class="form-label"></label>
+                    <select asp-for="DisplayUnitID"
+                            class="form-select"
+                            id="displayUnitDropdown"
+                            asp-items="Model.UnitList">
+                        <option value="">-- No Unit --</option>
+                    </select>
+                    <span asp-validation-for="DisplayUnitID" class="text-danger"></span>
+                </div>
+
+            </div>
         </div>
 
+        <!-- ACTION BAR -->
         <div class="mb-3">
-            <label asp-for="ItemSubTypeID" class="form-label"></label>
-
-            @{
-                var disableSubType = !Model.SubTypeOptions.Any() ? "disabled" : null;
-            }
-
-            <select asp-for="ItemSubTypeID"
-                    class="form-select"
-                    id="subTypeDropdown"
-                    disabled="@disableSubType">
-                <option value="">-- Select Sub Type --</option>
-            </select>
+            <button type="submit" class="btn btn-success">Save</button>
+            <a asp-action="Index" class="btn btn-secondary">Cancel</a>
         </div>
 
-        <div class="mb-3">
-            <label asp-for="BaseUnitID" class="form-label"></label>
-
-            <select asp-for="BaseUnitID"
-                    class="form-select"
-                    id="baseUnitDropdown"
-                    asp-items="Model.UnitList">
-                <option value="">-- No Unit --</option>
-            </select>
-
-            <span asp-validation-for="BaseUnitID" class="text-danger"></span>
-        </div>
-
-        <div class="mb-3">
-            <label asp-for="DisplayUnitID" class="form-label"></label>
-
-            <select asp-for="DisplayUnitID"
-                    class="form-select"
-                    id="displayUnitDropdown"
-                    asp-items="Model.UnitList">
-                <option value="">-- No Unit --</option>
-            </select>
-
-            <span asp-validation-for="DisplayUnitID" class="text-danger"></span>
-        </div>
-
-        <button type="submit" class="btn btn-primary">Create</button>
-        <a asp-action="Index" class="btn btn-secondary">Back</a>
     </form>
 </div>
 
@@ -77,20 +99,23 @@
     <partial name="_ValidationScriptsPartial" />
 
     <script>
-        $(function () {
+        document.addEventListener("DOMContentLoaded", () => {
 
+            const itemTypeDropdown = document.getElementById("itemTypeDropdown");
+            const subTypeDropdown = document.getElementById("subTypeDropdown");
+            const baseUnitDropdown = document.getElementById("baseUnitDropdown");
+            const displayUnitDropdown = document.getElementById("displayUnitDropdown");
             const url = '@Url.Action("GetSubTypesByItemType", "Item")';
 
-            $("#itemTypeDropdown").on("change", function () {
+            // Cascade Sub Type
+            itemTypeDropdown.addEventListener("change", function () {
+                const selectedId = this.value;
 
-                var selectedId = $(this).val();
-                var $sub = $("#subTypeDropdown");
-
-                $sub.empty();
+                subTypeDropdown.innerHTML = "";
 
                 if (!selectedId) {
-                    $sub.append('<option value="">-- Select Sub Type --</option>');
-                    $sub.prop('disabled', true);
+                    subTypeDropdown.appendChild(new Option("-- Select Sub Type --", ""));
+                    subTypeDropdown.disabled = true;
                     return;
                 }
 
@@ -99,27 +124,23 @@
                     .then(data => {
 
                         if (!data || data.length === 0) {
-                            $sub.append('<option value="">-- No Subcategories Available --</option>');
-                            $sub.prop('disabled', true);
+                            subTypeDropdown.appendChild(new Option("-- No Subcategories Available --", ""));
+                            subTypeDropdown.disabled = true;
                             return;
                         }
 
-                        $sub.prop('disabled', false);
-                        $sub.append('<option value="">-- Select Sub Type --</option>');
+                        subTypeDropdown.disabled = false;
+                        subTypeDropdown.appendChild(new Option("-- Select Sub Type --", ""));
 
                         data.forEach(item => {
-                            $sub.append(new Option(item.text, item.value));
+                            subTypeDropdown.appendChild(new Option(item.text, item.value));
                         });
                     });
             });
 
-            $("#baseUnitDropdown").on("change", function () {
-
-                const baseValue = $(this).val();
-                const display = $("#displayUnitDropdown");
-
-                if (!display.val()) {
-                    display.val(baseValue);
+            baseUnitDropdown.addEventListener("change", function () {
+                if (!displayUnitDropdown.value) {
+                    displayUnitDropdown.value = this.value;
                 }
             });
 
