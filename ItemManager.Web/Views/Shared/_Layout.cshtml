@@ -20,34 +20,21 @@
     else
     {
         <div id="appWrapper">
-
             @await Html.PartialAsync("_SidebarPartial")
 
             <div id="mainContent">
-
-                <header class="topbar">
-                    <button id="hamburger" class="btn btn-outline-secondary btn-sm">
-                        ☰
-                    </button>
-
-                    <span class="fw-semibold">
-                        @ViewData["Title"]
-                    </span>
-                </header>
-
                 <main class="p-4">
                     @RenderBody()
                 </main>
-
             </div>
-
         </div>
+
+        <div id="sidebarOverlay"></div>
+
+        <!-- FLOATING MOBILE BUTTON -->
+        <button id="hamburger" class="d-md-none">☰</button>
     }
 
-    <!-- Mobile overlay -->
-    <div id="sidebarOverlay"></div>
-
-    <!-- Scripts -->
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/sidebar.js" asp-append-version="true"></script>
 

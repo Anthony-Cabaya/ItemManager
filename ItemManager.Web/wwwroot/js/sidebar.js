@@ -1,105 +1,38 @@
 ﻿document.addEventListener("DOMContentLoaded", function () {
 
     const sidebar = document.getElementById("sidebar");
-    const mainContent = document.getElementById("mainContent");
     const overlay = document.getElementById("sidebarOverlay");
     const hamburger = document.getElementById("hamburger");
-    const toggleBtn = document.getElementById("sidebarToggle");
+    const closeBtn = document.getElementById("sidebarCloseBtn");
 
-    const BREAKPOINT = 768;
-
-    let isMobile = window.innerWidth <= BREAKPOINT;
-
-    function updateToggleIcon() {
-        if (!toggleBtn) return;
-
-        toggleBtn.textContent =
-            sidebar.classList.contains("collapsed") ? "▶" : "◀";
-    }
-
-    // INIT STATE (DESKTOP COLLAPSE)
-    function initSidebarState() {
-        const saved = localStorage.getItem("sidebarCollapsed");
-
-        if (!isMobile && saved === "true") {
-            sidebar.classList.add("collapsed");
-        }
-
-        updateToggleIcon();
-        closeMobileSidebar();
-    }
-
-    // TOGGLE DESKTOP COLLAPSE
-    function toggleCollapse() {
-        sidebar.classList.toggle("collapsed");
-
-        const isCollapsed = sidebar.classList.contains("collapsed");
-        localStorage.setItem("sidebarCollapsed", isCollapsed);
-    }
-
-    // OPEN MOBILE SIDEBAR
-    function openMobileSidebar() {
+    function openSidebar() {
         sidebar.classList.add("mobile-open");
         overlay.classList.add("active");
+        document.body.style.overflow = "hidden";
     }
 
-    // CLOSE MOBILE SIDEBAR
-    function closeMobileSidebar() {
+    function closeSidebar() {
         sidebar.classList.remove("mobile-open");
         overlay.classList.remove("active");
+        document.body.style.overflow = "";
     }
 
-    // HANDLE RESPONSIVE MODE
-    function handleResize() {
-        const nowMobile = window.innerWidth <= BREAKPOINT;
+    if (hamburger)
+        hamburger.addEventListener("click", openSidebar);
 
-        if (nowMobile !== isMobile) {
-            isMobile = nowMobile;
+    if (closeBtn)
+        closeBtn.addEventListener("click", closeSidebar);
 
-            closeMobileSidebar();
+    if (overlay)
+        overlay.addEventListener("click", closeSidebar);
 
-            if (isMobile) {
-                sidebar.classList.remove("collapsed");
-            } else {
-                initSidebarState();
-            }
-        }
-    }
-
-    // EVENTS
-
-    // desktop collapse toggle
-    if (toggleBtn) {
-        toggleBtn.addEventListener("click", function () {
-            toggleCollapse();
-            updateToggleIcon();
+    document.querySelectorAll("#sidebar .nav-item")
+        .forEach(item => {
+            item.addEventListener("click", function () {
+                if (window.innerWidth <= 768) {
+                    closeSidebar();
+                }
+            });
         });
-    }
-
-    // mobile side
-    if (hamburger) {
-        hamburger.addEventListener("click", function () {
-            openMobileSidebar();
-        });
-    }
-
-    if (overlay) {
-        overlay.addEventListener("click", function () {
-            closeMobileSidebar();
-        });
-    }
-
-    document.querySelectorAll("#sidebar .nav-item").forEach(item => {
-        item.addEventListener("click", function () {
-            if (isMobile) {
-                closeMobileSidebar();
-            }
-        });
-    });
-
-    window.addEventListener("resize", handleResize);
-
-    // INIT RUN
-    initSidebarState();
 
 });

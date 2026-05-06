@@ -87,12 +87,14 @@ namespace ItemManager.Web.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Create()
+        public async Task<IActionResult> Create(string returnUrl = "")
         {
             try
             {
                 if (!IsAdmin)
                     return RedirectToAction("Index", "Dashboard");
+
+                ViewData["ReturnUrl"] = returnUrl;
 
                 var viewModel = new UnitViewModel
                 {
@@ -109,7 +111,7 @@ namespace ItemManager.Web.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create(UnitViewModel viewModel)
+        public async Task<IActionResult> Create(UnitViewModel viewModel, string returnUrl = "")
         {
             try
             {
@@ -118,6 +120,7 @@ namespace ItemManager.Web.Controllers
 
                 if (!ModelState.IsValid)
                 {
+                    ViewData["ReturnUrl"] = returnUrl;
                     viewModel.UnitCategoryList = await GetCategoryDropdown();
                     return View(viewModel);
                 }
@@ -134,6 +137,9 @@ namespace ItemManager.Web.Controllers
 
                 await _unitRepository.AddAsync(model);
 
+                if (!string.IsNullOrEmpty(returnUrl))
+                    return Redirect(returnUrl);
+
                 return RedirectToAction(nameof(Index));
             }
             catch (Exception ex)
@@ -144,7 +150,7 @@ namespace ItemManager.Web.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Edit(int id)
+        public async Task<IActionResult> Edit(int id, string returnUrl = "")
         {
             try
             {
@@ -154,6 +160,8 @@ namespace ItemManager.Web.Controllers
                 var unit = await _unitRepository.GetByIdAsync(id);
                 if (unit == null)
                     return NotFound();
+
+                ViewData["ReturnUrl"] = returnUrl;
 
                 var viewModel = new UnitViewModel
                 {
@@ -177,7 +185,7 @@ namespace ItemManager.Web.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Edit(UnitViewModel viewModel)
+        public async Task<IActionResult> Edit(UnitViewModel viewModel, string returnUrl = "")
         {
             try
             {
@@ -197,6 +205,7 @@ namespace ItemManager.Web.Controllers
 
                 if (!ModelState.IsValid)
                 {
+                    ViewData["ReturnUrl"] = returnUrl;
                     viewModel.UnitCategoryList = await GetCategoryDropdown();
                     return View(viewModel);
                 }
@@ -205,7 +214,6 @@ namespace ItemManager.Web.Controllers
 
                 if (existing.IsSystem)
                 {
-                    // Only allow Sort update
                     model = new Unit
                     {
                         UnitID = existing.UnitID,
@@ -220,7 +228,6 @@ namespace ItemManager.Web.Controllers
                 }
                 else
                 {
-                    // Full update
                     model = new Unit
                     {
                         UnitID = viewModel.UnitID,
@@ -235,6 +242,9 @@ namespace ItemManager.Web.Controllers
                 }
 
                 await _unitRepository.UpdateAsync(model);
+
+                if (!string.IsNullOrEmpty(returnUrl))
+                    return Redirect(returnUrl);
 
                 return RedirectToAction(nameof(Index));
             }
@@ -286,11 +296,14 @@ namespace ItemManager.Web.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetUnitsByCategory(int categoryId)
+        public async Task<IActionResult> GetUnitsByCategory(int categoryId, string returnUrl = "")
         {
             try
             {
                 var units = await _unitRepository.GetByCategoryIdAsync(categoryId);
+
+                ViewData["ReturnUrl"] = returnUrl;
+
                 return PartialView("_UnitTablePartial", units);
             }
             catch (Exception ex)
