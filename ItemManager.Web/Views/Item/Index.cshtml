@@ -211,6 +211,16 @@
                             Edit
                         </a>
 
+                        @if (item.BaseUnitID.HasValue)
+                        {
+                            <a asp-controller="Item"
+                               asp-action="Conversions"
+                               asp-route-id="@item.ItemID"
+                               class="btn btn-sm btn-info">
+                                Conversions
+                            </a>
+                        }
+
                         @if (Context.Session.GetString("Role") == "Admin")
                         {
                             <a asp-controller="Item"

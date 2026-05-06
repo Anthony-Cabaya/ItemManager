@@ -24,6 +24,7 @@ builder.Services.AddScoped<IItemSubTypeRepository, ItemSubTypeRepository>();
 builder.Services.AddScoped<IUnitCategoryRepository, UnitCategoryRepository>();
 builder.Services.AddScoped<IUnitRepository, UnitRepository>();
 builder.Services.AddScoped<IDashboardRepository, DashboardRepository>();
+builder.Services.AddScoped<IItemUnitConversionRepository, ItemUnitConversionRepository>();
 
 // Add Session
 builder.Services.AddSession(options =>
@@ -39,7 +40,6 @@ var app = builder.Build();
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 

@@ -13,17 +13,20 @@ namespace ItemManager.Web.Controllers
         private readonly IItemTypeRepository _itemTypeRepository;
         private readonly IItemSubTypeRepository _itemSubTypeRepository;
         private readonly IUnitRepository _unitRepository;
+        private readonly IItemUnitConversionRepository _unitConversionRepository;
 
         public ItemController(
             IItemRepository itemRepository,
             IItemTypeRepository itemTypeRepository,
             IItemSubTypeRepository itemSubTypeRepository,
-            IUnitRepository unitRepository)
+            IUnitRepository unitRepository,
+            IItemUnitConversionRepository unitConversionRepository)
         {
             _itemRepository = itemRepository;
             _itemTypeRepository = itemTypeRepository;
             _itemSubTypeRepository = itemSubTypeRepository;
             _unitRepository = unitRepository;
+            _unitConversionRepository = unitConversionRepository;
         }
 
         public async Task<IActionResult> Index(
@@ -307,6 +310,99 @@ namespace ItemManager.Web.Controllers
                 Value = x.UnitID.ToString(),
                 Text = $"{x.UnitName} ({x.Abbreviation})"
             }).ToList();
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Conversions(int id)
+        {
+            var item = await _itemRepository.GetByIdAsync(id);
+            if (item == null) return NotFound();
+
+            if (!item.BaseUnitID.HasValue)
+            {
+                TempData["ErrorMessage"] =
+                    "Please set a Base Unit for this item first.";
+                return RedirectToAction("Index");
+            }
+
+            var conversions = await _unitConversionRepository.GetByItemIdAsync(id);
+            var baseUnit = await _unitRepository.GetByIdAsync(item.BaseUnitID.Value);
+            var allUnits = await _unitRepository.GetAllAsync();
+            var usedUnitIds = conversions.Select(x => x.UnitID).ToList();
+
+            var availableUnits = allUnits
+                .Where(u => u.UnitID != item.BaseUnitID
+                         && !usedUnitIds.Contains(u.UnitID))
+                .Select(u => new SelectListItem
+                {
+                    Value = u.UnitID.ToString(),
+                    Text = $"{u.UnitName} ({u.Abbreviation})"
+                }).ToList();
+
+            var vm = new ItemUnitConversionViewModel
+            {
+                ItemID = item.ItemID,
+                ItemName = item.ItemName,
+                BaseUnitName = baseUnit?.UnitName,
+                BaseUnitAbbreviation = baseUnit?.Abbreviation,
+                Conversions = conversions,
+                AvailableUnits = availableUnits
+            };
+
+            return View(vm);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AddConversion(ItemUnitConversionViewModel vm)
+        {
+            if (!ModelState.IsValid)
+            {
+                var item = await _itemRepository.GetByIdAsync(vm.ItemID);
+                if (item == null) return NotFound();
+
+                var conversions = await _unitConversionRepository.GetByItemIdAsync(vm.ItemID);
+                var baseUnit = await _unitRepository.GetByIdAsync(item.BaseUnitID!.Value);
+                var allUnits = await _unitRepository.GetAllAsync();
+
+                var usedUnitIds = conversions.Select(x => x.UnitID).ToList();
+
+                vm.ItemName = item.ItemName;
+                vm.BaseUnitName = baseUnit?.UnitName;
+                vm.BaseUnitAbbreviation = baseUnit?.Abbreviation;
+                vm.Conversions = conversions;
+
+                vm.AvailableUnits = allUnits
+                    .Where(u => u.UnitID != item.BaseUnitID
+                             && !usedUnitIds.Contains(u.UnitID))
+                    .Select(u => new SelectListItem
+                    {
+                        Value = u.UnitID.ToString(),
+                        Text = $"{u.UnitName} ({u.Abbreviation})"
+                    }).ToList();
+
+                return View("Conversions", vm);
+            }
+
+            var model = new ItemUnitConversion
+            {
+                ItemID = vm.ItemID,
+                UnitID = vm.UnitID,
+                Factor = vm.Factor,
+                CreatedBy = CurrentUsername,
+                CreatedDate = DateTime.Now
+            };
+
+            await _unitConversionRepository.AddAsync(model);
+
+            return RedirectToAction("Conversions", new { id = vm.ItemID });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteConversion(int conversionId, int itemId)
+        {
+            await _unitConversionRepository.DeleteAsync(conversionId);
+
+            return RedirectToAction("Conversions", new { id = itemId });
         }
 
     }

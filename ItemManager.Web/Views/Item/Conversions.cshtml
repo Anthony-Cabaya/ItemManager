@@ -1,0 +1,106 @@
+﻿@model ItemUnitConversionViewModel
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">
+        Unit Conversions
+        <small class="text-muted fs-6">@Model.ItemName</small>
+    </h2>
+
+    <a asp-action="Index" class="btn btn-secondary">
+        Back to Items
+    </a>
+</div>
+
+<table class="table table-hover table-bordered align-middle dashboard-table">
+    <thead class="table-light">
+        <tr>
+            <th>Unit</th>
+            <th>Abbreviation</th>
+            <th>Factor</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        <tr class="table-light">
+            <td>
+                @Model.BaseUnitName
+                <span class="badge bg-secondary ms-1">Base Unit</span>
+            </td>
+            <td>@Model.BaseUnitAbbreviation</td>
+            <td>1 (base)</td>
+            <td>—</td>
+        </tr>
+
+        @if (!Model.Conversions.Any())
+        {
+            <tr>
+                <td colspan="4" class="text-center text-muted py-3">
+                    No conversions added yet.
+                </td>
+            </tr>
+        }
+        else
+        {
+            foreach (var c in Model.Conversions)
+            {
+                <tr>
+                    <td>@c.UnitName</td>
+                    <td>@c.Abbreviation</td>
+                    <td>@c.Factor</td>
+                    <td>
+                        <form asp-action="DeleteConversion" method="post"
+                              onsubmit="return confirm('Remove this conversion?')">
+                            <input type="hidden" name="conversionId" value="@c.ConversionID" />
+                            <input type="hidden" name="itemId" value="@Model.ItemID" />
+                            <button class="btn btn-sm btn-danger">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>
+
+<div class="card mt-3">
+    <div class="card-header fw-semibold">Add Conversion</div>
+
+    <div class="card-body">
+        <form asp-action="AddConversion" method="post"
+              class="d-flex gap-2 align-items-start">
+
+            <input type="hidden" asp-for="ItemID" />
+
+            <div>
+                <select asp-for="UnitID"
+                        asp-items="Model.AvailableUnits"
+                        class="form-select">
+                    <option value="">-- Select Unit --</option>
+                </select>
+                <span asp-validation-for="UnitID" class="text-danger"></span>
+            </div>
+
+            <div>
+                <input asp-for="Factor"
+                       class="form-control"
+                       type="number"
+                       step="0.000001"
+                       placeholder="e.g. 144" />
+                <span asp-validation-for="Factor" class="text-danger"></span>
+            </div>
+
+            <button class="btn btn-primary">Add</button>
+        </form>
+
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="alert alert-danger mt-2">
+                @TempData["ErrorMessage"]
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
