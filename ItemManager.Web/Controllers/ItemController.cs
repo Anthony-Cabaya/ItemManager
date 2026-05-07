@@ -1,6 +1,5 @@
 ﻿using ItemManager.Core.Interfaces;
 using ItemManager.Core.Models;
-using ItemManager.Infrastructure.Repositories;
 using ItemManager.Web.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -9,25 +8,46 @@ namespace ItemManager.Web.Controllers
 {
     public class ItemController : BaseController
     {
-        private readonly IItemRepository _itemRepository;
-        private readonly IItemTypeRepository _itemTypeRepository;
-        private readonly IItemSubTypeRepository _itemSubTypeRepository;
-        private readonly IUnitRepository _unitRepository;
-        private readonly IItemUnitConversionRepository _unitConversionRepository;
+        private readonly IItemRepository _itemRepo;
+        private readonly IItemTypeRepository _itemTypeRepo;
+        private readonly IItemSubTypeRepository _itemSubTypeRepo;
+        private readonly IUnitRepository _unitRepo;
+        private readonly IItemUnitConversionRepository _conversionRepo;
+        private readonly IItemCodeService _itemCodeService;
 
         public ItemController(
-            IItemRepository itemRepository,
-            IItemTypeRepository itemTypeRepository,
-            IItemSubTypeRepository itemSubTypeRepository,
-            IUnitRepository unitRepository,
-            IItemUnitConversionRepository unitConversionRepository)
+            IItemRepository itemRepo,
+            IItemTypeRepository itemTypeRepo,
+            IItemSubTypeRepository itemSubTypeRepo,
+            IUnitRepository unitRepo,
+            IItemUnitConversionRepository conversionRepo,
+            IItemCodeService itemCodeService)
         {
-            _itemRepository = itemRepository;
-            _itemTypeRepository = itemTypeRepository;
-            _itemSubTypeRepository = itemSubTypeRepository;
-            _unitRepository = unitRepository;
-            _unitConversionRepository = unitConversionRepository;
+            _itemRepo = itemRepo;
+            _itemTypeRepo = itemTypeRepo;
+            _itemSubTypeRepo = itemSubTypeRepo;
+            _unitRepo = unitRepo;
+            _conversionRepo = conversionRepo;
+            _itemCodeService = itemCodeService;
         }
+
+        private JsonResult JsonSuccess(
+            string message,
+            object? data = null)
+            => Json(new
+            {
+                success = true,
+                message,
+                data
+            });
+
+        private JsonResult JsonFail(string message)
+            => Json(new
+            {
+                success = false,
+                message,
+                data = (object?)null
+            });
 
         public async Task<IActionResult> Index(
             int page = 1,
@@ -39,253 +59,414 @@ namespace ItemManager.Web.Controllers
         {
             try
             {
-                var itemTypes = await _itemTypeRepository.GetAllAsync();
+                var itemTypes = await _itemTypeRepo.GetAllAsync();
                 ViewData["ItemTypes"] = itemTypes;
 
-                var result = await _itemRepository.GetPagedAsync(
-                    page, 10, search, sortColumn, sortDirection,
+                return View();
+            }
+            catch (Exception ex)
+            {
+                ViewData["ErrorMessage"] = ex.Message;
+                return View("Error");
+            }
+        }
+
+        [HttpGet]
+        public async Task<JsonResult> GetItemsData(
+            int page = 1,
+            string search = "",
+            string sortColumn = "Sort",
+            string sortDirection = "asc",
+            int itemTypeFilter = 0,
+            int itemSubTypeFilter = 0)
+        {
+            try
+            {
+                const int pageSize = 10;
+
+                var result = await _itemRepo.GetPagedAsync(
+                    page,
+                    pageSize,
+                    search,
+                    sortColumn,
+                    sortDirection,
                     itemTypeFilter,
                     itemSubTypeFilter,
                     IsAdmin);
 
-                ViewData["Search"] = search;
-                ViewData["SortColumn"] = sortColumn;
-                ViewData["SortDirection"] = sortDirection;
-                ViewData["ItemTypeFilter"] = itemTypeFilter;
-                ViewData["ItemSubTypeFilter"] = itemSubTypeFilter;
+                var data = new
+                {
+                    items = result.Items.Select(x => new
+                    {
+                        itemID = x.ItemID,
+                        itemCode = x.ItemCode,
+                        itemName = x.ItemName,
+                        sort = x.Sort,
+                        itemTypeName = x.ItemType?.ItemTypeName,
+                        itemSubTypeName = x.ItemSubTypeName,
+                        baseUnitAbbreviation = x.BaseUnitAbbreviation,
+                        condition = x.Condition,
+                        createdBy = x.CreatedBy,
+                        createdDate = x.CreatedDate?.ToString("yyyy-MM-dd HH:mm"),
+                        updatedBy = x.UpdatedBy,
+                        updatedDate = x.UpdatedDate?.ToString("yyyy-MM-dd HH:mm"),
+                        baseUnitID = x.BaseUnitID,
+                        variants = "—",
+                        currentStock = "—",
+                        unitCost = "—"
+                    }),
 
-                return View(result);
+                    totalCount = result.TotalCount,
+                    totalPages = result.TotalPages,
+                    pageNumber = result.PageNumber,
+                    pageSize = result.PageSize,
+                    hasNextPage = result.HasNextPage,
+                    hasPreviousPage = result.HasPreviousPage
+                };
+
+                return JsonSuccess("Items loaded successfully.", data);
             }
             catch (Exception ex)
             {
-                ViewData["ErrorMessage"] = ex.Message;
-                return View("Error");
+                return JsonFail(ex.Message);
             }
         }
 
         [HttpGet]
-        public async Task<IActionResult> Create()
+        public async Task<JsonResult> GetItemForEdit(int id)
         {
             try
             {
-                var itemTypes = await _itemTypeRepository.GetAllAsync();
+                var item = await _itemRepo.GetByIdAsync(id);
 
-                var viewModel = new ItemViewModel
+                if (item == null)
+                    return JsonFail("Item not found.");
+
+                var itemTypes = await _itemTypeRepo.GetAllAsync();
+
+                var subTypes = await _itemSubTypeRepo
+                    .GetByItemTypeIdAsync(item.ItemTypeID);
+
+                IEnumerable<Unit> units;
+
+                if (item.BaseUnitID.HasValue)
                 {
-                    ItemTypeOptions = itemTypes.Select(it => new SelectListItem
+                    var baseUnit = await _unitRepo
+                        .GetByIdAsync(item.BaseUnitID.Value);
+
+                    if (baseUnit != null)
                     {
-                        Value = it.ItemTypeID.ToString(),
-                        Text = it.ItemTypeName
-                    }).ToList(),
+                        units = await _unitRepo
+                            .GetByCategoryIdAsync(baseUnit.UnitCategoryID);
+                    }
+                    else
+                    {
+                        units = await _unitRepo.GetAllAsync();
+                    }
+                }
+                else
+                {
+                    units = await _unitRepo.GetAllAsync();
+                }
 
-                    UnitList = await GetUnitDropdown()
-                };
+                return JsonSuccess(
+                    "Item loaded successfully.",
+                    new
+                    {
+                        itemID = item.ItemID,
+                        itemCode = item.ItemCode,
+                        itemName = item.ItemName,
+                        sort = item.Sort,
+                        itemTypeID = item.ItemTypeID,
+                        itemSubTypeID = item.ItemSubTypeID,
+                        baseUnitID = item.BaseUnitID,
+                        displayUnitID = item.DisplayUnitID,
+                        condition = item.Condition,
 
-                return View(viewModel);
+                        itemTypeOptions = itemTypes.Select(x => new
+                        {
+                            value = x.ItemTypeID,
+                            text = x.ItemTypeName
+                        }),
+
+                        subTypeOptions = subTypes.Select(x => new
+                        {
+                            value = x.ItemSubTypeID,
+                            text = x.ItemSubTypeName
+                        }),
+
+                        unitOptions = units.Select(x => new
+                        {
+                            value = x.UnitID,
+                            text = $"{x.UnitName} ({x.Abbreviation})"
+                        })
+                    });
             }
             catch (Exception ex)
             {
-                ViewData["ErrorMessage"] = ex.Message;
-                return View("Error");
+                return JsonFail(ex.Message);
+            }
+        }
+
+        [HttpGet]
+        public async Task<JsonResult> GetGeneratedCode(
+            int itemTypeId,
+            int? itemSubTypeId)
+        {
+            try
+            {
+                var itemTypes = await _itemTypeRepo.GetAllAsync();
+                var itemType = itemTypes.FirstOrDefault(x => x.ItemTypeID == itemTypeId);
+
+                if (itemType == null)
+                    return JsonFail("Invalid Item Type.");
+
+                string? subTypeName = null;
+
+                if (itemSubTypeId.HasValue)
+                {
+                    var subTypes = await _itemSubTypeRepo.GetByItemTypeIdAsync(itemTypeId);
+                    subTypeName = subTypes.FirstOrDefault(x => x.ItemSubTypeID == itemSubTypeId)?.ItemSubTypeName;
+                }
+
+                var code = await _itemCodeService.PreviewCodeAsync(
+                    itemTypeId,
+                    itemSubTypeId,
+                    itemType.ItemTypeName!,
+                    subTypeName);
+
+                return JsonSuccess("Code generated successfully.", new { code });
+            }
+            catch (Exception ex)
+            {
+                return JsonFail(ex.Message);
             }
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create(ItemViewModel viewModel)
+        public async Task<JsonResult> Create(ItemViewModel vm)
         {
             try
             {
                 if (!ModelState.IsValid)
                 {
-                    var itemTypes = await _itemTypeRepository.GetAllAsync();
+                    var firstError = ModelState.Values
+                        .SelectMany(v => v.Errors)
+                        .Select(e => e.ErrorMessage)
+                        .FirstOrDefault()
+                        ?? "Validation failed.";
 
-                    viewModel.ItemTypeOptions = itemTypes.Select(it => new SelectListItem
+                    return JsonFail(firstError);
+                }
+
+                var itemTypes = await _itemTypeRepo.GetAllAsync();
+
+                var itemType = itemTypes
+                    .FirstOrDefault(x => x.ItemTypeID == vm.ItemTypeID);
+
+                if (itemType == null)
+                    return JsonFail("Invalid Item Type.");
+
+                string? subTypeName = null;
+
+                if (vm.ItemSubTypeID.HasValue)
+                {
+                    var subTypes = await _itemSubTypeRepo
+                        .GetByItemTypeIdAsync(vm.ItemTypeID);
+
+                    subTypeName = subTypes
+                        .FirstOrDefault(x =>
+                            x.ItemSubTypeID == vm.ItemSubTypeID)
+                        ?.ItemSubTypeName;
+                }
+
+                var generatedCode =
+                    await _itemCodeService.GenerateCodeAsync(
+                        vm.ItemTypeID,
+                        vm.ItemSubTypeID,
+                        itemType.ItemTypeName!,
+                        subTypeName);
+
+                string finalCode = generatedCode;
+
+                if (!string.IsNullOrWhiteSpace(vm.ItemCode)
+                    && vm.ItemCode != generatedCode)
+                {
+                    var isUnique = await _itemCodeService
+                        .IsCodeUniqueAsync(vm.ItemCode);
+
+                    if (!isUnique)
                     {
-                        Value = it.ItemTypeID.ToString(),
-                        Text = it.ItemTypeName
-                    }).ToList();
+                        return JsonFail(
+                            "Item Code already exists.");
+                    }
 
-                    var subTypes = await _itemSubTypeRepository
-                        .GetByItemTypeIdAsync(viewModel.ItemTypeID);
-
-                    viewModel.SubTypeOptions = subTypes.Select(st => new SelectListItem
-                    {
-                        Value = st.ItemSubTypeID.ToString(),
-                        Text = st.ItemSubTypeName
-                    }).ToList();
-
-                    viewModel.UnitList = await GetUnitDropdown();
-
-                    return View(viewModel);
+                    finalCode = vm.ItemCode;
                 }
 
                 var item = new Item
                 {
-                    ItemName = viewModel.ItemName,
-                    ItemTypeID = viewModel.ItemTypeID,
-                    ItemSubTypeID = viewModel.ItemSubTypeID,
-
-                    BaseUnitID = viewModel.BaseUnitID,
-                    DisplayUnitID = viewModel.DisplayUnitID,
-
-                    Sort = viewModel.Sort,
+                    ItemName = vm.ItemName,
+                    ItemTypeID = vm.ItemTypeID,
+                    ItemSubTypeID = vm.ItemSubTypeID,
+                    ItemCode = finalCode,
+                    Condition = vm.Condition,
+                    BaseUnitID = vm.BaseUnitID,
+                    DisplayUnitID = vm.DisplayUnitID,
+                    Sort = vm.Sort,
                     CreatedBy = CurrentUsername,
                     CreatedDate = DateTime.Now
                 };
-                await _itemRepository.AddAsync(item);
-                return RedirectToAction(nameof(Index));
+
+                await _itemRepo.AddAsync(item);
+
+                return JsonSuccess(
+                    "Item created successfully.");
             }
             catch (Exception ex)
             {
-                ViewData["ErrorMessage"] = ex.Message;
-                return View("Error");
-            }
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> Edit(int id)
-        {
-            try
-            {
-                var item = await _itemRepository.GetByIdAsync(id);
-                if (item == null) return NotFound();
-
-                var itemTypes = await _itemTypeRepository.GetAllAsync();
-
-                var subTypes = await _itemSubTypeRepository
-                    .GetByItemTypeIdAsync(item.ItemTypeID);
-
-                var viewModel = new ItemViewModel
-                {
-                    ItemID = item.ItemID,
-                    ItemName = item.ItemName,
-                    ItemTypeID = item.ItemTypeID,
-                    ItemSubTypeID = item.ItemSubTypeID,
-                    Sort = item.Sort,
-
-                    BaseUnitID = item.BaseUnitID,
-                    DisplayUnitID = item.DisplayUnitID,
-
-                    ItemTypeOptions = itemTypes.Select(it => new SelectListItem
-                    {
-                        Value = it.ItemTypeID.ToString(),
-                        Text = it.ItemTypeName
-                    }).ToList(),
-
-                    SubTypeOptions = subTypes.Select(st => new SelectListItem
-                    {
-                        Value = st.ItemSubTypeID.ToString(),
-                        Text = st.ItemSubTypeName
-                    }).ToList(),
-
-                    UnitList = await GetUnitDropdown()
-                };
-
-                return View(viewModel);
-            }
-            catch (Exception ex)
-            {
-                ViewData["ErrorMessage"] = ex.Message;
-                return View("Error");
+                return JsonFail(ex.Message);
             }
         }
 
         [HttpPost]
-        public async Task<IActionResult> Edit(ItemViewModel viewModel)
+        public async Task<JsonResult> Update(ItemViewModel vm)
         {
             try
             {
                 if (!ModelState.IsValid)
                 {
-                    var itemTypes = await _itemTypeRepository.GetAllAsync();
-                    var subTypes = await _itemSubTypeRepository
-                        .GetByItemTypeIdAsync(viewModel.ItemTypeID);
+                    var firstError = ModelState.Values
+                        .SelectMany(v => v.Errors)
+                        .Select(e => e.ErrorMessage)
+                        .FirstOrDefault()
+                        ?? "Validation failed.";
 
-                    viewModel.ItemTypeOptions = itemTypes.Select(it => new SelectListItem
-                    {
-                        Value = it.ItemTypeID.ToString(),
-                        Text = it.ItemTypeName
-                    }).ToList();
-
-                    viewModel.SubTypeOptions = subTypes.Select(st => new SelectListItem
-                    {
-                        Value = st.ItemSubTypeID.ToString(),
-                        Text = st.ItemSubTypeName
-                    }).ToList();
-
-                    viewModel.UnitList = await GetUnitDropdown();
-
-                    return View(viewModel);
+                    return JsonFail(firstError);
                 }
 
-                var item = new Item
+                var existing = await _itemRepo.GetByIdAsync(vm.ItemID);
+
+                if (existing == null)
+                    return JsonFail("Item not found.");
+
+                bool baseUnitChanged =
+                    existing.BaseUnitID != vm.BaseUnitID;
+
+                if (baseUnitChanged)
                 {
-                    ItemID = viewModel.ItemID,
-                    ItemName = viewModel.ItemName,
-                    ItemTypeID = viewModel.ItemTypeID,
-                    ItemSubTypeID = viewModel.ItemSubTypeID,
+                    var conversions = await _conversionRepo
+                        .GetByItemIdAsync(vm.ItemID);
 
-                    BaseUnitID = viewModel.BaseUnitID,
-                    DisplayUnitID = viewModel.DisplayUnitID,
+                    if (conversions.Any())
+                    {
+                        return JsonFail(
+                            "Cannot change Base Unit while conversions exist. Delete all conversions first.");
+                    }
+                }
 
-                    Sort = viewModel.Sort,
-                    UpdatedBy = CurrentUsername,
-                    UpdatedDate = DateTime.Now
-                };
-                await _itemRepository.UpdateAsync(item);
-                return RedirectToAction(nameof(Index));
+                if (!string.Equals(
+                    existing.ItemCode,
+                    vm.ItemCode,
+                    StringComparison.OrdinalIgnoreCase))
+                {
+                    var isUnique = await _itemCodeService
+                        .IsCodeUniqueAsync(vm.ItemCode ?? "");
+
+                    if (!isUnique)
+                    {
+                        return JsonFail(
+                            "Item Code already exists.");
+                    }
+                }
+
+                existing.ItemName = vm.ItemName;
+                existing.ItemTypeID = vm.ItemTypeID;
+                existing.ItemSubTypeID = vm.ItemSubTypeID;
+                existing.ItemCode = vm.ItemCode;
+                existing.Condition = vm.Condition;
+                existing.BaseUnitID = vm.BaseUnitID;
+                existing.DisplayUnitID = vm.DisplayUnitID;
+                existing.Sort = vm.Sort;
+                existing.UpdatedBy = CurrentUsername;
+                existing.UpdatedDate = DateTime.Now;
+
+                await _itemRepo.UpdateAsync(existing);
+
+                return JsonSuccess(
+                    "Item updated successfully.");
             }
             catch (Exception ex)
             {
-                ViewData["ErrorMessage"] = ex.Message;
-                return View("Error");
+                return JsonFail(ex.Message);
+            }
+        }
+
+        [HttpPost]
+        public async Task<JsonResult> DeleteItems(
+            List<int> ids)
+        {
+            try
+            {
+                if (ids == null || !ids.Any())
+                {
+                    return JsonFail(
+                        "No items selected.");
+                }
+
+                if (!IsAdmin)
+                {
+                    return JsonFail(
+                        "Unauthorized.");
+                }
+
+                foreach (var id in ids)
+                {
+                    await _itemRepo.DeleteAsync(id);
+                }
+
+                return JsonSuccess(
+                    $"{ids.Count} item(s) deleted successfully.");
+            }
+            catch (Exception ex)
+            {
+                return JsonFail(ex.Message);
             }
         }
 
         [HttpGet]
-        public async Task<IActionResult> Delete(int id)
+        public async Task<JsonResult> GetUnitsForItem(
+            int unitCategoryId)
         {
             try
             {
-                if (!IsAdmin)
-                    return RedirectToAction("Index", "Dashboard");
+                var units = await _unitRepo
+                    .GetByCategoryIdAsync(unitCategoryId);
 
-                var item = await _itemRepository.GetByIdAsync(id);
-                if (item == null) return NotFound();
+                var result = units.Select(x => new
+                {
+                    value = x.UnitID,
+                    text = $"{x.UnitName} ({x.Abbreviation})"
+                });
 
-                return View(item);
+                return JsonSuccess(
+                    "Units loaded successfully.",
+                    result);
             }
             catch (Exception ex)
             {
-                ViewData["ErrorMessage"] = ex.Message;
-                return View("Error");
-            }
-        }
-
-        [HttpPost, ActionName("Delete")]
-        public async Task<IActionResult> DeleteConfirmed(int id)
-        {
-            try
-            {
-                if (!IsAdmin)
-                    return RedirectToAction("Index", "Dashboard");
-
-                await _itemRepository.DeleteAsync(id);
-                return RedirectToAction(nameof(Index));
-            }
-            catch (Exception ex)
-            {
-                ViewData["ErrorMessage"] = ex.Message;
-                return View("Error");
+                return JsonFail(ex.Message);
             }
         }
 
         [HttpGet]
-        public async Task<JsonResult> GetSubTypesByItemType(int itemTypeId)
+        public async Task<JsonResult> GetSubTypesByItemType(
+            int itemTypeId)
         {
             try
             {
-                var subTypes = await _itemSubTypeRepository.GetByItemTypeIdAsync(itemTypeId);
+                var subTypes = await _itemSubTypeRepo
+                    .GetByItemTypeIdAsync(itemTypeId);
 
                 var result = subTypes.Select(st => new
                 {
@@ -301,34 +482,32 @@ namespace ItemManager.Web.Controllers
             }
         }
 
-        private async Task<List<SelectListItem>> GetUnitDropdown()
-        {
-            var units = await _unitRepository.GetAllAsync();
-
-            return units.Select(x => new SelectListItem
-            {
-                Value = x.UnitID.ToString(),
-                Text = $"{x.UnitName} ({x.Abbreviation})"
-            }).ToList();
-        }
-
         [HttpGet]
         public async Task<IActionResult> Conversions(int id)
         {
-            var item = await _itemRepository.GetByIdAsync(id);
+            var item = await _itemRepo.GetByIdAsync(id);
             if (item == null) return NotFound();
 
             if (!item.BaseUnitID.HasValue)
             {
                 TempData["ErrorMessage"] =
                     "Please set a Base Unit for this item first.";
+
                 return RedirectToAction("Index");
             }
 
-            var conversions = await _unitConversionRepository.GetByItemIdAsync(id);
-            var baseUnit = await _unitRepository.GetByIdAsync(item.BaseUnitID.Value);
-            var allUnits = await _unitRepository.GetAllAsync();
-            var usedUnitIds = conversions.Select(x => x.UnitID).ToList();
+            var conversions =
+                await _conversionRepo.GetByItemIdAsync(id);
+
+            var baseUnit =
+                await _unitRepo.GetByIdAsync(
+                    item.BaseUnitID.Value);
+
+            var allUnits =
+                await _unitRepo.GetAllAsync();
+
+            var usedUnitIds =
+                conversions.Select(x => x.UnitID).ToList();
 
             var availableUnits = allUnits
                 .Where(u => u.UnitID != item.BaseUnitID
@@ -353,18 +532,29 @@ namespace ItemManager.Web.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> AddConversion(ItemUnitConversionViewModel vm)
+        public async Task<IActionResult> AddConversion(
+            ItemUnitConversionViewModel vm)
         {
             if (!ModelState.IsValid)
             {
-                var item = await _itemRepository.GetByIdAsync(vm.ItemID);
-                if (item == null) return NotFound();
+                var item = await _itemRepo.GetByIdAsync(vm.ItemID);
 
-                var conversions = await _unitConversionRepository.GetByItemIdAsync(vm.ItemID);
-                var baseUnit = await _unitRepository.GetByIdAsync(item.BaseUnitID!.Value);
-                var allUnits = await _unitRepository.GetAllAsync();
+                if (item == null)
+                    return NotFound();
 
-                var usedUnitIds = conversions.Select(x => x.UnitID).ToList();
+                var conversions =
+                    await _conversionRepo
+                        .GetByItemIdAsync(vm.ItemID);
+
+                var baseUnit =
+                    await _unitRepo
+                        .GetByIdAsync(item.BaseUnitID!.Value);
+
+                var allUnits =
+                    await _unitRepo.GetAllAsync();
+
+                var usedUnitIds =
+                    conversions.Select(x => x.UnitID).ToList();
 
                 vm.ItemName = item.ItemName;
                 vm.BaseUnitName = baseUnit?.UnitName;
@@ -392,17 +582,23 @@ namespace ItemManager.Web.Controllers
                 CreatedDate = DateTime.Now
             };
 
-            await _unitConversionRepository.AddAsync(model);
+            await _conversionRepo.AddAsync(model);
 
-            return RedirectToAction("Conversions", new { id = vm.ItemID });
+            return RedirectToAction(
+                "Conversions",
+                new { id = vm.ItemID });
         }
 
         [HttpPost]
-        public async Task<IActionResult> DeleteConversion(int conversionId, int itemId)
+        public async Task<IActionResult> DeleteConversion(
+            int conversionId,
+            int itemId)
         {
-            await _unitConversionRepository.DeleteAsync(conversionId);
+            await _conversionRepo.DeleteAsync(conversionId);
 
-            return RedirectToAction("Conversions", new { id = itemId });
+            return RedirectToAction(
+                "Conversions",
+                new { id = itemId });
         }
 
     }

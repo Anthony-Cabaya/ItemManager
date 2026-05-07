@@ -120,5 +120,39 @@ namespace ItemManager.Infrastructure.Repositories
             }
         }
 
+        public async Task<int> PeekNextSequenceAsync(
+    int itemTypeId, int? itemSubTypeId)
+        {
+            try
+            {
+                const string query = @"
+                    SELECT ISNULL(LastSequence, 0) + 1
+                    FROM ItemCodeSequences
+                    WHERE ItemTypeID = @ItemTypeID
+                    AND (ItemSubTypeID = @ItemSubTypeID
+                         OR (ItemSubTypeID IS NULL
+                             AND @ItemSubTypeID IS NULL))";
+
+                using var conn = _dbHelper.CreateConnection();
+                await conn.OpenAsync();
+
+                using var cmd = new SqlCommand(query, conn);
+                cmd.Parameters.AddWithValue(
+                    "@ItemTypeID", itemTypeId);
+                cmd.Parameters.AddWithValue(
+                    "@ItemSubTypeID",
+                    (object?)itemSubTypeId ?? DBNull.Value);
+
+                var result = await cmd.ExecuteScalarAsync();
+                return result != null
+                    ? Convert.ToInt32(result) : 1;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(
+                    "Error peeking sequence.", ex);
+            }
+        }
+
     }
 }

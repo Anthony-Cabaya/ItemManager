@@ -45,5 +45,31 @@ namespace ItemManager.Infrastructure.Services
             return await _itemCodeRepo.IsCodeUniqueAsync(itemCode);
         }
 
+        public async Task<string> PreviewCodeAsync(
+            int itemTypeId, int? itemSubTypeId,
+            string itemTypeName, string? itemSubTypeName)
+        {
+            string typeAcronym = itemTypeName
+                .Substring(0, Math.Min(2, itemTypeName.Length))
+                .ToUpper();
+
+            string? subTypeAcronym = itemSubTypeName != null
+                ? itemSubTypeName
+                    .Substring(0, Math.Min(2,
+                        itemSubTypeName.Length))
+                    .ToUpper()
+                : null;
+
+            int seq = await _itemCodeRepo
+                .PeekNextSequenceAsync(
+                    itemTypeId, itemSubTypeId);
+
+            string seqStr = seq.ToString("D3");
+
+            return subTypeAcronym != null
+                ? $"{typeAcronym}-{subTypeAcronym}-{seqStr}"
+                : $"{typeAcronym}-{seqStr}";
+        }
+
     }
 }

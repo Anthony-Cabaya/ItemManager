@@ -8,5 +8,7 @@
 
         Task<bool> IsCodeUniqueAsync(string itemCode);
 
+        Task<int> PeekNextSequenceAsync(int itemTypeId, int? itemSubTypeId);
+
     }
 }
