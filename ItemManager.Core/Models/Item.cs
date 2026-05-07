@@ -29,6 +29,9 @@ namespace ItemManager.Core.Models
 
         public string? ItemSubTypeName { get; set; }
 
+        public string? ItemCode { get; set; }
+        public string? Condition { get; set; }
+
         // Unit fields
         public int? BaseUnitID { get; set; }
         public int? DisplayUnitID { get; set; }

@@ -22,6 +22,12 @@ namespace ItemManager.Web.ViewModels
         [Display(Name = "Sort Order")]
         public int Sort { get; set; }
 
+        [Display(Name = "Item Code")]
+        public string? ItemCode { get; set; }
+
+        [Display(Name = "Condition")]
+        public string? Condition { get; set; }
+
         // Dropdown
         public List<SelectListItem> ItemTypeOptions { get; set; } = new();
         public List<SelectListItem> SubTypeOptions { get; set; } = new();
@@ -40,6 +46,19 @@ namespace ItemManager.Web.ViewModels
         public string? DisplayUnitAbbreviation { get; set; }
 
         public List<SelectListItem> UnitList { get; set; } = new();
+
+        public static List<SelectListItem> ConditionOptions =>
+            new()
+            {
+                new SelectListItem("New", "New"),
+                new SelectListItem(
+                    "Opened - Never Used",
+                    "Opened - Never Used"),
+                new SelectListItem("Used", "Used"),
+                new SelectListItem("Defective", "Defective"),
+                new SelectListItem("Disposed", "Disposed"),
+                new SelectListItem("Discontinued", "Discontinued")
+            };
 
     }
 }

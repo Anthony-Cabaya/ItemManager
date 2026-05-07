@@ -1,6 +1,7 @@
 using ItemManager.Core.Interfaces;
 using ItemManager.Infrastructure.Helpers;
 using ItemManager.Infrastructure.Repositories;
+using ItemManager.Infrastructure.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,6 +26,8 @@ builder.Services.AddScoped<IUnitCategoryRepository, UnitCategoryRepository>();
 builder.Services.AddScoped<IUnitRepository, UnitRepository>();
 builder.Services.AddScoped<IDashboardRepository, DashboardRepository>();
 builder.Services.AddScoped<IItemUnitConversionRepository, ItemUnitConversionRepository>();
+builder.Services.AddScoped<IItemCodeRepository, ItemCodeRepository>();
+builder.Services.AddScoped<IItemCodeService, ItemCodeService>();
 
 // Add Session
 builder.Services.AddSession(options =>

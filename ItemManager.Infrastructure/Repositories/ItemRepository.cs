@@ -19,6 +19,7 @@ namespace ItemManager.Infrastructure.Repositories
         // Base Select
         private const string BaseSelect = @"
             SELECT i.ItemID, i.ItemName, i.ItemTypeID, i.ItemSubTypeID,
+                   i.ItemCode, i.Condition,
                    i.BaseUnitID, i.DisplayUnitID,
                    i.Sort,
                    i.CreatedBy, i.CreatedDate, i.UpdatedBy, i.UpdatedDate,
@@ -87,6 +88,15 @@ namespace ItemManager.Infrastructure.Repositories
                 DisplayUnitAbbreviation = reader.IsDBNull(reader.GetOrdinal("DisplayUnitAbbreviation"))
                     ? null
                     : reader.GetString(reader.GetOrdinal("DisplayUnitAbbreviation")),
+
+                // MODIFY Map()
+                ItemCode = reader.IsDBNull(reader.GetOrdinal("ItemCode"))
+                    ? null
+                    : reader.GetString(reader.GetOrdinal("ItemCode")),
+
+                Condition = reader.IsDBNull(reader.GetOrdinal("Condition"))
+                    ? null
+                    : reader.GetString(reader.GetOrdinal("Condition"))
             };
         }
 
@@ -151,9 +161,31 @@ namespace ItemManager.Infrastructure.Repositories
         {
             var query = @"
                 INSERT INTO Items
-                (ItemName, ItemTypeID, ItemSubTypeID, BaseUnitID, DisplayUnitID, Sort, CreatedBy, CreatedDate)
+                (
+                    ItemName,
+                    ItemTypeID,
+                    ItemSubTypeID,
+                    ItemCode,
+                    Condition,
+                    BaseUnitID,
+                    DisplayUnitID,
+                    Sort,
+                    CreatedBy,
+                    CreatedDate
+                )
                 VALUES
-                (@ItemName, @ItemTypeID, @ItemSubTypeID, @BaseUnitID, @DisplayUnitID, @Sort, @CreatedBy, @CreatedDate)";
+                (
+                    @ItemName,
+                    @ItemTypeID,
+                    @ItemSubTypeID,
+                    @ItemCode,
+                    @Condition,
+                    @BaseUnitID,
+                    @DisplayUnitID,
+                    @Sort,
+                    @CreatedBy,
+                    @CreatedDate
+                )";
 
             using var connection = _dbHelper.CreateConnection();
             await connection.OpenAsync();
@@ -166,6 +198,12 @@ namespace ItemManager.Infrastructure.Repositories
             command.Parameters.AddWithValue("@BaseUnitID", (object?)item.BaseUnitID ?? DBNull.Value);
             command.Parameters.AddWithValue("@DisplayUnitID", (object?)item.DisplayUnitID ?? DBNull.Value);
             command.Parameters.AddWithValue("@Sort", item.Sort);
+            command.Parameters.AddWithValue(
+                "@ItemCode",
+                (object?)item.ItemCode ?? DBNull.Value);
+            command.Parameters.AddWithValue(
+                "@Condition",
+                (object?)item.Condition ?? DBNull.Value);
             command.Parameters.AddWithValue("@CreatedBy", (object?)item.CreatedBy ?? DBNull.Value);
             command.Parameters.AddWithValue("@CreatedDate", (object?)item.CreatedDate ?? DBNull.Value);
 
@@ -179,6 +217,8 @@ namespace ItemManager.Infrastructure.Repositories
                 SET ItemName = @ItemName,
                     ItemTypeID = @ItemTypeID,
                     ItemSubTypeID = @ItemSubTypeID,
+                    ItemCode = @ItemCode,
+                    Condition = @Condition,
                     BaseUnitID = @BaseUnitID,
                     DisplayUnitID = @DisplayUnitID,
                     Sort = @Sort,
@@ -198,6 +238,12 @@ namespace ItemManager.Infrastructure.Repositories
             command.Parameters.AddWithValue("@BaseUnitID", (object?)item.BaseUnitID ?? DBNull.Value);
             command.Parameters.AddWithValue("@DisplayUnitID", (object?)item.DisplayUnitID ?? DBNull.Value);
             command.Parameters.AddWithValue("@Sort", item.Sort);
+            command.Parameters.AddWithValue(
+                "@ItemCode",
+                (object?)item.ItemCode ?? DBNull.Value);
+            command.Parameters.AddWithValue(
+                "@Condition",
+                (object?)item.Condition ?? DBNull.Value);
             command.Parameters.AddWithValue("@UpdatedBy", (object?)item.UpdatedBy ?? DBNull.Value);
             command.Parameters.AddWithValue("@UpdatedDate", (object?)item.UpdatedDate ?? DBNull.Value);
 
@@ -276,6 +322,7 @@ namespace ItemManager.Infrastructure.Repositories
 
                 var dataQuery = $@"
                     SELECT i.ItemID, i.ItemName, i.ItemTypeID, i.ItemSubTypeID,
+                           i.ItemCode, i.Condition,
                            i.BaseUnitID, i.DisplayUnitID,
                            i.Sort,
                            i.CreatedBy, i.CreatedDate, i.UpdatedBy, i.UpdatedDate,
