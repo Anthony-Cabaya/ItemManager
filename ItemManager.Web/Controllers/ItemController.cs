@@ -406,7 +406,10 @@ namespace ItemManager.Web.Controllers
                 existing.ItemName = vm.ItemName;
                 existing.ItemTypeID = vm.ItemTypeID;
                 existing.ItemSubTypeID = vm.ItemSubTypeID;
-                existing.ItemCode = vm.ItemCode;
+                existing.ItemCode =
+                    string.IsNullOrWhiteSpace(vm.ItemCode)
+                        ? existing.ItemCode
+                        : vm.ItemCode;
                 existing.Condition = vm.Condition;
                 existing.BaseUnitID = vm.BaseUnitID;
                 existing.DisplayUnitID = vm.DisplayUnitID;

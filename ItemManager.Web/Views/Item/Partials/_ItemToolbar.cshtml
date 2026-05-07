@@ -35,10 +35,10 @@
                         ("col-15","Updated Date",false)
                         })
             {
-                <label class="d-block small py-1"
-                       style="cursor:pointer;">
+                <label class="d-flex align-items-center gap-2 small py-1 px-1"
+                       style="cursor:pointer; user-select:none;">
                     <input type="checkbox"
-                           class="col-toggle me-1"
+                           class="col-toggle"
                            data-col="@col.Item1"
                            @(col.Item3 ? "checked" : "") />
                     @col.Item2
@@ -48,20 +48,23 @@
     </div>
 
     <!-- Search -->
-    <div class="position-relative">
+    <div class="position-relative" style="max-width:280px;">
         <input id="searchInput" type="text"
-               class="form-control form-control-sm"
-               placeholder="Search items..."
-               style="max-width:220px; width:220px;" />
-        <button id="clearSearch"
-                class="btn btn-sm btn-outline-secondary"
-                style="display:none; position:absolute;
-                   right:4px; top:50%;
-                   transform:translateY(-50%);
-                   border:none; padding:0 6px;">
+               class="form-control form-control-sm pe-4"
+               placeholder="Search items..." />
+        <span id="clearSearch"
+              style="display:none; position:absolute;
+                 right:8px; top:50%;
+                 transform:translateY(-50%);
+                 cursor:pointer; color:#999;
+                 font-size:12px; z-index:5;">
             ✕
-        </button>
+        </span>
     </div>
+    <button id="btnSearch"
+            class="btn btn-outline-secondary btn-sm">
+        Search
+    </button>
 
     <!-- ItemType filter -->
     <select id="itemTypeFilter"

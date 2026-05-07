@@ -1,10 +1,78 @@
 ﻿let _allUnits = [];
 
+const FormFields = {
+    create: {
+        itemName: "create_itemName",
+        itemType: "create_itemType",
+        sort: "create_sort",
+        itemCode: "create_itemCode",
+        subType: "create_subType",
+        baseUnit: "create_baseUnit",
+        displayUnit: "create_displayUnit",
+        condition: "create_condition",
+        error: "createErrorMsg"
+    },
+    edit: {
+        itemName: "edit_itemName",
+        itemType: "edit_itemType",
+        sort: "edit_sort",
+        itemCode: "edit_itemCode",
+        subType: "edit_subType",
+        baseUnit: "edit_baseUnit",
+        displayUnit: "edit_displayUnit",
+        condition: "edit_condition",
+        error: "editErrorMsg"
+    }
+};
+
+function resetForm(prefix) {
+    const f = FormFields[prefix];
+
+    document.getElementById(f.itemName).value = "";
+    document.getElementById(f.sort).value = "0";
+    document.getElementById(f.itemCode).value = "";
+    document.getElementById(f.condition).value = "";
+
+    const err = document.getElementById(f.error);
+    if (err) err.classList.add("d-none");
+
+    clearValidation(prefix);
+}
+
+function validateCreate(payload) {
+    const f = FormFields.create;
+
+    if (!payload.itemName?.trim()) {
+        markInvalid(f.itemName);
+        return "Item Name is required.";
+    }
+
+    if (!payload.itemTypeID) {
+        markInvalid(f.itemType);
+        return "Please select an Item Type.";
+    }
+
+    return null;
+}
+
 // Load all units from server
 async function loadAllUnits() {
     if (_allUnits.length > 0) return;
     const res = await getJson("/Item/GetUnitsForItem?unitCategoryId=0");
     if (res.success) _allUnits = res.data;
+}
+
+// Reusable Validator
+function validateRequired(prefix, fieldName, message) {
+    const id = `${prefix}_${fieldName}`;
+    const el = document.getElementById(id);
+
+    if (!el || !el.value || !el.value.toString().trim()) {
+        markInvalid(id);
+        return message;
+    }
+
+    return null;
 }
 
 // Populate a select element with units
@@ -23,11 +91,7 @@ function populateUnitDropdown(selectId, units, selectedValue = "") {
 
 // CREATE MODAL FUNCTIONS
 async function openCreateModal() {
-    document.getElementById("create_itemName").value = "";
-    document.getElementById("create_sort").value = "0";
-    document.getElementById("create_itemCode").value = "";
-    document.getElementById("create_condition").value = "";
-    document.getElementById("createErrorMsg").classList.add("d-none");
+    resetForm("create");
 
     const typeSelect = document.getElementById("create_itemType");
     typeSelect.innerHTML = '<option value="">-- Select Item Type --</option>';
@@ -49,6 +113,7 @@ async function openCreateModal() {
     populateUnitDropdown("create_displayUnit", _allUnits);
 
     openModal("createModal");
+    clearValidation("create");
 }
 
 // Handle change of ItemType in create modal
@@ -199,19 +264,25 @@ async function refreshCreateCode() {
 
 // Save new item
 async function saveCreate() {
-    const itemName = document.getElementById("create_itemName").value.trim();
-    const sort = parseInt(document.getElementById("create_sort").value) || 0;
-    const itemCode = document.getElementById("create_itemCode").value.trim();
-    const itemTypeID = parseInt(document.getElementById("create_itemType").value) || 0;
-    const itemSubTypeID = parseInt(document.getElementById("create_subType").value) || null;
-    const baseUnitID = parseInt(document.getElementById("create_baseUnit").value) || null;
-    const displayUnitID = parseInt(document.getElementById("create_displayUnit").value) || null;
-    const condition = document.getElementById("create_condition").value;
 
-    if (!itemName) return showError("createErrorMsg", "Item Name is required.");
-    if (!itemTypeID) return showError("createErrorMsg", "Please select an Item Type.");
+    const payload = {
+        itemName: document.getElementById("create_itemName").value.trim(),
+        itemTypeID: parseInt(document.getElementById("create_itemType").value) || 0,
+        sort: parseInt(document.getElementById("create_sort").value) || 0,
+        itemCode: document.getElementById("create_itemCode").value.trim(),
+        itemSubTypeID: parseInt(document.getElementById("create_subType").value) || null,
+        baseUnitID: parseInt(document.getElementById("create_baseUnit").value) || null,
+        displayUnitID: parseInt(document.getElementById("create_displayUnit").value) || null,
+        condition: document.getElementById("create_condition").value
+    };
 
-    const res = await postJson("/Item/Create", { itemName, sort, itemCode, itemTypeID, itemSubTypeID, baseUnitID, displayUnitID, condition });
+    clearValidation("create");
+
+    const error = validateCreate(payload);
+    if (error) return showError("createErrorMsg", error);
+
+    const res = await postJson("/Item/Create", payload);
+
     if (res.success) {
         closeModal("createModal");
         showToast(res.message, "create");
@@ -262,34 +333,40 @@ async function openEditModal(itemId) {
     populateUnitDropdown("edit_displayUnit", d.unitOptions, d.displayUnitID);
 
     openModal("editModal");
+    clearValidation("edit");
 }
 
 // Save edited item
 async function saveEdit() {
-    const itemID = parseInt(document.getElementById("edit_itemID").value);
+
     const itemName = document.getElementById("edit_itemName").value.trim();
-    const sort = parseInt(document.getElementById("edit_sort").value) || 0;
-    const itemCode = document.getElementById("edit_itemCode").value.trim();
     const itemTypeID = parseInt(document.getElementById("edit_itemType").value) || 0;
-    const itemSubTypeID = parseInt(document.getElementById("edit_subType").value) || null;
-    const baseUnitID = parseInt(document.getElementById("edit_baseUnit").value) || null;
-    const displayUnitID = parseInt(document.getElementById("edit_displayUnit").value) || null;
-    const condition = document.getElementById("edit_condition").value;
 
-    if (!itemName) return showError("editErrorMsg", "Item Name is required.");
-    if (!itemTypeID) return showError("editErrorMsg", "Please select an Item Type.");
+    clearValidation("edit");
 
-    const res = await postJson("/Item/Update", {
-        itemID,
+    if (!itemName) {
+        markInvalid("edit_itemName");
+        return showError("editErrorMsg", "Item Name is required.");
+    }
+
+    if (!itemTypeID) {
+        markInvalid("edit_itemType");
+        return showError("editErrorMsg", "Please select an Item Type.");
+    }
+
+    const payload = {
+        itemID: parseInt(document.getElementById("edit_itemID").value),
         itemName,
-        sort,
-        itemCode,
+        sort: parseInt(document.getElementById("edit_sort").value) || 0,
+        itemCode: document.getElementById("edit_itemCode").value.trim(),
         itemTypeID,
-        itemSubTypeID,
-        baseUnitID,
-        displayUnitID,
-        condition
-    });
+        itemSubTypeID: parseInt(document.getElementById("edit_subType").value) || null,
+        baseUnitID: parseInt(document.getElementById("edit_baseUnit").value) || null,
+        displayUnitID: parseInt(document.getElementById("edit_displayUnit").value) || null,
+        condition: document.getElementById("edit_condition").value
+    };
+
+    const res = await postJson("/Item/Update", payload);
 
     if (res.success) {
         closeModal("editModal");
@@ -324,6 +401,42 @@ function showError(divId, message) {
     const div = document.getElementById(divId);
     div.textContent = message;
     div.classList.remove("d-none");
+
+    const modalBody = div.closest(".modal-body");
+    if (modalBody) {
+        modalBody.scrollTop = 0;
+    }
+
+    const modalDialog = div.closest(".modal");
+    if (modalDialog) {
+        modalDialog.scrollTop = 0;
+    }
+
+    div.setAttribute("tabindex", "-1");
+    div.focus({ preventScroll: false });
+}
+
+function markInvalid(fieldId) {
+    const el = document.getElementById(fieldId);
+    if (el) el.classList.add("is-invalid");
+}
+
+function clearValidation(prefix) {
+    const fields = [
+        "itemName",
+        "itemType",
+        "itemCode",
+        "sort",
+        "condition"
+    ];
+
+    fields.forEach(f => {
+        const el = document.getElementById(`${prefix}_${f}`);
+        if (el) el.classList.remove("is-invalid");
+    });
+
+    document.getElementById(`${prefix}ErrorMsg`)
+        ?.classList.add("d-none");
 }
 
 window.ItemModals = {

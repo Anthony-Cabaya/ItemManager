@@ -1,26 +1,31 @@
 ﻿let _searchDebounce;
 
 function initSearch() {
-    const input =
-        document.getElementById("searchInput");
-    const clearBtn =
-        document.getElementById("clearSearch");
+    const input = document.getElementById("searchInput");
+    const clearBtn = document.getElementById("clearSearch");
 
-    input.addEventListener("input", function () {
-        clearBtn.style.display =
-            this.value.length > 0 ? "inline-block" : "none";
-        clearTimeout(_searchDebounce);
-        _searchDebounce = setTimeout(() => {
-            ItemState.search = this.value;
-            ItemState.currentPage = 1;
-            loadItems();
-        }, 400);
+    input.addEventListener("input", () => {
+        clearBtn.style.display = input.value ? "inline" : "none";
     });
 
     clearBtn.addEventListener("click", () => {
         input.value = "";
         clearBtn.style.display = "none";
         ItemState.search = "";
+        ItemState.currentPage = 1;
+        loadItems();
+    });
+
+    input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+            ItemState.search = input.value;
+            ItemState.currentPage = 1;
+            loadItems();
+        }
+    });
+
+    document.getElementById("btnSearch").addEventListener("click", () => {
+        ItemState.search = input.value;
         ItemState.currentPage = 1;
         loadItems();
     });
