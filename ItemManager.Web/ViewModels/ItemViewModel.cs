@@ -60,5 +60,10 @@ namespace ItemManager.Web.ViewModels
                 new SelectListItem("Discontinued", "Discontinued")
             };
 
+        public class DeleteItemsRequest
+        {
+            public List<int> Ids { get; set; } = new();
+        }
+
     }
 }

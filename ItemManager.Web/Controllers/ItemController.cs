@@ -3,6 +3,7 @@ using ItemManager.Core.Models;
 using ItemManager.Web.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using static ItemManager.Web.ViewModels.ItemViewModel;
 
 namespace ItemManager.Web.Controllers
 {
@@ -31,23 +32,65 @@ namespace ItemManager.Web.Controllers
             _itemCodeService = itemCodeService;
         }
 
-        private JsonResult JsonSuccess(
-            string message,
-            object? data = null)
-            => Json(new
-            {
-                success = true,
-                message,
-                data
-            });
+        #region Helpers
+
+        private JsonResult JsonSuccess(string message, object? data = null)
+            => Json(new { success = true, message, data });
 
         private JsonResult JsonFail(string message)
-            => Json(new
-            {
-                success = false,
-                message,
-                data = (object?)null
-            });
+            => Json(new { success = false, message, data = (object?)null });
+
+        // Map Unit to JSON object
+        private object MapUnit(Unit u) => new
+        {
+            value = u.UnitID,
+            text = $"{u.UnitName} ({u.Abbreviation})",
+            categoryId = u.UnitCategoryID
+        };
+
+        // Map SelectListItem style (generic)
+        private object MapSelectListItem(int value, string? text) => new { value, text = text ?? "" };
+
+        // Map Item for Grid
+        private object MapItemForGrid(Item x) => new
+        {
+            itemID = x.ItemID,
+            itemCode = x.ItemCode,
+            itemName = x.ItemName,
+            sort = x.Sort,
+            itemTypeName = x.ItemType?.ItemTypeName,
+            itemSubTypeName = x.ItemSubTypeName,
+            baseUnitAbbreviation = x.BaseUnitAbbreviation,
+            condition = x.Condition,
+            createdBy = x.CreatedBy,
+            createdDate = x.CreatedDate?.ToString("yyyy-MM-dd HH:mm"),
+            updatedBy = x.UpdatedBy,
+            updatedDate = x.UpdatedDate?.ToString("yyyy-MM-dd HH:mm"),
+            baseUnitID = x.BaseUnitID,
+            variants = "—",
+            currentStock = "—",
+            unitCost = "—"
+        };
+
+        // For AvailableUnits
+        private List<SelectListItem> MapAvailableUnits(IEnumerable<Unit> allUnits, int baseUnitId, IEnumerable<int> usedUnitIds)
+        {
+            return allUnits
+                .Where(u => u.UnitID != baseUnitId && !usedUnitIds.Contains(u.UnitID))
+                .Select(u => new SelectListItem
+                {
+                    Value = u.UnitID.ToString(),
+                    Text = $"{u.UnitName} ({u.Abbreviation})"
+                }).ToList();
+        }
+
+        // Map ItemType to dropdown JSON
+        private object MapItemTypeDropdown(ItemType x) => MapSelectListItem(x.ItemTypeID, x.ItemTypeName);
+
+        // Map ItemSubType to dropdown JSON
+        private object MapItemSubTypeDropdown(ItemSubType x) => MapSelectListItem(x.ItemSubTypeID, x.ItemSubTypeName);
+
+        #endregion
 
         public async Task<IActionResult> Index(
             int page = 1,
@@ -61,6 +104,7 @@ namespace ItemManager.Web.Controllers
             {
                 var itemTypes = await _itemTypeRepo.GetAllAsync();
                 ViewData["ItemTypes"] = itemTypes;
+                ViewData["IsAdmin"] = IsAdmin;
 
                 return View();
             }
@@ -78,7 +122,8 @@ namespace ItemManager.Web.Controllers
             string sortColumn = "Sort",
             string sortDirection = "asc",
             int itemTypeFilter = 0,
-            int itemSubTypeFilter = 0)
+            int itemSubTypeFilter = 0,
+            string conditionFilter = "")
         {
             try
             {
@@ -94,37 +139,29 @@ namespace ItemManager.Web.Controllers
                     itemSubTypeFilter,
                     IsAdmin);
 
-                var data = new
-                {
-                    items = result.Items.Select(x => new
-                    {
-                        itemID = x.ItemID,
-                        itemCode = x.ItemCode,
-                        itemName = x.ItemName,
-                        sort = x.Sort,
-                        itemTypeName = x.ItemType?.ItemTypeName,
-                        itemSubTypeName = x.ItemSubTypeName,
-                        baseUnitAbbreviation = x.BaseUnitAbbreviation,
-                        condition = x.Condition,
-                        createdBy = x.CreatedBy,
-                        createdDate = x.CreatedDate?.ToString("yyyy-MM-dd HH:mm"),
-                        updatedBy = x.UpdatedBy,
-                        updatedDate = x.UpdatedDate?.ToString("yyyy-MM-dd HH:mm"),
-                        baseUnitID = x.BaseUnitID,
-                        variants = "—",
-                        currentStock = "—",
-                        unitCost = "—"
-                    }),
+                var itemsList = result.Items.AsEnumerable();
+                int totalCount = result.TotalCount;
 
-                    totalCount = result.TotalCount,
-                    totalPages = result.TotalPages,
+                if (!string.IsNullOrEmpty(conditionFilter))
+                {
+                    itemsList = itemsList.Where(x => x.Condition == conditionFilter);
+
+                    totalCount = itemsList.Count();
+                }
+
+                int totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+                if (totalPages == 0) totalPages = 1;
+
+                return JsonSuccess("Items loaded successfully.", new
+                {
+                    items = itemsList.Select(MapItemForGrid),
+                    totalCount,
+                    totalPages,
                     pageNumber = result.PageNumber,
                     pageSize = result.PageSize,
                     hasNextPage = result.HasNextPage,
                     hasPreviousPage = result.HasPreviousPage
-                };
-
-                return JsonSuccess("Items loaded successfully.", data);
+                });
             }
             catch (Exception ex)
             {
@@ -183,23 +220,9 @@ namespace ItemManager.Web.Controllers
                         displayUnitID = item.DisplayUnitID,
                         condition = item.Condition,
 
-                        itemTypeOptions = itemTypes.Select(x => new
-                        {
-                            value = x.ItemTypeID,
-                            text = x.ItemTypeName
-                        }),
-
-                        subTypeOptions = subTypes.Select(x => new
-                        {
-                            value = x.ItemSubTypeID,
-                            text = x.ItemSubTypeName
-                        }),
-
-                        unitOptions = units.Select(x => new
-                        {
-                            value = x.UnitID,
-                            text = $"{x.UnitName} ({x.Abbreviation})"
-                        })
+                        itemTypeOptions = itemTypes.Select(MapItemTypeDropdown),
+                        subTypeOptions = subTypes.Select(MapItemSubTypeDropdown),
+                        unitOptions = units.Select(MapUnit)
                     });
             }
             catch (Exception ex)
@@ -244,7 +267,7 @@ namespace ItemManager.Web.Controllers
         }
 
         [HttpPost]
-        public async Task<JsonResult> Create(ItemViewModel vm)
+        public async Task<JsonResult> Create([FromBody] ItemViewModel vm)
         {
             try
             {
@@ -330,7 +353,7 @@ namespace ItemManager.Web.Controllers
         }
 
         [HttpPost]
-        public async Task<JsonResult> Update(ItemViewModel vm)
+        public async Task<JsonResult> Update([FromBody] ItemViewModel vm)
         {
             try
             {
@@ -403,55 +426,37 @@ namespace ItemManager.Web.Controllers
         }
 
         [HttpPost]
-        public async Task<JsonResult> DeleteItems(
-            List<int> ids)
+        public async Task<JsonResult> DeleteItems([FromBody] DeleteItemsRequest request)
         {
-            try
-            {
-                if (ids == null || !ids.Any())
-                {
-                    return JsonFail(
-                        "No items selected.");
-                }
+            var ids = request.Ids;
 
-                if (!IsAdmin)
-                {
-                    return JsonFail(
-                        "Unauthorized.");
-                }
+            if (ids == null || !ids.Any())
+                return JsonFail("No items selected.");
 
-                foreach (var id in ids)
-                {
-                    await _itemRepo.DeleteAsync(id);
-                }
+            if (!IsAdmin)
+                return JsonFail("Unauthorized.");
 
-                return JsonSuccess(
-                    $"{ids.Count} item(s) deleted successfully.");
-            }
-            catch (Exception ex)
-            {
-                return JsonFail(ex.Message);
-            }
+            foreach (var id in ids)
+                await _itemRepo.DeleteAsync(id);
+
+            return JsonSuccess($"{ids.Count} item(s) deleted successfully.");
         }
 
         [HttpGet]
-        public async Task<JsonResult> GetUnitsForItem(
-            int unitCategoryId)
+        public async Task<JsonResult> GetUnitsForItem(int unitCategoryId)
         {
             try
             {
-                var units = await _unitRepo
-                    .GetByCategoryIdAsync(unitCategoryId);
+                IEnumerable<Unit> units;
 
-                var result = units.Select(x => new
-                {
-                    value = x.UnitID,
-                    text = $"{x.UnitName} ({x.Abbreviation})"
-                });
+                if (unitCategoryId == 0)
+                    units = await _unitRepo.GetAllAsync();
+                else
+                    units = await _unitRepo.GetByCategoryIdAsync(unitCategoryId);
 
-                return JsonSuccess(
-                    "Units loaded successfully.",
-                    result);
+                var result = units.Select(MapUnit);
+
+                return JsonSuccess("Units loaded successfully.", result);
             }
             catch (Exception ex)
             {
@@ -468,11 +473,7 @@ namespace ItemManager.Web.Controllers
                 var subTypes = await _itemSubTypeRepo
                     .GetByItemTypeIdAsync(itemTypeId);
 
-                var result = subTypes.Select(st => new
-                {
-                    value = st.ItemSubTypeID,
-                    text = st.ItemSubTypeName
-                });
+                var result = subTypes.Select(MapItemSubTypeDropdown);
 
                 return Json(result);
             }
@@ -509,14 +510,7 @@ namespace ItemManager.Web.Controllers
             var usedUnitIds =
                 conversions.Select(x => x.UnitID).ToList();
 
-            var availableUnits = allUnits
-                .Where(u => u.UnitID != item.BaseUnitID
-                         && !usedUnitIds.Contains(u.UnitID))
-                .Select(u => new SelectListItem
-                {
-                    Value = u.UnitID.ToString(),
-                    Text = $"{u.UnitName} ({u.Abbreviation})"
-                }).ToList();
+            var availableUnits = MapAvailableUnits(allUnits, item.BaseUnitID.Value, usedUnitIds);
 
             var vm = new ItemUnitConversionViewModel
             {
@@ -561,14 +555,7 @@ namespace ItemManager.Web.Controllers
                 vm.BaseUnitAbbreviation = baseUnit?.Abbreviation;
                 vm.Conversions = conversions;
 
-                vm.AvailableUnits = allUnits
-                    .Where(u => u.UnitID != item.BaseUnitID
-                             && !usedUnitIds.Contains(u.UnitID))
-                    .Select(u => new SelectListItem
-                    {
-                        Value = u.UnitID.ToString(),
-                        Text = $"{u.UnitName} ({u.Abbreviation})"
-                    }).ToList();
+                vm.AvailableUnits = MapAvailableUnits(allUnits, item.BaseUnitID!.Value, usedUnitIds);
 
                 return View("Conversions", vm);
             }

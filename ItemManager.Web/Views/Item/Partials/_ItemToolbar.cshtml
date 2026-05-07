@@ -1,0 +1,122 @@
+﻿@model IEnumerable<ItemManager.Core.Models.ItemType>
+
+<div class="d-flex gap-2 flex-wrap
+            align-items-center mb-2
+            position-relative">
+
+    <!-- Column toggle -->
+    <div class="position-relative">
+        <button id="btnColumns"
+                class="btn btn-outline-secondary btn-sm">
+            Columns ▼
+        </button>
+        <div id="columnPanel"
+             class="bg-white border rounded shadow-sm p-2"
+             style="display:none; position:absolute;
+                top:100%; left:0; z-index:1000;
+                min-width:180px;">
+            <!-- col-2 through col-15 checkboxes -->
+            <!-- checked by default: col-2 to col-11 -->
+            <!-- unchecked by default: col-12 to col-15 -->
+            @foreach (var col in new[] {
+                        ("col-2","Item Code",true),
+                        ("col-3","Item Name",true),
+                        ("col-4","Sort",true),
+                        ("col-5","Item Type",true),
+                        ("col-6","Sub Type",true),
+                        ("col-7","Variants",true),
+                        ("col-8","Base Unit",true),
+                        ("col-9","Current Stock",true),
+                        ("col-10","Unit Cost",true),
+                        ("col-11","Condition",true),
+                        ("col-12","Created By",false),
+                        ("col-13","Created Date",false),
+                        ("col-14","Updated By",false),
+                        ("col-15","Updated Date",false)
+                        })
+            {
+                <label class="d-block small py-1"
+                       style="cursor:pointer;">
+                    <input type="checkbox"
+                           class="col-toggle me-1"
+                           data-col="@col.Item1"
+                           @(col.Item3 ? "checked" : "") />
+                    @col.Item2
+                </label>
+            }
+        </div>
+    </div>
+
+    <!-- Search -->
+    <div class="position-relative">
+        <input id="searchInput" type="text"
+               class="form-control form-control-sm"
+               placeholder="Search items..."
+               style="max-width:220px; width:220px;" />
+        <button id="clearSearch"
+                class="btn btn-sm btn-outline-secondary"
+                style="display:none; position:absolute;
+                   right:4px; top:50%;
+                   transform:translateY(-50%);
+                   border:none; padding:0 6px;">
+            ✕
+        </button>
+    </div>
+
+    <!-- ItemType filter -->
+    <select id="itemTypeFilter"
+            class="form-select form-select-sm w-auto">
+        <option value="0">All Types</option>
+        @foreach (var t in Model)
+        {
+            <option value="@t.ItemTypeID">
+                @t.ItemTypeName
+            </option>
+        }
+    </select>
+
+    <!-- SubType filter -->
+    <select id="itemSubTypeFilter"
+            class="form-select form-select-sm w-auto"
+            disabled>
+        <option value="0">All SubTypes</option>
+    </select>
+
+    <!-- Condition filter -->
+    <select id="conditionFilter"
+            class="form-select form-select-sm w-auto">
+        <option value="">All Conditions</option>
+        <option>New</option>
+        <option>Opened - Never Used</option>
+        <option>Used</option>
+        <option>Defective</option>
+        <option>Disposed</option>
+        <option>Discontinued</option>
+    </select>
+
+</div>
+
+<!-- Action buttons row -->
+<div class="d-flex gap-2 align-items-center mb-3">
+    <button id="btnCreate"
+            class="btn btn-primary btn-sm">
+        CREATE
+    </button>
+    <button id="btnEdit"
+            class="btn btn-warning btn-sm"
+            disabled>
+        EDIT
+    </button>
+    <button id="btnDelete"
+            class="btn btn-danger btn-sm"
+            disabled>
+        DELETE
+    </button>
+    <button id="btnConversions"
+            class="btn btn-info btn-sm"
+            style="display:none;">
+        CONVERSIONS
+    </button>
+    <span id="selectedCount"
+          class="text-muted small ms-2"></span>
+</div>

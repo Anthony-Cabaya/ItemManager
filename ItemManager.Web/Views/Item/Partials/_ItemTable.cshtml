@@ -1,0 +1,46 @@
+﻿<div style="overflow-x:auto;">
+    <table id="itemTable"
+           class="table table-hover table-bordered
+                align-middle table-sm"
+           style="font-size:13px; min-width:1000px;">
+        <thead class="table-light">
+            <tr>
+                <th style="width:36px;">
+                    <input type="checkbox" id="selectAll" />
+                </th>
+                <th data-col="col-2">Item Code</th>
+                <th data-col="col-3">Item Name</th>
+                <th data-col="col-4">Sort</th>
+                <th data-col="col-5">Item Type</th>
+                <th data-col="col-6">Sub Type</th>
+                <th data-col="col-7">Variants</th>
+                <th data-col="col-8">Base Unit</th>
+                <th data-col="col-9">Current Stock</th>
+                <th data-col="col-10">Unit Cost</th>
+                <th data-col="col-11">Condition</th>
+                <th data-col="col-12">Created By</th>
+                <th data-col="col-13">Created Date</th>
+                <th data-col="col-14">Updated By</th>
+                <th data-col="col-15">Updated Date</th>
+            </tr>
+        </thead>
+        <tbody id="itemTableBody">
+            <tr>
+                <td colspan="15"
+                    class="text-center text-muted py-4">
+                    Loading...
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<div class="d-flex justify-content-between
+            align-items-center mt-2 mb-3">
+    <span id="paginationInfo"
+          class="text-muted small"></span>
+    <nav>
+        <ul class="pagination pagination-sm mb-0"
+            id="paginationControls"></ul>
+    </nav>
+</div>
