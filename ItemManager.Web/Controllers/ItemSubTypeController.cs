@@ -2,101 +2,90 @@
 using ItemManager.Core.Models;
 using ItemManager.Web.ViewModels;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace ItemManager.Web.Controllers
 {
     public class ItemSubTypeController : BaseController
     {
-        private readonly IItemSubTypeRepository _itemSubTypeRepository;
-        private readonly IItemTypeRepository _itemTypeRepository;
+        private const int PageSize = 10;
+
+        private readonly IItemSubTypeRepository _subTypeRepo;
+        private readonly IItemTypeRepository _itemTypeRepo;
 
         public ItemSubTypeController(
-            IItemSubTypeRepository itemSubTypeRepository,
-            IItemTypeRepository itemTypeRepository)
+            IItemSubTypeRepository subTypeRepo,
+            IItemTypeRepository itemTypeRepo)
         {
-            _itemSubTypeRepository = itemSubTypeRepository;
-            _itemTypeRepository = itemTypeRepository;
+            _subTypeRepo = subTypeRepo;
+            _itemTypeRepo = itemTypeRepo;
         }
 
-        public async Task<IActionResult> Index(
-            int itemTypeFilter = 0,
-            string search = "",
-            string sortColumn = "Sort",
-            string sortDirection = "asc")
+        private JsonResult JsonSuccess(
+            string message,
+            object? data = null)
+            => Json(new
+            {
+                success = true,
+                message,
+                data
+            });
+
+        private JsonResult JsonFail(string message)
+            => Json(new
+            {
+                success = false,
+                message,
+                data = (object?)null
+            });
+
+        private object MapSubType(ItemSubType x)
+        {
+            return new
+            {
+                itemSubTypeID = x.ItemSubTypeID,
+                itemSubTypeName = x.ItemSubTypeName,
+                itemTypeName = x.ItemTypeName,
+                itemTypeID = x.ItemTypeID,
+                sort = x.Sort,
+
+                createdBy = x.CreatedBy,
+
+                createdDate = x.CreatedDate?.ToString(
+                    "yyyy-MM-dd HH:mm",
+                    System.Globalization.CultureInfo.InvariantCulture),
+
+                updatedBy = x.UpdatedBy,
+
+                updatedDate = x.UpdatedDate.HasValue
+                    ? x.UpdatedDate.Value.ToString(
+                        "yyyy-MM-dd HH:mm",
+                        System.Globalization.CultureInfo.InvariantCulture)
+                    : null
+            };
+        }
+
+        public class DeleteSubTypesRequest
+        {
+            public List<int> Ids { get; set; } = new();
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Index()
         {
             try
             {
                 if (!IsAdmin)
-                    return RedirectToAction("Index", "Dashboard");
+                    return RedirectToAction(
+                        "Index",
+                        "Dashboard");
 
-                ViewBag.ItemTypes = await GetItemTypeDropdown();
-                ViewBag.ItemTypeFilter = itemTypeFilter;
-                ViewBag.Search = search;
-                ViewBag.SortColumn = sortColumn;
-                ViewBag.SortDirection = sortDirection;
+                var itemTypes =
+                    await _itemTypeRepo.GetAllAsync();
 
-                IEnumerable<ItemSubType> subTypes =
-                    itemTypeFilter > 0
-                        ? await _itemSubTypeRepository.GetByItemTypeIdAsync(itemTypeFilter)
-                        : await _itemSubTypeRepository.GetAllAsync();
+                ViewBag.ItemTypes = itemTypes;
+                ViewBag.IsAdmin = IsAdmin;
 
-                if (!string.IsNullOrWhiteSpace(search))
-                {
-                    search = search.Trim().ToLower();
-
-                    subTypes = subTypes.Where(x =>
-                        (!string.IsNullOrEmpty(x.ItemSubTypeName) &&
-                         x.ItemSubTypeName.ToLower().Contains(search))
-
-                        ||
-
-                        (!string.IsNullOrEmpty(x.CreatedBy) &&
-                         x.CreatedBy.ToLower().Contains(search))
-
-                        ||
-
-                        (!string.IsNullOrEmpty(x.UpdatedBy) &&
-                         x.UpdatedBy.ToLower().Contains(search))
-                    );
-
-                }
-
-                subTypes = sortColumn switch
-                {
-                    "ItemSubTypeName" => sortDirection == "asc"
-                        ? subTypes.OrderBy(x => x.ItemSubTypeName)
-                        : subTypes.OrderByDescending(x => x.ItemSubTypeName),
-
-                    "Sort" => sortDirection == "asc"
-                        ? subTypes.OrderBy(x => x.Sort)
-                        : subTypes.OrderByDescending(x => x.Sort),
-
-                    "CreatedBy" => sortDirection == "asc"
-                        ? subTypes.OrderBy(x => x.CreatedBy)
-                        : subTypes.OrderByDescending(x => x.CreatedBy),
-
-                    "UpdatedBy" => sortDirection == "asc"
-                        ? subTypes.OrderBy(x => x.UpdatedBy)
-                        : subTypes.OrderByDescending(x => x.UpdatedBy),
-
-                    _ => subTypes.OrderBy(x => x.ItemSubTypeName)
-                };
-
-                var viewModel = subTypes.Select(x => new ItemSubTypeViewModel
-                {
-                    ItemSubTypeID = x.ItemSubTypeID,
-                    ItemSubTypeName = x.ItemSubTypeName,
-                    ItemTypeID = x.ItemTypeID,
-                    ItemTypeName = x.ItemTypeName,
-                    Sort = x.Sort,
-                    CreatedBy = x.CreatedBy,
-                    CreatedDate = x.CreatedDate,
-                    UpdatedBy = x.UpdatedBy,
-                    UpdatedDate = x.UpdatedDate
-                }).ToList();
-
-                return View(viewModel);
+                return View();
             }
             catch (Exception ex)
             {
@@ -106,161 +95,232 @@ namespace ItemManager.Web.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Create()
+        public async Task<IActionResult> GetSubTypesData(
+            int page = 1,
+            string search = "",
+            int itemTypeFilter = 0)
         {
             try
             {
-                if (!IsAdmin)
-                    return RedirectToAction("Index", "Dashboard");
+                var result =
+                    await _subTypeRepo.GetPagedAsync(
+                        page,
+                        PageSize,
+                        search,
+                        itemTypeFilter);
 
-                var viewModel = new ItemSubTypeViewModel
-                {
-                    ItemTypeList = await GetItemTypeDropdown()
-                };
-
-                return View(viewModel);
+                return JsonSuccess(
+                    "Loaded successfully.",
+                    new
+                    {
+                        items = result.Items.Select(MapSubType),
+                        totalCount = result.TotalCount,
+                        totalPages = result.TotalPages,
+                        pageNumber = result.PageNumber,
+                        pageSize = result.PageSize,
+                        hasNextPage = result.HasNextPage,
+                        hasPreviousPage = result.HasPreviousPage
+                    });
             }
             catch (Exception ex)
             {
-                ViewData["ErrorMessage"] = ex.Message;
-                return View("Error");
+                return JsonFail(ex.Message);
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetSubTypeForEdit(
+            int id)
+        {
+            try
+            {
+                var subType =
+                    await _subTypeRepo.GetByIdAsync(id);
+
+                if (subType == null)
+                {
+                    return JsonFail(
+                        "Sub Type not found.");
+                }
+
+                return JsonSuccess(
+                    "Loaded successfully.",
+                    new
+                    {
+                        itemSubTypeID = subType.ItemSubTypeID,
+                        itemSubTypeName = subType.ItemSubTypeName,
+                        itemTypeID = subType.ItemTypeID,
+                        sort = subType.Sort
+                    });
+            }
+            catch (Exception ex)
+            {
+                return JsonFail(ex.Message);
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult>
+            GetItemTypesForDropdown()
+        {
+            try
+            {
+                var itemTypes =
+                    await _itemTypeRepo.GetAllAsync();
+
+                return Json(
+                    itemTypes.Select(x => new
+                    {
+                        value = x.ItemTypeID,
+                        text = x.ItemTypeName
+                    }));
+            }
+            catch (Exception ex)
+            {
+                return JsonFail(ex.Message);
             }
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create(ItemSubTypeViewModel viewModel)
+        public async Task<IActionResult> Create(
+            [FromBody] ItemSubTypeViewModel vm)
         {
             try
             {
-                if (!IsAdmin)
-                    return RedirectToAction("Index", "Dashboard");
-
-                if (!ModelState.IsValid)
+                if (string.IsNullOrWhiteSpace(
+                    vm.ItemSubTypeName))
                 {
-                    viewModel.ItemTypeList = await GetItemTypeDropdown();
-                    return View(viewModel);
+                    return JsonFail(
+                        "Sub Type Name is required.");
+                }
+
+                if (vm.ItemTypeID <= 0)
+                {
+                    return JsonFail(
+                        "Please select an Item Type.");
                 }
 
                 var model = new ItemSubType
                 {
-                    ItemSubTypeName = viewModel.ItemSubTypeName,
-                    ItemTypeID = viewModel.ItemTypeID,
-                    Sort = viewModel.Sort,
+                    ItemSubTypeName =
+                        vm.ItemSubTypeName.Trim(),
+
+                    ItemTypeID = vm.ItemTypeID,
+                    Sort = vm.Sort,
+
                     CreatedBy = CurrentUsername,
                     CreatedDate = DateTime.Now
                 };
 
-                await _itemSubTypeRepository.AddAsync(model);
+                await _subTypeRepo.AddAsync(model);
 
-                return RedirectToAction(nameof(Index));
+                return JsonSuccess(
+                    "Sub Type created successfully.");
             }
             catch (Exception ex)
             {
-                ViewData["ErrorMessage"] = ex.Message;
-                return View("Error");
-            }
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> Edit(int id)
-        {
-            try
-            {
-                if (!IsAdmin)
-                    return RedirectToAction("Index", "Dashboard");
-
-                var viewModel = await GetById(id);
-                if (viewModel == null)
-                    return NotFound();
-
-                return View(viewModel);
-            }
-            catch (Exception ex)
-            {
-                ViewData["ErrorMessage"] = ex.Message;
-                return View("Error");
+                return JsonFail(ex.Message);
             }
         }
 
         [HttpPost]
-        public async Task<IActionResult> Edit(ItemSubTypeViewModel viewModel)
+        public async Task<IActionResult> Update(
+            [FromBody] ItemSubTypeViewModel vm)
         {
             try
             {
-                if (!IsAdmin)
-                    return RedirectToAction("Index", "Dashboard");
-
-                if (!ModelState.IsValid)
+                if (string.IsNullOrWhiteSpace(
+                    vm.ItemSubTypeName))
                 {
-                    viewModel.ItemTypeList = await GetItemTypeDropdown();
-                    return View(viewModel);
+                    return JsonFail(
+                        "Sub Type Name is required.");
                 }
 
-                var model = new ItemSubType
+                if (vm.ItemTypeID <= 0)
                 {
-                    ItemSubTypeID = viewModel.ItemSubTypeID,
-                    ItemSubTypeName = viewModel.ItemSubTypeName,
-                    ItemTypeID = viewModel.ItemTypeID,
-                    Sort = viewModel.Sort,
-                    UpdatedBy = CurrentUsername,
-                    UpdatedDate = DateTime.Now
-                };
+                    return JsonFail(
+                        "Please select an Item Type.");
+                }
 
-                await _itemSubTypeRepository.UpdateAsync(model);
+                var existing =
+                    await _subTypeRepo.GetByIdAsync(
+                        vm.ItemSubTypeID);
 
-                return RedirectToAction(nameof(Index));
+                if (existing == null)
+                {
+                    return JsonFail(
+                        "Sub Type not found.");
+                }
+
+                existing.ItemSubTypeName =
+                    vm.ItemSubTypeName.Trim();
+
+                existing.ItemTypeID =
+                    vm.ItemTypeID;
+
+                existing.Sort =
+                    vm.Sort;
+
+                existing.UpdatedBy =
+                    CurrentUsername;
+
+                existing.UpdatedDate =
+                    DateTime.Now;
+
+                await _subTypeRepo.UpdateAsync(
+                    existing);
+
+                return JsonSuccess(
+                    "Sub Type updated successfully.");
             }
             catch (Exception ex)
             {
-                ViewData["ErrorMessage"] = ex.Message;
-                return View("Error");
+                return JsonFail(ex.Message);
             }
         }
 
         [HttpPost]
-        public async Task<IActionResult> Delete(int id)
+        public async Task<IActionResult> DeleteSubTypes(
+            [FromBody] DeleteSubTypesRequest request)
         {
             try
             {
                 if (!IsAdmin)
-                    return RedirectToAction("Index", "Dashboard");
+                {
+                    return JsonFail(
+                        "Unauthorized.");
+                }
 
-                await _itemSubTypeRepository.DeleteAsync(id);
+                if (request.Ids == null ||
+                    !request.Ids.Any())
+                {
+                    return JsonFail(
+                        "No Sub Types selected.");
+                }
 
-                return RedirectToAction(nameof(Index));
+                foreach (var id in request.Ids)
+                {
+                    var count =
+                        await _subTypeRepo
+                            .GetItemCountBySubTypeAsync(id);
+
+                    if (count > 0)
+                    {
+                        return JsonFail(
+                            "Cannot delete — one or more Sub Types have items assigned to them.");
+                    }
+                }
+
+                await _subTypeRepo.DeleteManyAsync(
+                    request.Ids);
+
+                return JsonSuccess(
+                    $"{request.Ids.Count} sub type(s) deleted successfully.");
             }
             catch (Exception ex)
             {
-                ViewData["ErrorMessage"] = ex.Message;
-                return View("Error");
+                return JsonFail(ex.Message);
             }
         }
-
-        private async Task<ItemSubTypeViewModel?> GetById(int id)
-        {
-            var subType = await _itemSubTypeRepository.GetByIdAsync(id);
-            if (subType == null) return null;
-
-            return new ItemSubTypeViewModel
-            {
-                ItemSubTypeID = subType.ItemSubTypeID,
-                ItemSubTypeName = subType.ItemSubTypeName,
-                ItemTypeID = subType.ItemTypeID,
-                Sort = subType.Sort,
-                ItemTypeList = await GetItemTypeDropdown()
-            };
-        }
-
-        private async Task<List<SelectListItem>> GetItemTypeDropdown()
-        {
-            var itemTypes = await _itemTypeRepository.GetAllAsync();
-
-            return itemTypes.Select(x => new SelectListItem
-            {
-                Value = x.ItemTypeID.ToString(),
-                Text = x.ItemTypeName
-            }).ToList();
-        }
-
     }
 }

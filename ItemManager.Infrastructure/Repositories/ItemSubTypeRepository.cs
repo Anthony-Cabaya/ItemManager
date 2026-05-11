@@ -1,4 +1,5 @@
-﻿using ItemManager.Core.Interfaces;
+﻿using ItemManager.Core.Helpers;
+using ItemManager.Core.Interfaces;
 using ItemManager.Core.Models;
 using ItemManager.Infrastructure.Helpers;
 using Microsoft.Data.SqlClient;
@@ -265,5 +266,205 @@ namespace ItemManager.Infrastructure.Repositories
                 throw new Exception("An unexpected error occurred while deleting ItemSubType.", ex);
             }
         }
+
+        public async Task<int> GetItemCountBySubTypeAsync(int itemSubTypeId)
+        {
+            try
+            {
+                using var connection = _dbHelper.CreateConnection();
+                await connection.OpenAsync();
+
+                var query = @"SELECT COUNT(*)
+                      FROM Items
+                      WHERE ItemSubTypeID = @ItemSubTypeID";
+
+                using var command = new SqlCommand(query, connection);
+
+                command.Parameters.AddWithValue(
+                    "@ItemSubTypeID",
+                    itemSubTypeId);
+
+                var result = await command.ExecuteScalarAsync();
+
+                return Convert.ToInt32(result);
+            }
+            catch (SqlException sqlEx)
+            {
+                throw new Exception(
+                    "An error occurred while counting Items by SubType.",
+                    sqlEx);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(
+                    "An unexpected error occurred while counting Items by SubType.",
+                    ex);
+            }
+        }
+
+        public async Task DeleteManyAsync(IEnumerable<int> ids)
+        {
+            try
+            {
+                var idList = ids.ToList();
+
+                if (!idList.Any())
+                    return;
+
+                using var connection = _dbHelper.CreateConnection();
+
+                await connection.OpenAsync();
+
+                var parameters = idList
+                    .Select((x, i) => $"@Id{i}")
+                    .ToList();
+
+                var query = $@"
+            DELETE FROM ItemSubType
+            WHERE ItemSubTypeID IN
+            ({string.Join(",", parameters)})";
+
+                using var command =
+                    new SqlCommand(query, connection);
+
+                for (int i = 0; i < idList.Count; i++)
+                {
+                    command.Parameters.AddWithValue(
+                        parameters[i],
+                        idList[i]);
+                }
+
+                await command.ExecuteNonQueryAsync();
+            }
+            catch (SqlException sqlEx)
+            {
+                throw new Exception(
+                    "An error occurred while deleting Sub Types.",
+                    sqlEx);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(
+                    "An unexpected error occurred while deleting Sub Types.",
+                    ex);
+            }
+        }
+
+        public async Task<PagedResult<ItemSubType>> GetPagedAsync(
+    int pageNumber,
+    int pageSize,
+    string search = "",
+    int itemTypeFilter = 0)
+        {
+            var items = new List<ItemSubType>();
+
+            try
+            {
+                using var connection = _dbHelper.CreateConnection();
+
+                await connection.OpenAsync();
+
+                var countQuery = @"
+            SELECT COUNT(*)
+            FROM ItemSubType ist
+            INNER JOIN ItemType it
+                ON ist.ItemTypeID = it.ItemTypeID
+            WHERE (@Search = ''
+                OR ist.SubTypeName LIKE @SearchPattern)
+            AND (@ItemTypeFilter = 0
+                OR ist.ItemTypeID = @ItemTypeFilter)";
+
+                using var countCommand =
+                    new SqlCommand(countQuery, connection);
+
+                countCommand.Parameters.AddWithValue(
+                    "@Search",
+                    search);
+
+                countCommand.Parameters.AddWithValue(
+                    "@SearchPattern",
+                    $"%{search}%");
+
+                countCommand.Parameters.AddWithValue(
+                    "@ItemTypeFilter",
+                    itemTypeFilter);
+
+                var totalCount = Convert.ToInt32(
+                    await countCommand.ExecuteScalarAsync());
+
+                var dataQuery = @"
+            SELECT ist.ItemSubTypeID,
+                   ist.ItemTypeID,
+                   ist.SubTypeName,
+                   ist.Sort,
+                   ist.CreatedBy,
+                   ist.CreatedDate,
+                   ist.UpdatedBy,
+                   ist.UpdatedDate,
+                   it.ItemTypeName
+            FROM ItemSubType ist
+            INNER JOIN ItemType it
+                ON ist.ItemTypeID = it.ItemTypeID
+            WHERE (@Search = ''
+                OR ist.SubTypeName LIKE @SearchPattern)
+            AND (@ItemTypeFilter = 0
+                OR ist.ItemTypeID = @ItemTypeFilter)
+            ORDER BY ist.Sort ASC
+            OFFSET @Offset ROWS
+            FETCH NEXT @PageSize ROWS ONLY";
+
+                using var command =
+                    new SqlCommand(dataQuery, connection);
+
+                command.Parameters.AddWithValue(
+                    "@Search",
+                    search);
+
+                command.Parameters.AddWithValue(
+                    "@SearchPattern",
+                    $"%{search}%");
+
+                command.Parameters.AddWithValue(
+                    "@ItemTypeFilter",
+                    itemTypeFilter);
+
+                command.Parameters.AddWithValue(
+                    "@Offset",
+                    (pageNumber - 1) * pageSize);
+
+                command.Parameters.AddWithValue(
+                    "@PageSize",
+                    pageSize);
+
+                using var reader =
+                    await command.ExecuteReaderAsync();
+
+                while (await reader.ReadAsync())
+                {
+                    items.Add(Map(reader));
+                }
+
+                return new PagedResult<ItemSubType>
+                {
+                    Items = items,
+                    TotalCount = totalCount,
+                    PageNumber = pageNumber,
+                    PageSize = pageSize
+                };
+            }
+            catch (SqlException sqlEx)
+            {
+                throw new Exception(
+                    "An error occurred while fetching paged Sub Types.",
+                    sqlEx);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(
+                    "An unexpected error occurred while fetching paged Sub Types.",
+                    ex);
+            }
+        }
+
     }
 }
