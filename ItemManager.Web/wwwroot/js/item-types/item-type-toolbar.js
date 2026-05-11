@@ -6,23 +6,10 @@
     const clearBtn =
         document.getElementById("clearSearch");
 
-    let debounceTimer = null;
-
     input.addEventListener("input", function () {
 
         clearBtn.style.display =
             this.value ? "inline" : "none";
-
-        clearTimeout(debounceTimer);
-
-        debounceTimer = setTimeout(() => {
-
-            ItemTypeState.search = this.value;
-            ItemTypeState.currentPage = 1;
-
-            loadItemTypes();
-
-        }, 400);
     });
 
     clearBtn.addEventListener("click", function () {
