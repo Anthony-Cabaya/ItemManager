@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using ItemManager.Core.Helpers;
+﻿using ItemManager.Core.Helpers;
 using ItemManager.Core.Interfaces;
 using ItemManager.Core.Models;
 using ItemManager.Infrastructure.Helpers;
@@ -176,6 +171,78 @@ namespace ItemManager.Infrastructure.Repositories
             }
         }
 
+        public async Task<int> GetItemCountByTypeAsync(int itemTypeId)
+        {
+            try
+            {
+                using var connection = _dbHelper.CreateConnection();
+                await connection.OpenAsync();
+
+                var query = @"SELECT COUNT(*)
+                      FROM Items
+                      WHERE ItemTypeID = @ItemTypeID";
+
+                using var command = new SqlCommand(query, connection);
+
+                command.Parameters.AddWithValue("@ItemTypeID", itemTypeId);
+
+                var result = await command.ExecuteScalarAsync();
+
+                return result != null
+                    ? Convert.ToInt32(result)
+                    : 0;
+            }
+            catch (SqlException sqlEx)
+            {
+                throw new Exception("An error occurred while checking item count by ItemType.", sqlEx);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("An unexpected error occurred while checking item count by ItemType.", ex);
+            }
+        }
+
+        public async Task DeleteManyAsync(IEnumerable<int> ids)
+        {
+            try
+            {
+                var idList = ids.ToList();
+
+                if (!idList.Any())
+                    return;
+
+                using var connection = _dbHelper.CreateConnection();
+                await connection.OpenAsync();
+
+                var parameters = idList
+                    .Select((x, i) => $"@Id{i}")
+                    .ToList();
+
+                var query = $@"
+                    DELETE FROM ItemType
+                    WHERE ItemTypeID IN ({string.Join(",", parameters)})";
+
+                using var command = new SqlCommand(query, connection);
+
+                for (int i = 0; i < idList.Count; i++)
+                {
+                    command.Parameters.AddWithValue(
+                        parameters[i],
+                        idList[i]);
+                }
+
+                await command.ExecuteNonQueryAsync();
+            }
+            catch (SqlException sqlEx)
+            {
+                throw new Exception("An error occurred while deleting ItemTypes.", sqlEx);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("An unexpected error occurred while deleting ItemTypes.", ex);
+            }
+        }
+
         // Pagination in ItemType
         public async Task<PagedResult<ItemType>> GetPagedAsync(
             int pageNumber,
@@ -218,7 +285,12 @@ namespace ItemManager.Infrastructure.Repositories
                 countCommand.Parameters.AddWithValue("@SearchPattern", $"%{search}%");
                 countCommand.Parameters.AddWithValue("@IncludeAuditSearch", includeAuditSearch ? 1 : 0);
 
-                result.TotalCount = (int)await countCommand.ExecuteScalarAsync();
+                var totalCountResult =
+                    await countCommand.ExecuteScalarAsync();
+
+                result.TotalCount = totalCountResult != null
+                    ? Convert.ToInt32(totalCountResult)
+                    : 0;
 
                 // Query 2 - get paged data
                 var offset = (pageNumber - 1) * pageSize;

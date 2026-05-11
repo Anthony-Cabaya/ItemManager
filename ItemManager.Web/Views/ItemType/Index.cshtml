@@ -1,220 +1,41 @@
-﻿@model ItemManager.Core.Helpers.PagedResult<ItemType>
-
-@{
+﻿@{
     ViewData["Title"] = "Item Types";
-
-    var search = ViewData["Search"]?.ToString() ?? "";
-    var sortCol = ViewData["SortColumn"]?.ToString() ?? "Sort";
-    var sortDir = ViewData["SortDirection"]?.ToString() ?? "asc";
 }
 
-<div class="container mt-4">
+<div id="pageData"
+     data-is-admin="@((ViewBag.IsAdmin ?? false) ? "true" : "false")">
+</div>
 
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2 class="mb-0">Item Types</h2>
+@Html.AntiForgeryToken()
 
-        <a asp-action="Create" class="btn btn-primary">
-            Create New
-        </a>
-    </div>
+<div class="container-fluid px-4">
 
-    @* SEARCH *@
-    <form asp-action="Index" method="get" class="mb-3" id="searchForm">
+    @await Html.PartialAsync(
+    "Partials/_ItemTypeToolbar")
 
-        <div class="position-relative" style="max-width: 400px;">
+    @await Html.PartialAsync(
+        "Partials/_ItemTypeTable")
 
-            <input type="text"
-                   name="search"
-                   id="searchInput"
-                   value="@search"
-                   class="form-control pe-4"
-                   placeholder="Search item type name..."  />
+    @await Html.PartialAsync(
+        "Partials/_ItemTypeCreateModal")
 
-            <input type="hidden" name="sortColumn" value="@sortCol" />
-            <input type="hidden" name="sortDirection" value="@sortDir" />
+    @await Html.PartialAsync(
+        "Partials/_ItemTypeEditModal")
 
-            <span id="clearBtn"
-                  style="display:@(!string.IsNullOrEmpty(search) ? "flex" : "none");
-                         position:absolute;
-                         right:10px;
-                         top:50%;
-                         transform:translateY(-50%);
-                         cursor:pointer;
-                         color:#999;">
-                ✕
-            </span>
-
-        </div>
-    </form>
-
-    @* TABLE *@
-    <table class="table table-hover table-bordered align-middle dashboard-table">
-        <thead class="table-light">
-            <tr>
-
-                <th>
-                    Item Type Name
-
-                    <a asp-action="Index"
-                       asp-route-search="@search"
-                       asp-route-sortColumn="ItemTypeName"
-                       asp-route-sortDirection="asc"
-                       class="ms-1 @(sortCol == "ItemTypeName" && sortDir == "asc" ? "text-primary fw-bold" : "text-secondary")">
-                        ▲
-                    </a>
-
-                    <a asp-action="Index"
-                       asp-route-search="@search"
-                       asp-route-sortColumn="ItemTypeName"
-                       asp-route-sortDirection="desc"
-                       class="ms-1 @(sortCol == "ItemTypeName" && sortDir == "desc" ? "text-primary fw-bold" : "text-secondary")">
-                        ▼
-                    </a>
-                </th>
-
-                <th>
-                    Sort
-
-                    <a asp-action="Index"
-                       asp-route-search="@search"
-                       asp-route-sortColumn="Sort"
-                       asp-route-sortDirection="asc"
-                       class="ms-1 @(sortCol == "Sort" && sortDir == "asc" ? "text-primary fw-bold" : "text-secondary")">
-                        ▲
-                    </a>
-
-                    <a asp-action="Index"
-                       asp-route-search="@search"
-                       asp-route-sortColumn="Sort"
-                       asp-route-sortDirection="desc"
-                       class="ms-1 @(sortCol == "Sort" && sortDir == "desc" ? "text-primary fw-bold" : "text-secondary")">
-                        ▼
-                    </a>
-                </th>
-
-                @* ADMIN ONLY *@
-                @if (Context.Session.GetString("Role") == "Admin")
-                {
-                    <th class="d-none d-md-table-cell">Created By</th>
-                    <th class="d-none d-md-table-cell">Created Date</th>
-                    <th class="d-none d-md-table-cell">Updated By</th>
-                    <th class="d-none d-md-table-cell">Updated Date</th>
-                }
-
-                <th>Actions</th>
-            </tr>
-        </thead>
-
-        <tbody>
-            @foreach (var item in Model.Items)
-            {
-                <tr>
-
-                    <td class="fw-semibold">
-                        @item.ItemTypeName
-                    </td>
-
-                    <td>
-                        @item.Sort
-                    </td>
-
-                    @if (Context.Session.GetString("Role") == "Admin")
-                    {
-                        <td class="d-none d-md-table-cell">@item.CreatedBy</td>
-                        <td class="d-none d-md-table-cell">
-                            @(item.CreatedDate?.ToString("yyyy-MM-dd HH:mm") ?? "—")
-                        </td>
-                        <td class="d-none d-md-table-cell">@item.UpdatedBy</td>
-                        <td class="d-none d-md-table-cell">
-                            @(item.UpdatedDate?.ToString("yyyy-MM-dd HH:mm") ?? "—")
-                        </td>
-                    }
-
-                    <td>
-                        <a asp-action="Edit"
-                           asp-route-id="@item.ItemTypeID"
-                           class="btn btn-sm btn-warning">
-                            Edit
-                        </a>
-                    </td>
-
-                </tr>
-            }
-        </tbody>
-    </table>
-
-    @* PAGINATION *@
-    <nav>
-        <ul class="pagination justify-content-center mt-3">
-
-            <li class="page-item @(!Model.HasPreviousPage ? "disabled" : "")">
-                <a class="page-link"
-                   asp-action="Index"
-                   asp-route-page="@(Model.PageNumber - 1)"
-                   asp-route-search="@search"
-                   asp-route-sortColumn="@sortCol"
-                   asp-route-sortDirection="@sortDir">
-                    Previous
-                </a>
-            </li>
-
-            @for (int i = 1; i <= Model.TotalPages; i++)
-            {
-                <li class="page-item @(i == Model.PageNumber ? "active" : "")">
-                    <a class="page-link"
-                       asp-action="Index"
-                       asp-route-page="@i"
-                       asp-route-search="@search"
-                       asp-route-sortColumn="@sortCol"
-                       asp-route-sortDirection="@sortDir">
-                        @i
-                    </a>
-                </li>
-            }
-
-            <li class="page-item @(!Model.HasNextPage ? "disabled" : "")">
-                <a class="page-link"
-                   asp-action="Index"
-                   asp-route-page="@(Model.PageNumber + 1)"
-                   asp-route-search="@search"
-                   asp-route-sortColumn="@sortCol"
-                   asp-route-sortDirection="@sortDir">
-                    Next
-                </a>
-            </li>
-
-        </ul>
-    </nav>
+    @await Html.PartialAsync(
+        "Partials/_ItemTypeDeleteModal")
 
 </div>
 
-<style>
-    a {
-        text-decoration: none;
-    }
-</style>
-
 @section Scripts {
-    <script>
-        const searchInput = document.getElementById('searchInput');
-        const clearBtn = document.getElementById('clearBtn');
-        const searchForm = document.getElementById('searchForm');
 
-        let debounceTimer;
+    <script src="~/js/shared/fetch-helper.js"></script>
+    <script src="~/js/shared/toast.js"></script>
+    <script src="~/js/shared/modal-helper.js"></script>
 
-        searchInput.addEventListener('input', function () {
-            clearBtn.style.display = this.value.length > 0 ? 'flex' : 'none';
-
-            clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(() => {
-                searchForm.submit();
-            }, 400);
-        });
-
-        clearBtn.addEventListener('click', function () {
-            searchInput.value = '';
-            clearBtn.style.display = 'none';
-            searchForm.submit();
-        });
-    </script>
+    <script src="~/js/item-types/item-type-state.js"></script>
+    <script src="~/js/item-types/item-type-table.js"></script>
+    <script src="~/js/item-types/item-type-toolbar.js"></script>
+    <script src="~/js/item-types/item-type-modals.js"></script>
+    <script src="~/js/item-types/item-type-init.js"></script>
 }

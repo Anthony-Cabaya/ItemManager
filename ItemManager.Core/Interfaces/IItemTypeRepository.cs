@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using ItemManager.Core.Helpers;
+﻿using ItemManager.Core.Helpers;
 using ItemManager.Core.Models;
 
 namespace ItemManager.Core.Interfaces
@@ -14,6 +9,8 @@ namespace ItemManager.Core.Interfaces
         Task<ItemType?> GetByIdAsync(int id);
         Task AddAsync(ItemType itemType);
         Task UpdateAsync(ItemType itemType);
+        Task<int> GetItemCountByTypeAsync(int itemTypeId);
+        Task DeleteManyAsync(IEnumerable<int> ids);
         Task<PagedResult<ItemType>> GetPagedAsync(
             int pageNumber,
             int pageSize,

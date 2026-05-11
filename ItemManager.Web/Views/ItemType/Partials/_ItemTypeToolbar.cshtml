@@ -1,0 +1,53 @@
+﻿<div class="d-flex gap-2 align-items-center mb-2">
+
+    <div class="position-relative" style="max-width:400px; width:100%;">
+
+        <input type="text"
+               id="searchInput"
+               class="form-control form-control-sm pe-4"
+               placeholder="Search item type name..." />
+
+        <span id="clearSearch"
+              style="
+                display:none;
+                position:absolute;
+                right:10px;
+                top:50%;
+                transform:translateY(-50%);
+                cursor:pointer;
+                color:#999;">
+            ✕
+        </span>
+
+    </div>
+
+    <button class="btn btn-outline-secondary btn-sm"
+            id="btnSearch">
+        Search
+    </button>
+
+</div>
+
+<div class="d-flex gap-2 align-items-center mb-3">
+
+    <button class="btn btn-primary btn-sm"
+            id="btnCreate">
+        CREATE
+    </button>
+
+    <button class="btn btn-warning btn-sm"
+            id="btnEdit"
+            disabled>
+        EDIT
+    </button>
+
+    <button class="btn btn-danger btn-sm"
+            id="btnDelete"
+            disabled>
+        DELETE
+    </button>
+
+    <span id="selectedCount"
+          class="text-muted small ms-2"></span>
+
+</div>

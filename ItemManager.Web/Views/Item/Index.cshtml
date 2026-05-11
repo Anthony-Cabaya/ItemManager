@@ -11,11 +11,13 @@
      data-item-types='@Html.Raw(System.Text.Json.JsonSerializer.Serialize(itemTypes.Select(x => new { value = x.ItemTypeID, text = x.ItemTypeName })))'>
 </div>
 
-@await Html.PartialAsync("Partials/_ItemToolbar", itemTypes)
-@await Html.PartialAsync("Partials/_ItemTable")
-@await Html.PartialAsync("Partials/_ItemCreateModal")
-@await Html.PartialAsync("Partials/_ItemEditModal")
-@await Html.PartialAsync("Partials/_ItemDeleteModal")
+<div class="container-fluid px-4">
+    @await Html.PartialAsync("Partials/_ItemToolbar", itemTypes)
+    @await Html.PartialAsync("Partials/_ItemTable")
+    @await Html.PartialAsync("Partials/_ItemCreateModal")
+    @await Html.PartialAsync("Partials/_ItemEditModal")
+    @await Html.PartialAsync("Partials/_ItemDeleteModal")
+</div>
 
 @section Scripts {
     <script src="~/js/shared/fetch-helper.js" asp-append-version="true"></script>
