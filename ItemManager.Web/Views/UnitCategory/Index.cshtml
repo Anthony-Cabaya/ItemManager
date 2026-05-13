@@ -1,190 +1,56 @@
-﻿@model List<ItemManager.Web.ViewModels.UnitCategoryViewModel>
-
-@{
+﻿@{
     ViewData["Title"] = "Unit Categories";
-
-    var search = ViewData["Search"]?.ToString() ?? "";
-    var sortCol = ViewData["SortColumn"]?.ToString() ?? "Sort";
-    var sortDir = ViewData["SortDirection"]?.ToString() ?? "asc";
 }
 
-<div class="container mt-4">
+<div id="pageData"
+     data-is-admin="@((ViewBag.IsAdmin ?? false)
+             ? "true" : "false")">
+</div>
 
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2 class="mb-0">Unit Categories</h2>
+@Html.AntiForgeryToken()
 
-        <a class="btn btn-primary" href="@Url.Action("Create")">
-            Create New
-        </a>
-    </div>
+<div class="container-fluid px-4">
 
-    @* SEARCH *@
-    <form asp-action="Index" method="get" id="searchForm" class="mb-3">
+    @await Html.PartialAsync(
+        "Partials/_CategoryToolbar")
 
-        <div class="position-relative" style="max-width: 400px;">
+    @await Html.PartialAsync(
+        "Partials/_CategoryTable")
 
-            <input type="text"
-                   name="search"
-                   id="searchInput"
-                   value="@search"
-                   class="form-control pe-4"
-                   placeholder="Search by category name..." />
+    @await Html.PartialAsync(
+        "Partials/_CategoryCreateModal")
 
-            <span id="clearBtn"
-                  style="display:@(!string.IsNullOrEmpty(search) ? "flex" : "none");
-                         position:absolute;
-                         right:10px;
-                         top:50%;
-                         transform:translateY(-50%);
-                         cursor:pointer;
-                         color:#999;">
-                ✕
-            </span>
+    @await Html.PartialAsync(
+        "Partials/_CategoryEditModal")
 
-            <input type="hidden" name="sortColumn" value="@sortCol" />
-            <input type="hidden" name="sortDirection" value="@sortDir" />
-        </div>
-    </form>
-
-    <table class="table table-hover table-bordered align-middle dashboard-table">
-        <thead class="table-light">
-            <tr>
-
-                <th>
-                    Category Name
-
-                    <a asp-action="Index"
-                       asp-route-search="@search"
-                       asp-route-sortColumn="CategoryName"
-                       asp-route-sortDirection="asc"
-                       class="ms-1 @(sortCol == "CategoryName" && sortDir == "asc" ? "text-primary fw-bold" : "text-secondary")">
-                        ▲
-                    </a>
-
-                    <a asp-action="Index"
-                       asp-route-search="@search"
-                       asp-route-sortColumn="CategoryName"
-                       asp-route-sortDirection="desc"
-                       class="ms-1 @(sortCol == "CategoryName" && sortDir == "desc" ? "text-primary fw-bold" : "text-secondary")">
-                        ▼
-                    </a>
-                </th>
-
-                <th>
-                    Sort
-
-                    <a asp-action="Index"
-                       asp-route-search="@search"
-                       asp-route-sortColumn="Sort"
-                       asp-route-sortDirection="asc"
-                       class="ms-1 @(sortCol == "Sort" && sortDir == "asc" ? "text-primary fw-bold" : "text-secondary")">
-                        ▲
-                    </a>
-
-                    <a asp-action="Index"
-                       asp-route-search="@search"
-                       asp-route-sortColumn="Sort"
-                       asp-route-sortDirection="desc"
-                       class="ms-1 @(sortCol == "Sort" && sortDir == "desc" ? "text-primary fw-bold" : "text-secondary")">
-                        ▼
-                    </a>
-                </th>
-
-                <th>System</th>
-
-                @if (Context.Session.GetString("Role") == "Admin")
-                {
-                    <th>Created By</th>
-                    <th>Created Date</th>
-                    <th>Updated By</th>
-                    <th>Updated Date</th>
-                }
-
-                <th>Actions</th>
-            </tr>
-        </thead>
-
-        <tbody>
-            @foreach (var item in Model)
-            {
-                <tr>
-                    <td>@item.CategoryName</td>
-                    <td>@item.Sort</td>
-
-                    <td>
-                        @if (item.IsSystem)
-                        {
-                            <span class="badge bg-primary">System</span>
-                        }
-                    </td>
-
-                    @if (Context.Session.GetString("Role") == "Admin")
-                    {
-                        <td>@item.CreatedBy</td>
-                        <td>@item.CreatedDate?.ToString("yyyy-MM-dd HH:mm")</td>
-                        <td>@item.UpdatedBy</td>
-                        <td>@item.UpdatedDate?.ToString("yyyy-MM-dd HH:mm")</td>
-                    }
-
-                    <td>
-                        <a class="btn btn-sm btn-warning"
-                           href="@Url.Action("Edit", new { id = item.UnitCategoryID })">
-                            Edit
-                        </a>
-
-                        @if (!item.IsSystem)
-                        {
-                            <form asp-action="Delete"
-                                  asp-route-id="@item.UnitCategoryID"
-                                  method="post"
-                                  class="d-inline"
-                                  onsubmit="return confirm('Delete this category?');">
-
-                                <button type="submit"
-                                        class="btn btn-sm btn-danger">
-                                    Delete
-                                </button>
-                            </form>
-                        }
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
+    @await Html.PartialAsync(
+        "Partials/_CategoryDeleteModal")
 
 </div>
 
-<style>
-    a {
-        text-decoration: none;
-    }
-</style>
-
 @section Scripts {
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
 
-            const searchInput = document.getElementById("searchInput");
-            const clearBtn = document.getElementById("clearBtn");
-            const searchForm = document.getElementById("searchForm");
+    <script src="~/js/shared/fetch-helper.js">
+    </script>
 
-            searchInput.addEventListener("input", function () {
-                clearBtn.style.display = this.value.length > 0 ? "flex" : "none";
-            });
+    <script src="~/js/shared/toast.js">
+    </script>
 
-            searchInput.addEventListener("keydown", function (e) {
-                if (e.key === "Enter") {
-                    e.preventDefault();
-                    searchForm.submit();
-                }
-            });
+    <script src="~/js/shared/modal-helper.js">
+    </script>
 
-            clearBtn.addEventListener("click", function () {
-                searchInput.value = "";
-                clearBtn.style.display = "none";
-                searchForm.submit();
-            });
+    <script src="~/js/unit-categories/category-state.js">
+    </script>
 
-        });
+    <script src="~/js/unit-categories/category-table.js">
+    </script>
+
+    <script src="~/js/unit-categories/category-toolbar.js">
+    </script>
+
+    <script src="~/js/unit-categories/category-modals.js">
+    </script>
+
+    <script src="~/js/unit-categories/category-init.js">
     </script>
 }
