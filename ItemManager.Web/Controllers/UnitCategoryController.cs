@@ -7,65 +7,67 @@ namespace ItemManager.Web.Controllers
 {
     public class UnitCategoryController : BaseController
     {
-        private readonly IUnitCategoryRepository _unitCategoryRepository;
+        private readonly IUnitCategoryRepository _categoryRepo;
 
-        public UnitCategoryController(IUnitCategoryRepository unitCategoryRepository)
+        public UnitCategoryController(
+            IUnitCategoryRepository categoryRepo)
         {
-            _unitCategoryRepository = unitCategoryRepository;
+            _categoryRepo = categoryRepo;
         }
 
-        public async Task<IActionResult> Index(
-            string search = "",
-            string sortColumn = "Sort",
-            string sortDirection = "asc")
+        public class DeleteCategoriesRequest
+        {
+            public List<int> Ids { get; set; } = new();
+        }
+
+        private JsonResult JsonSuccess(
+            string message,
+            object? data = null)
+        {
+            return Json(new
+            {
+                success = true,
+                message,
+                data
+            });
+        }
+
+        private JsonResult JsonFail(string message)
+        {
+            return Json(new
+            {
+                success = false,
+                message,
+                data = (object?)null
+            });
+        }
+
+        private object MapCategory(UnitCategory x)
+        {
+            return new
+            {
+                unitCategoryID = x.UnitCategoryID,
+                categoryName = x.CategoryName,
+                isSystem = x.IsSystem,
+                sort = x.Sort,
+                createdBy = x.CreatedBy,
+                createdDate = x.CreatedDate?.ToString("yyyy-MM-dd HH:mm"),
+                updatedBy = x.UpdatedBy,
+                updatedDate = x.UpdatedDate?.ToString("yyyy-MM-dd HH:mm")
+            };
+        }
+
+        [HttpGet]
+        public IActionResult Index()
         {
             try
             {
                 if (!IsAdmin)
                     return RedirectToAction("Index", "Dashboard");
 
-                ViewData["Search"] = search;
-                ViewData["SortColumn"] = sortColumn;
-                ViewData["SortDirection"] = sortDirection;
+                ViewBag.IsAdmin = IsAdmin;
 
-                IEnumerable<UnitCategory> categories = await _unitCategoryRepository.GetAllAsync();
-
-                if (!string.IsNullOrWhiteSpace(search))
-                {
-                    search = search.Trim().ToLower();
-
-                    categories = categories.Where(x =>
-                        !string.IsNullOrEmpty(x.CategoryName) &&
-                        x.CategoryName.ToLower().Contains(search)
-                    );
-                }
-
-                categories = sortColumn switch
-                {
-                    "CategoryName" => sortDirection == "asc"
-                        ? categories.OrderBy(x => x.CategoryName)
-                        : categories.OrderByDescending(x => x.CategoryName),
-
-                    "Sort" => sortDirection == "asc"
-                        ? categories.OrderBy(x => x.Sort)
-                        : categories.OrderByDescending(x => x.Sort),
-
-                    _ => categories.OrderBy(x => x.Sort)
-                };
-
-                var viewModel = categories.Select(x => new UnitCategoryViewModel
-                {
-                    UnitCategoryID = x.UnitCategoryID,
-                    CategoryName = x.CategoryName,
-                    Sort = x.Sort,
-                    CreatedBy = x.CreatedBy,
-                    CreatedDate = x.CreatedDate,
-                    UpdatedBy = x.UpdatedBy,
-                    UpdatedDate = x.UpdatedDate,
-                    IsSystem = x.IsSystem
-                }).ToList();
-
-                return View(viewModel);
+                return View();
             }
             catch (Exception ex)
             {
@@ -75,149 +77,177 @@ namespace ItemManager.Web.Controllers
         }
 
         [HttpGet]
-        public IActionResult Create()
-        {
-            if (!IsAdmin)
-                return RedirectToAction("Index", "Dashboard");
-
-            return View(new UnitCategoryViewModel());
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> Create(UnitCategoryViewModel viewModel)
+        public async Task<IActionResult> GetCategoriesData(
+            int page = 1,
+            string search = "")
         {
             try
             {
-                if (!IsAdmin)
-                    return RedirectToAction("Index", "Dashboard");
+                var result = await _categoryRepo.GetPagedAsync(
+                    page,
+                    10,
+                    search);
 
-                if (!ModelState.IsValid)
-                    return View(viewModel);
+                return JsonSuccess(
+                    "Loaded successfully.",
+                    new
+                    {
+                        items = result.Items.Select(MapCategory),
+                        totalCount = result.TotalCount,
+                        totalPages = result.TotalPages,
+                        pageNumber = result.PageNumber,
+                        pageSize = result.PageSize,
+                        hasNextPage = result.HasNextPage,
+                        hasPreviousPage = result.HasPreviousPage
+                    });
+            }
+            catch (Exception ex)
+            {
+                return JsonFail(ex.Message);
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetCategoryForEdit(int id)
+        {
+            try
+            {
+                var category = await _categoryRepo.GetByIdAsync(id);
+
+                if (category == null)
+                    return JsonFail("Category not found.");
+
+                return JsonSuccess(
+                    "Loaded successfully.",
+                    new
+                    {
+                        unitCategoryID = category.UnitCategoryID,
+                        categoryName = category.CategoryName,
+                        isSystem = category.IsSystem,
+                        sort = category.Sort
+                    });
+            }
+            catch (Exception ex)
+            {
+                return JsonFail(ex.Message);
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Create(
+            [FromBody] UnitCategoryViewModel vm)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(vm.CategoryName))
+                    return JsonFail("Category Name is required.");
 
                 var model = new UnitCategory
                 {
-                    CategoryName = viewModel.CategoryName,
-                    Sort = viewModel.Sort,
+                    CategoryName = vm.CategoryName.Trim(),
+                    Sort = vm.Sort,
+                    IsSystem = false,
                     CreatedBy = CurrentUsername,
                     CreatedDate = DateTime.Now
                 };
 
-                await _unitCategoryRepository.AddAsync(model);
+                await _categoryRepo.AddAsync(model);
 
-                return RedirectToAction(nameof(Index));
+                return JsonSuccess(
+                    "Category created successfully.");
             }
             catch (Exception ex)
             {
-                ViewData["ErrorMessage"] = ex.Message;
-                return View("Error");
-            }
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> Edit(int id)
-        {
-            try
-            {
-                if (!IsAdmin)
-                    return RedirectToAction("Index", "Dashboard");
-
-                var category = await _unitCategoryRepository.GetByIdAsync(id);
-                if (category == null)
-                    return NotFound();
-
-                if (category.IsSystem)
-                {
-                    TempData["ErrorMessage"] = "System categories cannot be edited.";
-                    return RedirectToAction(nameof(Index));
-                }
-
-                var viewModel = new UnitCategoryViewModel
-                {
-                    UnitCategoryID = category.UnitCategoryID,
-                    CategoryName = category.CategoryName,
-                    Sort = category.Sort,
-                    IsSystem = category.IsSystem
-                };
-
-                return View(viewModel);
-            }
-            catch (Exception ex)
-            {
-                ViewData["ErrorMessage"] = ex.Message;
-                return View("Error");
+                return JsonFail(ex.Message);
             }
         }
 
         [HttpPost]
-        public async Task<IActionResult> Edit(UnitCategoryViewModel viewModel)
+        public async Task<IActionResult> Update(
+            [FromBody] UnitCategoryViewModel vm)
         {
             try
             {
-                if (!IsAdmin)
-                    return RedirectToAction("Index", "Dashboard");
+                if (string.IsNullOrWhiteSpace(vm.CategoryName))
+                    return JsonFail("Category Name is required.");
 
-                var existing = await _unitCategoryRepository.GetByIdAsync(viewModel.UnitCategoryID);
+                var existing = await _categoryRepo
+                    .GetByIdAsync(vm.UnitCategoryID);
+
                 if (existing == null)
-                    return NotFound();
+                    return JsonFail("Category not found.");
 
-                if (existing.IsSystem)
+                existing.Sort = vm.Sort;
+
+                if (!existing.IsSystem)
                 {
-                    TempData["ErrorMessage"] = "System categories cannot be edited.";
-                    return RedirectToAction(nameof(Index));
+                    existing.CategoryName = vm.CategoryName.Trim();
                 }
 
-                if (!ModelState.IsValid)
-                    return View(viewModel);
+                existing.UpdatedBy = CurrentUsername;
+                existing.UpdatedDate = DateTime.Now;
 
-                var model = new UnitCategory
-                {
-                    UnitCategoryID = viewModel.UnitCategoryID,
-                    CategoryName = viewModel.CategoryName,
-                    Sort = viewModel.Sort,
-                    UpdatedBy = CurrentUsername,
-                    UpdatedDate = DateTime.Now,
-                    IsSystem = existing.IsSystem
-                };
+                await _categoryRepo.UpdateAsync(existing);
 
-                await _unitCategoryRepository.UpdateAsync(model);
-
-                return RedirectToAction(nameof(Index));
+                return JsonSuccess(
+                    "Category updated successfully.");
             }
             catch (Exception ex)
             {
-                ViewData["ErrorMessage"] = ex.Message;
-                return View("Error");
+                return JsonFail(ex.Message);
             }
         }
 
         [HttpPost]
-        public async Task<IActionResult> Delete(int id)
+        public async Task<IActionResult> DeleteCategories(
+            [FromBody] DeleteCategoriesRequest request)
         {
             try
             {
                 if (!IsAdmin)
-                    return RedirectToAction("Index", "Dashboard");
+                    return JsonFail("Unauthorized.");
 
-                var category = await _unitCategoryRepository.GetByIdAsync(id);
-                if (category == null)
-                    return NotFound();
-
-                if (category.IsSystem)
+                if (request == null ||
+                    request.Ids == null ||
+                    !request.Ids.Any())
                 {
-                    TempData["ErrorMessage"] = "System categories cannot be deleted.";
-                    return RedirectToAction(nameof(Index));
+                    return JsonFail(
+                        "No categories selected.");
                 }
 
-                await _unitCategoryRepository.DeleteAsync(id);
+                foreach (var id in request.Ids)
+                {
+                    var category = await _categoryRepo
+                        .GetByIdAsync(id);
 
-                return RedirectToAction(nameof(Index));
+                    if (category == null)
+                        continue;
+
+                    if (category.IsSystem)
+                    {
+                        return JsonFail(
+                            "Cannot delete system categories.");
+                    }
+
+                    var count = await _categoryRepo
+                        .GetUnitCountByCategoryAsync(id);
+
+                    if (count > 0)
+                    {
+                        return JsonFail(
+                            "Cannot delete — one or more categories have units assigned to them.");
+                    }
+                }
+
+                await _categoryRepo.DeleteManyAsync(request.Ids);
+
+                return JsonSuccess(
+                    $"{request.Ids.Count} category(ies) deleted successfully.");
             }
             catch (Exception ex)
             {
-                ViewData["ErrorMessage"] = ex.Message;
-                return View("Error");
+                return JsonFail(ex.Message);
             }
         }
-
     }
 }

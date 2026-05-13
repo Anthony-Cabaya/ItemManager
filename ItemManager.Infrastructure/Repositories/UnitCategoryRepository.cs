@@ -1,4 +1,5 @@
-﻿using ItemManager.Core.Interfaces;
+﻿using ItemManager.Core.Helpers;
+using ItemManager.Core.Interfaces;
 using ItemManager.Core.Models;
 using ItemManager.Infrastructure.Helpers;
 using Microsoft.Data.SqlClient;
@@ -199,6 +200,147 @@ namespace ItemManager.Infrastructure.Repositories
             catch (Exception ex)
             {
                 throw new Exception("An unexpected error occurred while deleting Unit Category.", ex);
+            }
+        }
+
+        public async Task<int> GetUnitCountByCategoryAsync(int unitCategoryId)
+        {
+            try
+            {
+                using var connection = _dbHelper.CreateConnection();
+                await connection.OpenAsync();
+
+                var query = @"SELECT COUNT(*)
+                              FROM Units
+                              WHERE UnitCategoryID = @UnitCategoryID";
+
+                using var command = new SqlCommand(query, connection);
+
+                command.Parameters.AddWithValue("@UnitCategoryID", unitCategoryId);
+
+                var result = await command.ExecuteScalarAsync();
+
+                return Convert.ToInt32(result);
+            }
+            catch (SqlException sqlEx)
+            {
+                throw new Exception("An error occurred while counting Units by Category.", sqlEx);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("An unexpected error occurred while counting Units by Category.", ex);
+            }
+        }
+
+        public async Task DeleteManyAsync(IEnumerable<int> ids)
+        {
+            try
+            {
+                var idList = ids.ToList();
+
+                if (!idList.Any())
+                    return;
+
+                using var connection = _dbHelper.CreateConnection();
+                await connection.OpenAsync();
+
+                var parameterNames = idList
+                    .Select((x, index) => $"@Id{index}")
+                    .ToList();
+
+                var query = $@"DELETE FROM UnitCategory
+                               WHERE UnitCategoryID IN ({string.Join(", ", parameterNames)})";
+
+                using var command = new SqlCommand(query, connection);
+
+                for (int i = 0; i < idList.Count; i++)
+                {
+                    command.Parameters.AddWithValue(parameterNames[i], idList[i]);
+                }
+
+                await command.ExecuteNonQueryAsync();
+            }
+            catch (SqlException sqlEx)
+            {
+                throw new Exception("An error occurred while deleting Unit Categories.", sqlEx);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("An unexpected error occurred while deleting Unit Categories.", ex);
+            }
+        }
+
+        public async Task<PagedResult<UnitCategory>> GetPagedAsync(
+            int pageNumber,
+            int pageSize,
+            string search = "")
+        {
+            try
+            {
+                var items = new List<UnitCategory>();
+
+                using var connection = _dbHelper.CreateConnection();
+                await connection.OpenAsync();
+
+                var countQuery = @"SELECT COUNT(*)
+                                   FROM UnitCategory
+                                   WHERE (@Search = ''
+                                       OR CategoryName LIKE @SearchPattern)";
+
+                using var countCommand = new SqlCommand(countQuery, connection);
+
+                countCommand.Parameters.AddWithValue("@Search", search);
+                countCommand.Parameters.AddWithValue("@SearchPattern", $"%{search}%");
+
+                var totalCount = Convert.ToInt32(
+                    await countCommand.ExecuteScalarAsync());
+
+                var offset = (pageNumber - 1) * pageSize;
+
+                var dataQuery = @"SELECT UnitCategoryID,
+                                         CategoryName,
+                                         IsSystem,
+                                         Sort,
+                                         CreatedBy,
+                                         CreatedDate,
+                                         UpdatedBy,
+                                         UpdatedDate
+                                  FROM UnitCategory
+                                  WHERE (@Search = ''
+                                      OR CategoryName LIKE @SearchPattern)
+                                  ORDER BY Sort ASC
+                                  OFFSET @Offset ROWS
+                                  FETCH NEXT @PageSize ROWS ONLY";
+
+                using var dataCommand = new SqlCommand(dataQuery, connection);
+
+                dataCommand.Parameters.AddWithValue("@Search", search);
+                dataCommand.Parameters.AddWithValue("@SearchPattern", $"%{search}%");
+                dataCommand.Parameters.AddWithValue("@Offset", offset);
+                dataCommand.Parameters.AddWithValue("@PageSize", pageSize);
+
+                using var reader = await dataCommand.ExecuteReaderAsync();
+
+                while (await reader.ReadAsync())
+                {
+                    items.Add(Map(reader));
+                }
+
+                return new PagedResult<UnitCategory>
+                {
+                    Items = items,
+                    TotalCount = totalCount,
+                    PageNumber = pageNumber,
+                    PageSize = pageSize
+                };
+            }
+            catch (SqlException sqlEx)
+            {
+                throw new Exception("An error occurred while fetching paged Unit Categories.", sqlEx);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("An unexpected error occurred while fetching paged Unit Categories.", ex);
             }
         }
 

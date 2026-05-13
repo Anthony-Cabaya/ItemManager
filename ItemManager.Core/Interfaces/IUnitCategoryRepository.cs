@@ -1,4 +1,5 @@
-﻿using ItemManager.Core.Models;
+﻿using ItemManager.Core.Helpers;
+using ItemManager.Core.Models;
 
 namespace ItemManager.Core.Interfaces
 {
@@ -13,5 +14,15 @@ namespace ItemManager.Core.Interfaces
         Task UpdateAsync(UnitCategory model);
 
         Task DeleteAsync(int id);
+
+        Task<int> GetUnitCountByCategoryAsync(
+            int unitCategoryId);
+
+        Task DeleteManyAsync(IEnumerable<int> ids);
+
+        Task<PagedResult<UnitCategory>> GetPagedAsync(
+            int pageNumber,
+            int pageSize,
+            string search = "");
     }
 }
