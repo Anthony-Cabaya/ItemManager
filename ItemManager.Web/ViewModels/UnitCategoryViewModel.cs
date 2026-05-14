@@ -4,7 +4,7 @@ namespace ItemManager.Web.ViewModels
 {
     public class UnitCategoryViewModel
     {
-        public int UnitCategoryID { get; set; } = 0;
+        public int UnitCategoryID { get; set; }
 
         [Required(ErrorMessage = "Category Name is required.")]
         [StringLength(200, ErrorMessage = "Maximum 200 characters allowed.")]
@@ -15,7 +15,10 @@ namespace ItemManager.Web.ViewModels
         [Display(Name = "Sort Order")]
         public int Sort { get; set; }
 
-        // Audit Fields (Index/Admin only)
+        public bool IsSystem { get; set; }
+
+        public bool HasUnits { get; set; }
+
         [Display(Name = "Created By")]
         public string? CreatedBy { get; set; }
 
@@ -27,8 +30,6 @@ namespace ItemManager.Web.ViewModels
 
         [Display(Name = "Updated Date")]
         public DateTime? UpdatedDate { get; set; }
-
-        public bool IsSystem { get; set; }
 
     }
 }

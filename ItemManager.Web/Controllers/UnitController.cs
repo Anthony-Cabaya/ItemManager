@@ -19,6 +19,57 @@ namespace ItemManager.Web.Controllers
             _unitCategoryRepository = unitCategoryRepository;
         }
 
+        // ---------------- DRY HELPERS ----------------
+        private IActionResult? AdminOnly()
+        {
+            if (!IsAdmin)
+                return RedirectToAction("Index", "Dashboard");
+
+            return null;
+        }
+
+        private UnitViewModel Map(Unit x) => new()
+        {
+            UnitID = x.UnitID,
+            UnitName = x.UnitName,
+            Abbreviation = x.Abbreviation,
+            UnitCategoryID = x.UnitCategoryID,
+            UnitCategoryName = x.UnitCategoryName,
+            Sort = x.Sort,
+            IsSystem = x.IsSystem,
+            CreatedBy = x.CreatedBy,
+            CreatedDate = x.CreatedDate,
+            UpdatedBy = x.UpdatedBy,
+            UpdatedDate = x.UpdatedDate
+        };
+
+        private async Task<List<SelectListItem>> GetCategoryDropdownAsync()
+        {
+            var categories = await _unitCategoryRepository.GetAllAsync();
+
+            return categories.Select(x => new SelectListItem
+            {
+                Value = x.UnitCategoryID.ToString(),
+                Text = x.CategoryName
+            }).ToList();
+        }
+
+        private IEnumerable<Unit> ApplySearch(IEnumerable<Unit> units, string search)
+        {
+            if (string.IsNullOrWhiteSpace(search))
+                return units;
+
+            search = search.Trim().ToLower();
+
+            return units.Where(x =>
+                !string.IsNullOrEmpty(x.UnitName) &&
+                x.UnitName.ToLower().Contains(search));
+        }
+
+        private bool IsAjaxRequest() =>
+            Request.Headers["X-Requested-With"] == "XMLHttpRequest";
+
+        // ---------------- INDEX (MASTER DETAIL SHELL) ----------------
         public async Task<IActionResult> Index(
             string search = "",
             string sortColumn = "Sort",
@@ -27,27 +78,20 @@ namespace ItemManager.Web.Controllers
         {
             try
             {
-                if (!IsAdmin)
-                    return RedirectToAction("Index", "Dashboard");
+                var redirect = AdminOnly();
+                if (redirect != null) return redirect;
 
                 ViewData["Search"] = search;
                 ViewData["SortColumn"] = sortColumn;
                 ViewData["SortDirection"] = sortDirection;
                 ViewBag.CategoryFilter = categoryFilter;
-                ViewBag.Categories = await GetCategoryDropdown();
+                ViewBag.Categories = await GetCategoryDropdownAsync();
 
-                IEnumerable<Unit> units =
-                    categoryFilter > 0
-                        ? await _unitRepository.GetByCategoryIdAsync(categoryFilter)
-                        : await _unitRepository.GetAllAsync();
+                var units = categoryFilter > 0
+                    ? await _unitRepository.GetByCategoryIdAsync(categoryFilter)
+                    : await _unitRepository.GetAllAsync();
 
-                if (!string.IsNullOrWhiteSpace(search))
-                {
-                    search = search.Trim().ToLower();
-                    units = units.Where(x =>
-                        (!string.IsNullOrEmpty(x.UnitName) && x.UnitName.ToLower().Contains(search))
-                    );
-                }
+                units = ApplySearch(units, search);
 
                 units = sortColumn switch
                 {
@@ -62,22 +106,7 @@ namespace ItemManager.Web.Controllers
                     _ => units.OrderBy(x => x.Sort)
                 };
 
-                var viewModel = units.Select(x => new UnitViewModel
-                {
-                    UnitID = x.UnitID,
-                    UnitName = x.UnitName,
-                    Abbreviation = x.Abbreviation,
-                    UnitCategoryID = x.UnitCategoryID,
-                    UnitCategoryName = x.UnitCategoryName,
-                    Sort = x.Sort,
-                    IsSystem = x.IsSystem,
-                    CreatedBy = x.CreatedBy,
-                    CreatedDate = x.CreatedDate,
-                    UpdatedBy = x.UpdatedBy,
-                    UpdatedDate = x.UpdatedDate
-                }).ToList();
-
-                return View(viewModel);
+                return View(units.Select(Map).ToList());
             }
             catch (Exception ex)
             {
@@ -86,22 +115,21 @@ namespace ItemManager.Web.Controllers
             }
         }
 
+        // ---------------- CREATE ----------------
         [HttpGet]
         public async Task<IActionResult> Create(string returnUrl = "")
         {
             try
             {
-                if (!IsAdmin)
-                    return RedirectToAction("Index", "Dashboard");
+                var redirect = AdminOnly();
+                if (redirect != null) return redirect;
 
                 ViewData["ReturnUrl"] = returnUrl;
 
-                var viewModel = new UnitViewModel
+                return View(new UnitViewModel
                 {
-                    UnitCategoryList = await GetCategoryDropdown()
-                };
-
-                return View(viewModel);
+                    UnitCategoryList = await GetCategoryDropdownAsync()
+                });
             }
             catch (Exception ex)
             {
@@ -111,36 +139,39 @@ namespace ItemManager.Web.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create(UnitViewModel viewModel, string returnUrl = "")
+        public async Task<IActionResult> Create(UnitViewModel vm, string returnUrl = "")
         {
             try
             {
-                if (!IsAdmin)
-                    return RedirectToAction("Index", "Dashboard");
+                var redirect = AdminOnly();
+                if (redirect != null) return redirect;
 
                 if (!ModelState.IsValid)
                 {
+                    if (IsAjaxRequest())
+                        return Json(new { success = false, message = "Please fill in all required fields." });
+
                     ViewData["ReturnUrl"] = returnUrl;
-                    viewModel.UnitCategoryList = await GetCategoryDropdown();
-                    return View(viewModel);
+                    vm.UnitCategoryList = await GetCategoryDropdownAsync();
+                    return View(vm);
                 }
 
-                var model = new Unit
+                await _unitRepository.CreateAsync(new Unit
                 {
-                    UnitName = viewModel.UnitName,
-                    Abbreviation = viewModel.Abbreviation,
-                    UnitCategoryID = viewModel.UnitCategoryID,
-                    Sort = viewModel.Sort,
+                    UnitName = vm.UnitName,
+                    Abbreviation = vm.Abbreviation,
+                    UnitCategoryID = vm.UnitCategoryID,
+                    Sort = vm.Sort,
                     CreatedBy = CurrentUsername,
                     CreatedDate = DateTime.Now
-                };
+                });
 
-                await _unitRepository.AddAsync(model);
+                if (IsAjaxRequest())
+                    return Json(new { success = true, message = "Unit created." });
 
-                if (!string.IsNullOrEmpty(returnUrl))
-                    return Redirect(returnUrl);
-
-                return RedirectToAction(nameof(Index));
+                return string.IsNullOrEmpty(returnUrl)
+                    ? RedirectToAction(nameof(Index))
+                    : Redirect(returnUrl);
             }
             catch (Exception ex)
             {
@@ -149,33 +180,24 @@ namespace ItemManager.Web.Controllers
             }
         }
 
+        // ---------------- EDIT ----------------
         [HttpGet]
         public async Task<IActionResult> Edit(int id, string returnUrl = "")
         {
             try
             {
-                if (!IsAdmin)
-                    return RedirectToAction("Index", "Dashboard");
+                var redirect = AdminOnly();
+                if (redirect != null) return redirect;
 
                 var unit = await _unitRepository.GetByIdAsync(id);
-                if (unit == null)
-                    return NotFound();
+                if (unit == null) return NotFound();
 
                 ViewData["ReturnUrl"] = returnUrl;
 
-                var viewModel = new UnitViewModel
-                {
-                    UnitID = unit.UnitID,
-                    UnitName = unit.UnitName,
-                    Abbreviation = unit.Abbreviation,
-                    UnitCategoryID = unit.UnitCategoryID,
-                    UnitCategoryName = unit.UnitCategoryName,
-                    Sort = unit.Sort,
-                    IsSystem = unit.IsSystem,
-                    UnitCategoryList = await GetCategoryDropdown()
-                };
+                var vm = Map(unit);
+                vm.UnitCategoryList = await GetCategoryDropdownAsync();
 
-                return View(viewModel);
+                return View(vm);
             }
             catch (Exception ex)
             {
@@ -185,68 +207,55 @@ namespace ItemManager.Web.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Edit(UnitViewModel viewModel, string returnUrl = "")
+        public async Task<IActionResult> Edit(UnitViewModel vm, string returnUrl = "")
         {
             try
             {
-                if (!IsAdmin)
-                    return RedirectToAction("Index", "Dashboard");
+                var redirect = AdminOnly();
+                if (redirect != null) return redirect;
 
-                var existing = await _unitRepository.GetByIdAsync(viewModel.UnitID);
-                if (existing == null)
-                    return NotFound();
+                var existing = await _unitRepository.GetByIdAsync(vm.UnitID);
+                if (existing == null) return NotFound();
 
-                if (existing.IsSystem)
+                var isSystem = existing.IsSystem;
+
+                if (isSystem)
                 {
-                    ModelState.Remove("UnitName");
-                    ModelState.Remove("Abbreviation");
-                    ModelState.Remove("UnitCategoryID");
+                    ModelState.Remove(nameof(vm.UnitName));
+                    ModelState.Remove(nameof(vm.Abbreviation));
+                    ModelState.Remove(nameof(vm.UnitCategoryID));
                 }
 
                 if (!ModelState.IsValid)
                 {
+                    if (IsAjaxRequest())
+                        return Json(new { success = false, message = "Please fill in all required fields." });
+
                     ViewData["ReturnUrl"] = returnUrl;
-                    viewModel.UnitCategoryList = await GetCategoryDropdown();
-                    return View(viewModel);
+                    vm.UnitCategoryList = await GetCategoryDropdownAsync();
+                    return View(vm);
                 }
 
-                Unit model;
-
-                if (existing.IsSystem)
+                var model = new Unit
                 {
-                    model = new Unit
-                    {
-                        UnitID = existing.UnitID,
-                        UnitName = existing.UnitName,
-                        Abbreviation = existing.Abbreviation,
-                        UnitCategoryID = existing.UnitCategoryID,
-                        Sort = viewModel.Sort,
-                        IsSystem = existing.IsSystem,
-                        UpdatedBy = CurrentUsername,
-                        UpdatedDate = DateTime.Now
-                    };
-                }
-                else
-                {
-                    model = new Unit
-                    {
-                        UnitID = viewModel.UnitID,
-                        UnitName = viewModel.UnitName,
-                        Abbreviation = viewModel.Abbreviation,
-                        UnitCategoryID = viewModel.UnitCategoryID,
-                        Sort = viewModel.Sort,
-                        IsSystem = existing.IsSystem,
-                        UpdatedBy = CurrentUsername,
-                        UpdatedDate = DateTime.Now
-                    };
-                }
+                    UnitID = vm.UnitID,
+                    UnitName = isSystem ? existing.UnitName : vm.UnitName,
+                    Abbreviation = isSystem ? existing.Abbreviation : vm.Abbreviation,
+                    UnitCategoryID = isSystem ? existing.UnitCategoryID : vm.UnitCategoryID,
+                    Sort = vm.Sort,
+                    IsSystem = isSystem,
+                    UpdatedBy = CurrentUsername,
+                    UpdatedDate = DateTime.Now
+                };
 
                 await _unitRepository.UpdateAsync(model);
 
-                if (!string.IsNullOrEmpty(returnUrl))
-                    return Redirect(returnUrl);
+                if (IsAjaxRequest())
+                    return Json(new { success = true, message = "Unit updated." });
 
-                return RedirectToAction(nameof(Index));
+                return string.IsNullOrEmpty(returnUrl)
+                    ? RedirectToAction(nameof(Index))
+                    : Redirect(returnUrl);
             }
             catch (Exception ex)
             {
@@ -255,46 +264,38 @@ namespace ItemManager.Web.Controllers
             }
         }
 
+        // ---------------- DELETE (FIXED) ----------------
         [HttpPost]
         public async Task<IActionResult> Delete(int id)
         {
             try
             {
-                if (!IsAdmin)
-                    return RedirectToAction("Index", "Dashboard");
+                var redirect = AdminOnly();
+                if (redirect != null) return redirect;
 
                 var unit = await _unitRepository.GetByIdAsync(id);
-                if (unit == null)
-                    return NotFound();
+                if (unit == null) return NotFound();
 
                 if (unit.IsSystem)
-                {
-                    TempData["ErrorMessage"] = "System units cannot be deleted.";
-                    return RedirectToAction(nameof(Index));
-                }
+                    return Json(new { success = false, message = "System units cannot be deleted." });
+
+                if (await _unitRepository.HasItemsUsingUnitAsync(id))
+                    return Json(new { success = false, message = "Cannot delete — unit is used by existing items." });
 
                 await _unitRepository.DeleteAsync(id);
+
+                if (IsAjaxRequest())
+                    return Json(new { success = true, message = "Unit deleted." });
 
                 return RedirectToAction(nameof(Index));
             }
             catch (Exception ex)
             {
-                ViewData["ErrorMessage"] = ex.Message;
-                return View("Error");
+                return Json(new { success = false, message = ex.Message });
             }
         }
 
-        private async Task<List<SelectListItem>> GetCategoryDropdown()
-        {
-            var categories = await _unitCategoryRepository.GetAllAsync();
-
-            return categories.Select(x => new SelectListItem
-            {
-                Value = x.UnitCategoryID.ToString(),
-                Text = x.CategoryName
-            }).ToList();
-        }
-
+        // ---------------- PARTIAL ----------------
         [HttpGet]
         public async Task<IActionResult> GetUnitsByCategory(int categoryId, string returnUrl = "")
         {
@@ -302,25 +303,16 @@ namespace ItemManager.Web.Controllers
             {
                 var units = await _unitRepository.GetByCategoryIdAsync(categoryId);
 
+                var vm = units.Select(Map).ToList();
+
                 ViewData["ReturnUrl"] = returnUrl;
 
-                return PartialView("_UnitTablePartial", units);
+                return PartialView("_UnitTablePartial", vm);
             }
             catch (Exception ex)
             {
                 return BadRequest(ex.Message);
             }
         }
-
-        [HttpGet]
-        public async Task<IActionResult> MasterDetail()
-        {
-            if (!IsAdmin)
-                return RedirectToAction("Index", "Dashboard");
-
-            var categories = await _unitCategoryRepository.GetAllAsync();
-            return View(categories);
-        }
-
     }
 }

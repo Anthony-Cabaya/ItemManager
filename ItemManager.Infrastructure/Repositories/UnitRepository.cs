@@ -14,7 +14,6 @@ namespace ItemManager.Infrastructure.Repositories
             _dbHelper = dbHelper;
         }
 
-        // Map Method
         private Unit Map(SqlDataReader reader)
         {
             return new Unit
@@ -26,30 +25,34 @@ namespace ItemManager.Infrastructure.Repositories
                 IsSystem = reader.GetBoolean(reader.GetOrdinal("IsSystem")),
                 Sort = reader.GetInt32(reader.GetOrdinal("Sort")),
 
-                // JOIN FIELD
-                UnitCategoryName = reader.IsDBNull(reader.GetOrdinal("CategoryName"))
-                                ? null
-                                : reader.GetString(reader.GetOrdinal("CategoryName")),
+                UnitCategoryName =
+                    reader.IsDBNull(reader.GetOrdinal("CategoryName"))
+                        ? null
+                        : reader.GetString(reader.GetOrdinal("CategoryName")),
 
-                CreatedBy = reader.IsDBNull(reader.GetOrdinal("CreatedBy"))
-                                ? null
-                                : reader.GetString(reader.GetOrdinal("CreatedBy")),
+                CreatedBy =
+                    reader.IsDBNull(reader.GetOrdinal("CreatedBy"))
+                        ? null
+                        : reader.GetString(reader.GetOrdinal("CreatedBy")),
 
-                CreatedDate = reader.IsDBNull(reader.GetOrdinal("CreatedDate"))
-                                ? null
-                                : reader.GetDateTime(reader.GetOrdinal("CreatedDate")),
+                CreatedDate =
+                    reader.IsDBNull(reader.GetOrdinal("CreatedDate"))
+                        ? null
+                        : reader.GetDateTime(reader.GetOrdinal("CreatedDate")),
 
-                UpdatedBy = reader.IsDBNull(reader.GetOrdinal("UpdatedBy"))
-                                ? null
-                                : reader.GetString(reader.GetOrdinal("UpdatedBy")),
+                UpdatedBy =
+                    reader.IsDBNull(reader.GetOrdinal("UpdatedBy"))
+                        ? null
+                        : reader.GetString(reader.GetOrdinal("UpdatedBy")),
 
-                UpdatedDate = reader.IsDBNull(reader.GetOrdinal("UpdatedDate"))
-                                ? null
-                                : reader.GetDateTime(reader.GetOrdinal("UpdatedDate"))
+                UpdatedDate =
+                    reader.IsDBNull(reader.GetOrdinal("UpdatedDate"))
+                        ? null
+                        : reader.GetDateTime(reader.GetOrdinal("UpdatedDate"))
             };
         }
 
-        public async Task<List<Unit>> GetAllAsync()
+        public async Task<IEnumerable<Unit>> GetAllAsync()
         {
             var list = new List<Unit>();
 
@@ -95,7 +98,7 @@ namespace ItemManager.Infrastructure.Repositories
             return list;
         }
 
-        public async Task<List<Unit>> GetByCategoryIdAsync(int categoryId)
+        public async Task<IEnumerable<Unit>> GetByCategoryIdAsync(int categoryId)
         {
             var list = new List<Unit>();
 
@@ -123,7 +126,10 @@ namespace ItemManager.Infrastructure.Repositories
                     ORDER BY u.Sort";
 
                 using var command = new SqlCommand(query, connection);
-                command.Parameters.AddWithValue("@UnitCategoryID", categoryId);
+
+                command.Parameters.AddWithValue(
+                    "@UnitCategoryID",
+                    categoryId);
 
                 using var reader = await command.ExecuteReaderAsync();
 
@@ -134,11 +140,15 @@ namespace ItemManager.Infrastructure.Repositories
             }
             catch (SqlException sqlEx)
             {
-                throw new Exception("An error occurred while fetching Units by Category.", sqlEx);
+                throw new Exception(
+                    "An error occurred while fetching Units by Category.",
+                    sqlEx);
             }
             catch (Exception ex)
             {
-                throw new Exception("An unexpected error occurred while fetching Units by Category.", ex);
+                throw new Exception(
+                    "An unexpected error occurred while fetching Units by Category.",
+                    ex);
             }
 
             return list;
@@ -169,6 +179,7 @@ namespace ItemManager.Infrastructure.Repositories
                     WHERE u.UnitID = @UnitID";
 
                 using var command = new SqlCommand(query, connection);
+
                 command.Parameters.AddWithValue("@UnitID", id);
 
                 using var reader = await command.ExecuteReaderAsync();
@@ -188,7 +199,56 @@ namespace ItemManager.Infrastructure.Repositories
             return null;
         }
 
-        public async Task AddAsync(Unit model)
+        public async Task<bool> ExistsAsync(
+            string name,
+            int categoryId,
+            int? excludeId = null)
+        {
+            try
+            {
+                using var connection = _dbHelper.CreateConnection();
+                await connection.OpenAsync();
+
+                var query = @"
+                    SELECT COUNT(1)
+                    FROM Units
+                    WHERE UnitName = @UnitName
+                      AND UnitCategoryID = @UnitCategoryID";
+
+                if (excludeId.HasValue)
+                {
+                    query += @"
+                      AND UnitID <> @ExcludeId";
+                }
+
+                using var command = new SqlCommand(query, connection);
+
+                command.Parameters.AddWithValue("@UnitName", name);
+                command.Parameters.AddWithValue("@UnitCategoryID", categoryId);
+
+                if (excludeId.HasValue)
+                {
+                    command.Parameters.AddWithValue(
+                        "@ExcludeId",
+                        excludeId.Value);
+                }
+
+                var count = Convert.ToInt32(
+                    await command.ExecuteScalarAsync());
+
+                return count > 0;
+            }
+            catch (SqlException sqlEx)
+            {
+                throw new Exception("An error occurred while checking Unit existence.", sqlEx);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("An unexpected error occurred while checking Unit existence.", ex);
+            }
+        }
+
+        public async Task<int> CreateAsync(Unit model)
         {
             try
             {
@@ -197,11 +257,27 @@ namespace ItemManager.Infrastructure.Repositories
 
                 var query = @"
                     INSERT INTO Units
-                    (UnitCategoryID, UnitName, Abbreviation, IsSystem, Sort,
-                     CreatedBy, CreatedDate)
+                    (
+                        UnitCategoryID,
+                        UnitName,
+                        Abbreviation,
+                        IsSystem,
+                        Sort,
+                        CreatedBy,
+                        CreatedDate
+                    )
                     VALUES
-                    (@UnitCategoryID, @UnitName, @Abbreviation, @IsSystem, @Sort,
-                     @CreatedBy, @CreatedDate)";
+                    (
+                        @UnitCategoryID,
+                        @UnitName,
+                        @Abbreviation,
+                        @IsSystem,
+                        @Sort,
+                        @CreatedBy,
+                        @CreatedDate
+                    );
+
+                    SELECT CAST(SCOPE_IDENTITY() as int);";
 
                 using var command = new SqlCommand(query, connection);
 
@@ -210,22 +286,29 @@ namespace ItemManager.Infrastructure.Repositories
                 command.Parameters.AddWithValue("@Abbreviation", model.Abbreviation);
                 command.Parameters.AddWithValue("@IsSystem", model.IsSystem);
                 command.Parameters.AddWithValue("@Sort", model.Sort);
-                command.Parameters.AddWithValue("@CreatedBy", (object?)model.CreatedBy ?? DBNull.Value);
-                command.Parameters.AddWithValue("@CreatedDate", (object?)model.CreatedDate ?? DBNull.Value);
 
-                await command.ExecuteNonQueryAsync();
+                command.Parameters.AddWithValue(
+                    "@CreatedBy",
+                    (object?)model.CreatedBy ?? DBNull.Value);
+
+                command.Parameters.AddWithValue(
+                    "@CreatedDate",
+                    (object?)model.CreatedDate ?? DBNull.Value);
+
+                return Convert.ToInt32(
+                    await command.ExecuteScalarAsync());
             }
             catch (SqlException sqlEx)
             {
-                throw new Exception("An error occurred while adding Unit.", sqlEx);
+                throw new Exception("An error occurred while creating Unit.", sqlEx);
             }
             catch (Exception ex)
             {
-                throw new Exception("An unexpected error occurred while adding Unit.", ex);
+                throw new Exception("An unexpected error occurred while creating Unit.", ex);
             }
         }
 
-        public async Task UpdateAsync(Unit model)
+        public async Task<bool> UpdateAsync(Unit model)
         {
             try
             {
@@ -251,10 +334,19 @@ namespace ItemManager.Infrastructure.Repositories
                 command.Parameters.AddWithValue("@Abbreviation", model.Abbreviation);
                 command.Parameters.AddWithValue("@IsSystem", model.IsSystem);
                 command.Parameters.AddWithValue("@Sort", model.Sort);
-                command.Parameters.AddWithValue("@UpdatedBy", (object?)model.UpdatedBy ?? DBNull.Value);
-                command.Parameters.AddWithValue("@UpdatedDate", (object?)model.UpdatedDate ?? DBNull.Value);
 
-                await command.ExecuteNonQueryAsync();
+                command.Parameters.AddWithValue(
+                    "@UpdatedBy",
+                    (object?)model.UpdatedBy ?? DBNull.Value);
+
+                command.Parameters.AddWithValue(
+                    "@UpdatedDate",
+                    (object?)model.UpdatedDate ?? DBNull.Value);
+
+                var affectedRows =
+                    await command.ExecuteNonQueryAsync();
+
+                return affectedRows > 0;
             }
             catch (SqlException sqlEx)
             {
@@ -266,19 +358,25 @@ namespace ItemManager.Infrastructure.Repositories
             }
         }
 
-        public async Task DeleteAsync(int id)
+        public async Task<bool> DeleteAsync(int id)
         {
             try
             {
                 using var connection = _dbHelper.CreateConnection();
                 await connection.OpenAsync();
 
-                var query = @"DELETE FROM Units WHERE UnitID = @UnitID";
+                var query = @"
+                    DELETE FROM Units
+                    WHERE UnitID = @UnitID";
 
                 using var command = new SqlCommand(query, connection);
+
                 command.Parameters.AddWithValue("@UnitID", id);
 
-                await command.ExecuteNonQueryAsync();
+                var affectedRows =
+                    await command.ExecuteNonQueryAsync();
+
+                return affectedRows > 0;
             }
             catch (SqlException sqlEx)
             {
@@ -287,6 +385,37 @@ namespace ItemManager.Infrastructure.Repositories
             catch (Exception ex)
             {
                 throw new Exception("An unexpected error occurred while deleting Unit.", ex);
+            }
+        }
+
+        public async Task<bool> HasItemsUsingUnitAsync(int unitId)
+        {
+            try
+            {
+                using var connection = _dbHelper.CreateConnection();
+                await connection.OpenAsync();
+
+                var query = @"
+                    SELECT COUNT(1)
+                    FROM Items
+                    WHERE UnitID = @UnitID";
+
+                using var command = new SqlCommand(query, connection);
+
+                command.Parameters.AddWithValue("@UnitID", unitId);
+
+                var count = Convert.ToInt32(
+                    await command.ExecuteScalarAsync());
+
+                return count > 0;
+            }
+            catch (SqlException sqlEx)
+            {
+                throw new Exception("An error occurred while checking Unit usage.", sqlEx);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("An unexpected error occurred while checking Unit usage.", ex);
             }
         }
 

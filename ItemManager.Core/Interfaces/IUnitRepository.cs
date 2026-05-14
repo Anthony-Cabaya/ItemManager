@@ -4,17 +4,25 @@ namespace ItemManager.Core.Interfaces
 {
     public interface IUnitRepository
     {
-        Task<List<Unit>> GetAllAsync();
+        Task<IEnumerable<Unit>> GetAllAsync();
 
-        Task<List<Unit>> GetByCategoryIdAsync(int categoryId);
+        Task<IEnumerable<Unit>> GetByCategoryIdAsync(int categoryId);
 
         Task<Unit?> GetByIdAsync(int id);
 
-        Task AddAsync(Unit model);
+        Task<bool> ExistsAsync(
+            string name,
+            int categoryId,
+            int? excludeId = null);
 
-        Task UpdateAsync(Unit model);
+        Task<int> CreateAsync(Unit unit);
 
-        Task DeleteAsync(int id);
+        Task<bool> UpdateAsync(Unit unit);
+
+        Task<bool> DeleteAsync(int id);
+
+        Task<bool> HasItemsUsingUnitAsync(
+            int unitId);
 
     }
 }

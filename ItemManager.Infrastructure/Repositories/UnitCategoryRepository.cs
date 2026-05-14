@@ -15,7 +15,6 @@ namespace ItemManager.Infrastructure.Repositories
             _dbHelper = dbHelper;
         }
 
-        // Map Method
         private UnitCategory Map(SqlDataReader reader)
         {
             return new UnitCategory
@@ -24,26 +23,31 @@ namespace ItemManager.Infrastructure.Repositories
                 CategoryName = reader.GetString(reader.GetOrdinal("CategoryName")),
                 Sort = reader.GetInt32(reader.GetOrdinal("Sort")),
 
-                CreatedBy = reader.IsDBNull(reader.GetOrdinal("CreatedBy"))
-                                ? null
-                                : reader.GetString(reader.GetOrdinal("CreatedBy")),
+                CreatedBy =
+                    reader.IsDBNull(reader.GetOrdinal("CreatedBy"))
+                        ? null
+                        : reader.GetString(reader.GetOrdinal("CreatedBy")),
 
-                CreatedDate = reader.IsDBNull(reader.GetOrdinal("CreatedDate"))
-                                ? null
-                                : reader.GetDateTime(reader.GetOrdinal("CreatedDate")),
+                CreatedDate =
+                    reader.IsDBNull(reader.GetOrdinal("CreatedDate"))
+                        ? null
+                        : reader.GetDateTime(reader.GetOrdinal("CreatedDate")),
 
-                UpdatedBy = reader.IsDBNull(reader.GetOrdinal("UpdatedBy"))
-                                ? null
-                                : reader.GetString(reader.GetOrdinal("UpdatedBy")),
+                UpdatedBy =
+                    reader.IsDBNull(reader.GetOrdinal("UpdatedBy"))
+                        ? null
+                        : reader.GetString(reader.GetOrdinal("UpdatedBy")),
 
-                UpdatedDate = reader.IsDBNull(reader.GetOrdinal("UpdatedDate"))
-                                ? null
-                                : reader.GetDateTime(reader.GetOrdinal("UpdatedDate")),
+                UpdatedDate =
+                    reader.IsDBNull(reader.GetOrdinal("UpdatedDate"))
+                        ? null
+                        : reader.GetDateTime(reader.GetOrdinal("UpdatedDate")),
+
                 IsSystem = reader.GetBoolean(reader.GetOrdinal("IsSystem"))
             };
         }
 
-        public async Task<List<UnitCategory>> GetAllAsync()
+        public async Task<IEnumerable<UnitCategory>> GetAllAsync()
         {
             var list = new List<UnitCategory>();
 
@@ -52,11 +56,17 @@ namespace ItemManager.Infrastructure.Repositories
                 using var connection = _dbHelper.CreateConnection();
                 await connection.OpenAsync();
 
-                var query = @"SELECT UnitCategoryID, CategoryName, Sort,
-                                     CreatedBy, CreatedDate, UpdatedBy, UpdatedDate,
-                                     IsSystem
-                              FROM UnitCategory
-                              ORDER BY Sort";
+                var query = @"
+                    SELECT UnitCategoryID,
+                           CategoryName,
+                           Sort,
+                           CreatedBy,
+                           CreatedDate,
+                           UpdatedBy,
+                           UpdatedDate,
+                           IsSystem
+                    FROM UnitCategory
+                    ORDER BY Sort";
 
                 using var command = new SqlCommand(query, connection);
                 using var reader = await command.ExecuteReaderAsync();
@@ -85,21 +95,26 @@ namespace ItemManager.Infrastructure.Repositories
                 using var connection = _dbHelper.CreateConnection();
                 await connection.OpenAsync();
 
-                var query = @"SELECT UnitCategoryID, CategoryName, Sort,
-                                     CreatedBy, CreatedDate, UpdatedBy, UpdatedDate,
-                                     IsSystem
-                              FROM UnitCategory
-                              WHERE UnitCategoryID = @UnitCategoryID";
+                var query = @"
+                    SELECT UnitCategoryID,
+                           CategoryName,
+                           Sort,
+                           CreatedBy,
+                           CreatedDate,
+                           UpdatedBy,
+                           UpdatedDate,
+                           IsSystem
+                    FROM UnitCategory
+                    WHERE UnitCategoryID = @UnitCategoryID";
 
                 using var command = new SqlCommand(query, connection);
+
                 command.Parameters.AddWithValue("@UnitCategoryID", id);
 
                 using var reader = await command.ExecuteReaderAsync();
 
                 if (await reader.ReadAsync())
-                {
                     return Map(reader);
-                }
             }
             catch (SqlException sqlEx)
             {
@@ -120,17 +135,34 @@ namespace ItemManager.Infrastructure.Repositories
                 using var connection = _dbHelper.CreateConnection();
                 await connection.OpenAsync();
 
-                var query = @"INSERT INTO UnitCategory
-                              (CategoryName, Sort, CreatedBy, CreatedDate)
-                              VALUES
-                              (@CategoryName, @Sort, @CreatedBy, @CreatedDate)";
+                var query = @"
+                    INSERT INTO UnitCategory
+                    (
+                        CategoryName,
+                        Sort,
+                        CreatedBy,
+                        CreatedDate
+                    )
+                    VALUES
+                    (
+                        @CategoryName,
+                        @Sort,
+                        @CreatedBy,
+                        @CreatedDate
+                    )";
 
                 using var command = new SqlCommand(query, connection);
 
                 command.Parameters.AddWithValue("@CategoryName", model.CategoryName);
                 command.Parameters.AddWithValue("@Sort", model.Sort);
-                command.Parameters.AddWithValue("@CreatedBy", (object?)model.CreatedBy ?? DBNull.Value);
-                command.Parameters.AddWithValue("@CreatedDate", (object?)model.CreatedDate ?? DBNull.Value);
+
+                command.Parameters.AddWithValue(
+                    "@CreatedBy",
+                    (object?)model.CreatedBy ?? DBNull.Value);
+
+                command.Parameters.AddWithValue(
+                    "@CreatedDate",
+                    (object?)model.CreatedDate ?? DBNull.Value);
 
                 await command.ExecuteNonQueryAsync();
             }
@@ -151,20 +183,27 @@ namespace ItemManager.Infrastructure.Repositories
                 using var connection = _dbHelper.CreateConnection();
                 await connection.OpenAsync();
 
-                var query = @"UPDATE UnitCategory
-                              SET CategoryName = @CategoryName,
-                                  Sort = @Sort,
-                                  UpdatedBy = @UpdatedBy,
-                                  UpdatedDate = @UpdatedDate
-                              WHERE UnitCategoryID = @UnitCategoryID";
+                var query = @"
+                    UPDATE UnitCategory
+                    SET CategoryName = @CategoryName,
+                        Sort = @Sort,
+                        UpdatedBy = @UpdatedBy,
+                        UpdatedDate = @UpdatedDate
+                    WHERE UnitCategoryID = @UnitCategoryID";
 
                 using var command = new SqlCommand(query, connection);
 
                 command.Parameters.AddWithValue("@UnitCategoryID", model.UnitCategoryID);
                 command.Parameters.AddWithValue("@CategoryName", model.CategoryName);
                 command.Parameters.AddWithValue("@Sort", model.Sort);
-                command.Parameters.AddWithValue("@UpdatedBy", (object?)model.UpdatedBy ?? DBNull.Value);
-                command.Parameters.AddWithValue("@UpdatedDate", (object?)model.UpdatedDate ?? DBNull.Value);
+
+                command.Parameters.AddWithValue(
+                    "@UpdatedBy",
+                    (object?)model.UpdatedBy ?? DBNull.Value);
+
+                command.Parameters.AddWithValue(
+                    "@UpdatedDate",
+                    (object?)model.UpdatedDate ?? DBNull.Value);
 
                 await command.ExecuteNonQueryAsync();
             }
@@ -185,10 +224,12 @@ namespace ItemManager.Infrastructure.Repositories
                 using var connection = _dbHelper.CreateConnection();
                 await connection.OpenAsync();
 
-                var query = @"DELETE FROM UnitCategory
-                              WHERE UnitCategoryID = @UnitCategoryID";
+                var query = @"
+                    DELETE FROM UnitCategory
+                    WHERE UnitCategoryID = @UnitCategoryID";
 
                 using var command = new SqlCommand(query, connection);
+
                 command.Parameters.AddWithValue("@UnitCategoryID", id);
 
                 await command.ExecuteNonQueryAsync();
@@ -210,13 +251,16 @@ namespace ItemManager.Infrastructure.Repositories
                 using var connection = _dbHelper.CreateConnection();
                 await connection.OpenAsync();
 
-                var query = @"SELECT COUNT(*)
-                              FROM Units
-                              WHERE UnitCategoryID = @UnitCategoryID";
+                var query = @"
+                    SELECT COUNT(*)
+                    FROM Units
+                    WHERE UnitCategoryID = @UnitCategoryID";
 
                 using var command = new SqlCommand(query, connection);
 
-                command.Parameters.AddWithValue("@UnitCategoryID", unitCategoryId);
+                command.Parameters.AddWithValue(
+                    "@UnitCategoryID",
+                    unitCategoryId);
 
                 var result = await command.ExecuteScalarAsync();
 
@@ -229,6 +273,40 @@ namespace ItemManager.Infrastructure.Repositories
             catch (Exception ex)
             {
                 throw new Exception("An unexpected error occurred while counting Units by Category.", ex);
+            }
+        }
+
+        public async Task<bool> HasUnitsAsync(int categoryId)
+        {
+            try
+            {
+                using var connection = _dbHelper.CreateConnection();
+                await connection.OpenAsync();
+
+                var query = @"
+                    SELECT COUNT(1)
+                    FROM Units
+                    WHERE UnitCategoryID = @CategoryId
+                      AND IsSystem = 0";
+
+                using var command = new SqlCommand(query, connection);
+
+                command.Parameters.AddWithValue(
+                    "@CategoryId",
+                    categoryId);
+
+                var count = Convert.ToInt32(
+                    await command.ExecuteScalarAsync());
+
+                return count > 0;
+            }
+            catch (SqlException sqlEx)
+            {
+                throw new Exception("An error occurred while checking category Units.", sqlEx);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("An unexpected error occurred while checking category Units.", ex);
             }
         }
 
@@ -248,14 +326,18 @@ namespace ItemManager.Infrastructure.Repositories
                     .Select((x, index) => $"@Id{index}")
                     .ToList();
 
-                var query = $@"DELETE FROM UnitCategory
-                               WHERE UnitCategoryID IN ({string.Join(", ", parameterNames)})";
+                var query = $@"
+                    DELETE FROM UnitCategory
+                    WHERE UnitCategoryID IN
+                    ({string.Join(", ", parameterNames)})";
 
                 using var command = new SqlCommand(query, connection);
 
                 for (int i = 0; i < idList.Count; i++)
                 {
-                    command.Parameters.AddWithValue(parameterNames[i], idList[i]);
+                    command.Parameters.AddWithValue(
+                        parameterNames[i],
+                        idList[i]);
                 }
 
                 await command.ExecuteNonQueryAsync();
@@ -282,44 +364,56 @@ namespace ItemManager.Infrastructure.Repositories
                 using var connection = _dbHelper.CreateConnection();
                 await connection.OpenAsync();
 
-                var countQuery = @"SELECT COUNT(*)
-                                   FROM UnitCategory
-                                   WHERE (@Search = ''
-                                       OR CategoryName LIKE @SearchPattern)";
+                var countQuery = @"
+                    SELECT COUNT(*)
+                    FROM UnitCategory
+                    WHERE (@Search = ''
+                        OR CategoryName LIKE @SearchPattern)";
 
-                using var countCommand = new SqlCommand(countQuery, connection);
+                using var countCommand =
+                    new SqlCommand(countQuery, connection);
 
                 countCommand.Parameters.AddWithValue("@Search", search);
-                countCommand.Parameters.AddWithValue("@SearchPattern", $"%{search}%");
+
+                countCommand.Parameters.AddWithValue(
+                    "@SearchPattern",
+                    $"%{search}%");
 
                 var totalCount = Convert.ToInt32(
                     await countCommand.ExecuteScalarAsync());
 
                 var offset = (pageNumber - 1) * pageSize;
 
-                var dataQuery = @"SELECT UnitCategoryID,
-                                         CategoryName,
-                                         IsSystem,
-                                         Sort,
-                                         CreatedBy,
-                                         CreatedDate,
-                                         UpdatedBy,
-                                         UpdatedDate
-                                  FROM UnitCategory
-                                  WHERE (@Search = ''
-                                      OR CategoryName LIKE @SearchPattern)
-                                  ORDER BY Sort ASC
-                                  OFFSET @Offset ROWS
-                                  FETCH NEXT @PageSize ROWS ONLY";
+                var dataQuery = @"
+                    SELECT UnitCategoryID,
+                           CategoryName,
+                           IsSystem,
+                           Sort,
+                           CreatedBy,
+                           CreatedDate,
+                           UpdatedBy,
+                           UpdatedDate
+                    FROM UnitCategory
+                    WHERE (@Search = ''
+                        OR CategoryName LIKE @SearchPattern)
+                    ORDER BY Sort ASC
+                    OFFSET @Offset ROWS
+                    FETCH NEXT @PageSize ROWS ONLY";
 
-                using var dataCommand = new SqlCommand(dataQuery, connection);
+                using var dataCommand =
+                    new SqlCommand(dataQuery, connection);
 
                 dataCommand.Parameters.AddWithValue("@Search", search);
-                dataCommand.Parameters.AddWithValue("@SearchPattern", $"%{search}%");
+
+                dataCommand.Parameters.AddWithValue(
+                    "@SearchPattern",
+                    $"%{search}%");
+
                 dataCommand.Parameters.AddWithValue("@Offset", offset);
                 dataCommand.Parameters.AddWithValue("@PageSize", pageSize);
 
-                using var reader = await dataCommand.ExecuteReaderAsync();
+                using var reader =
+                    await dataCommand.ExecuteReaderAsync();
 
                 while (await reader.ReadAsync())
                 {
@@ -336,13 +430,16 @@ namespace ItemManager.Infrastructure.Repositories
             }
             catch (SqlException sqlEx)
             {
-                throw new Exception("An error occurred while fetching paged Unit Categories.", sqlEx);
+                throw new Exception(
+                    "An error occurred while fetching paged Unit Categories.",
+                    sqlEx);
             }
             catch (Exception ex)
             {
-                throw new Exception("An unexpected error occurred while fetching paged Unit Categories.", ex);
+                throw new Exception(
+                    "An unexpected error occurred while fetching paged Unit Categories.",
+                    ex);
             }
         }
-
     }
 }
