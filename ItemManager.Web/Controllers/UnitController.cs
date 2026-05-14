@@ -69,44 +69,28 @@ namespace ItemManager.Web.Controllers
         private bool IsAjaxRequest() =>
             Request.Headers["X-Requested-With"] == "XMLHttpRequest";
 
-        // ---------------- INDEX (MASTER DETAIL SHELL) ----------------
-        public async Task<IActionResult> Index(
-            string search = "",
-            string sortColumn = "Sort",
-            string sortDirection = "asc",
-            int categoryFilter = 0)
+        public async Task<IActionResult> Index()
         {
             try
             {
                 var redirect = AdminOnly();
                 if (redirect != null) return redirect;
 
-                ViewData["Search"] = search;
-                ViewData["SortColumn"] = sortColumn;
-                ViewData["SortDirection"] = sortDirection;
-                ViewBag.CategoryFilter = categoryFilter;
-                ViewBag.Categories = await GetCategoryDropdownAsync();
+                var categories = await _unitCategoryRepository.GetAllAsync();
 
-                var units = categoryFilter > 0
-                    ? await _unitRepository.GetByCategoryIdAsync(categoryFilter)
-                    : await _unitRepository.GetAllAsync();
-
-                units = ApplySearch(units, search);
-
-                units = sortColumn switch
+                var categoryVms = categories.Select(c => new UnitCategoryViewModel
                 {
-                    "UnitName" => sortDirection == "asc"
-                        ? units.OrderBy(x => x.UnitName)
-                        : units.OrderByDescending(x => x.UnitName),
+                    UnitCategoryID = c.UnitCategoryID,
+                    CategoryName = c.CategoryName,
+                    Sort = c.Sort,
+                    IsSystem = c.IsSystem,
+                    CreatedBy = c.CreatedBy,
+                    CreatedDate = c.CreatedDate,
+                    UpdatedBy = c.UpdatedBy,
+                    UpdatedDate = c.UpdatedDate
+                }).ToList();
 
-                    "Sort" => sortDirection == "asc"
-                        ? units.OrderBy(x => x.Sort)
-                        : units.OrderByDescending(x => x.Sort),
-
-                    _ => units.OrderBy(x => x.Sort)
-                };
-
-                return View(units.Select(Map).ToList());
+                return View(categoryVms);
             }
             catch (Exception ex)
             {
@@ -115,7 +99,6 @@ namespace ItemManager.Web.Controllers
             }
         }
 
-        // ---------------- CREATE ----------------
         [HttpGet]
         public async Task<IActionResult> Create(string returnUrl = "")
         {
