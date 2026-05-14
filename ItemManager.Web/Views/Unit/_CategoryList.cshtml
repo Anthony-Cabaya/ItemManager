@@ -1,0 +1,23 @@
+﻿@model List<ItemManager.Web.ViewModels.UnitCategoryViewModel>
+
+@foreach (var c in Model)
+{
+    <div class="p-2 mb-1 category-item"
+         data-category-id="@c.UnitCategoryID"
+         data-is-system="@c.IsSystem"
+         data-name="@c.CategoryName"
+         style="cursor:pointer;">
+
+        <div class="d-flex justify-content-between align-items-center">
+
+            <span>@c.CategoryName</span>
+
+            @if (c.IsSystem)
+            {
+                <span class="badge bg-primary">System</span>
+            }
+
+        </div>
+
+    </div>
+}

@@ -1,0 +1,52 @@
+﻿<div class="modal fade" id="editUnitModal" tabindex="-1">
+
+    <div class="modal-dialog">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    EDIT UNIT
+                    <span id="edit-system-badge"
+                          class="badge bg-primary d-none ms-2">
+                        System
+                    </span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+
+                <div id="edit-error" class="alert alert-danger d-none mb-3"></div>
+
+                @Html.AntiForgeryToken()
+
+                <input type="hidden" id="edit-unit-id" />
+                <input type="hidden" id="edit-is-system" />
+                <input type="hidden" id="edit-unit-category-id" />
+                <input type="hidden" name="returnUrl" />
+
+                <div class="mb-2">
+                    <label>Unit Name</label>
+                    <input type="text" id="edit-unit-name" class="form-control" />
+                </div>
+
+                <div class="mb-2">
+                    <label>Abbreviation</label>
+                    <input type="text" id="edit-unit-abbr" class="form-control" />
+                </div>
+
+                <div class="mb-2">
+                    <label>Sort</label>
+                    <input type="number" id="edit-unit-sort" class="form-control" />
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">CANCEL</button>
+                <button class="btn btn-warning" id="btn-update-unit">UPDATE</button>
+            </div>
+
+        </div>
+    </div>
+</div>

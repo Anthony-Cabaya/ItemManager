@@ -1,0 +1,44 @@
+﻿<div class="modal fade" id="createUnitModal" tabindex="-1">
+
+    <div class="modal-dialog">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">CREATE UNIT</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+
+                <div id="create-error" class="alert alert-danger d-none mb-3"></div>
+
+                <input type="hidden" id="create-unit-category-id" />
+                <input type="hidden" name="returnUrl" />
+
+                @Html.AntiForgeryToken()
+
+                <div class="mb-2">
+                    <label>Unit Name</label>
+                    <input type="text" id="create-unit-name" class="form-control" />
+                </div>
+
+                <div class="mb-2">
+                    <label>Abbreviation</label>
+                    <input type="text" id="create-unit-abbr" class="form-control" />
+                </div>
+
+                <div class="mb-2">
+                    <label>Sort</label>
+                    <input type="number" id="create-unit-sort" class="form-control" value="0" />
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">CANCEL</button>
+                <button class="btn btn-primary" id="btn-save-unit">SAVE</button>
+            </div>
+
+        </div>
+    </div>
+</div>

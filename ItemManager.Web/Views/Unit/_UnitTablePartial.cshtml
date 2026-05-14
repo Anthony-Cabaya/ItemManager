@@ -1,61 +1,70 @@
-﻿@model IEnumerable<ItemManager.Core.Models.Unit>
-@{
-    Layout = null;
-    var returnUrl = ViewData["ReturnUrl"]?.ToString()
-        ?? Url.Action("MasterDetail", "Unit");
-}
+﻿@model List<ItemManager.Web.ViewModels.UnitViewModel>
 
-<table class="table table-hover table-bordered align-middle dashboard-table">
-    <thead class="table-light">
-        <tr>
-            <th>Unit Name</th>
-            <th>Abbreviation</th>
-            <th>IsSystem</th>
-            <th>Sort</th>
-            <th>Actions</th>
-        </tr>
-    </thead>
-    <tbody>
-        @if (Model != null && Model.Any())
-        {
-            foreach (var item in Model)
+@if (Model == null || !Model.Any())
+{
+    <div class="text-center text-muted py-4">
+        No units found.
+    </div>
+}
+else
+{
+    <table class="table table-hover table-bordered align-middle table-sm" style="font-size:13px;">
+
+        <thead class="table-light">
+            <tr>
+                <th>#</th>
+                <th>Unit Name</th>
+                <th>Abbreviation</th>
+                <th>Sort</th>
+                <th>Category</th>
+                <th>System</th>
+
+                <th class="audit-col">Created By</th>
+                <th class="audit-col">Created Date</th>
+                <th class="audit-col">Updated By</th>
+                <th class="audit-col">Updated Date</th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+            @{
+                var i = 1;
+            }
+
+            @foreach (var item in Model)
             {
-                <tr>
+                <tr data-id="@item.UnitID"
+                    data-name="@item.UnitName"
+                    data-abbreviation="@item.Abbreviation"
+                    data-category-id="@item.UnitCategoryID"
+                    data-sort="@item.Sort"
+                    data-is-system="@item.IsSystem"
+                    class="unit-row">
+
+                    <td>@i</td>
                     <td>@item.UnitName</td>
                     <td>@item.Abbreviation</td>
+                    <td>@item.Sort</td>
+                    <td>@item.UnitCategoryName</td>
+
                     <td>
                         @if (item.IsSystem)
                         {
                             <span class="badge bg-primary">System</span>
                         }
-                        else
-                        {
-                            @Html.Raw("—")
-                        }
                     </td>
-                    <td>@item.Sort</td>
-                    <td>
-                        <a asp-action="Edit"
-                           asp-route-id="@item.UnitID"
-                           asp-route-returnUrl="@returnUrl"
-                           class="btn btn-sm btn-warning">
-                            Edit
-                        </a>
-                        @if (!item.IsSystem)
-                        {
-                            <a asp-action="Delete" asp-route-id="@item.UnitID" class="btn btn-sm btn-danger">Delete</a>
-                        }
-                    </td>
+
+                    <td class="audit-col">@item.CreatedBy</td>
+                    <td class="audit-col">@item.CreatedDate?.ToString("yyyy-MM-dd HH:mm")</td>
+                    <td class="audit-col">@item.UpdatedBy</td>
+                    <td class="audit-col">@item.UpdatedDate?.ToString("yyyy-MM-dd HH:mm")</td>
+
                 </tr>
+
+                i++;
             }
-        }
-        else
-        {
-            <tr>
-                <td colspan="5" class="text-center text-muted py-4">
-                    No units in this category.
-                </td>
-            </tr>
-        }
-    </tbody>
-</table>
+
+        </tbody>
+    </table>
+}
