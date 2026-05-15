@@ -125,9 +125,9 @@
 </div>
 
 <!-- MODALS -->
-@await Html.PartialAsync("_CreateUnitModal")
-@await Html.PartialAsync("_EditUnitModal")
-@await Html.PartialAsync("_DeleteUnitModal")
+@await Html.PartialAsync("Partials/_UnitCreateModal")
+@await Html.PartialAsync("Partials/_UnitEditModal")
+@await Html.PartialAsync("Partials/_UnitDeleteModal")
 
 @section Scripts {
     <script src="/js/shared/fetch-helper.js"></script>

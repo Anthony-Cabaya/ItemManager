@@ -290,7 +290,7 @@ namespace ItemManager.Web.Controllers
 
                 ViewData["ReturnUrl"] = returnUrl;
 
-                return PartialView("_UnitTablePartial", vm);
+                return PartialView("Partials/_UnitTable", vm);
             }
             catch (Exception ex)
             {
