@@ -15,9 +15,9 @@ namespace ItemManager.Core.Interfaces
             int categoryId,
             int? excludeId = null);
 
-        Task<int> CreateAsync(Unit unit);
+        Task AddAsync(Unit unit);
 
-        Task<bool> UpdateAsync(Unit unit);
+        Task UpdateAsync(Unit unit);
 
         Task<bool> DeleteAsync(int id);
 

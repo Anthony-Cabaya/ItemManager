@@ -139,7 +139,7 @@ namespace ItemManager.Web.Controllers
                     return View(vm);
                 }
 
-                await _unitRepository.CreateAsync(new Unit
+                await _unitRepository.AddAsync(new Unit
                 {
                     UnitName = vm.UnitName,
                     Abbreviation = vm.Abbreviation,

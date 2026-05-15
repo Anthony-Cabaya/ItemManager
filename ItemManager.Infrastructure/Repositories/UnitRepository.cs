@@ -248,7 +248,7 @@ namespace ItemManager.Infrastructure.Repositories
             }
         }
 
-        public async Task<int> CreateAsync(Unit model)
+        public async Task AddAsync(Unit model)
         {
             try
             {
@@ -295,8 +295,7 @@ namespace ItemManager.Infrastructure.Repositories
                     "@CreatedDate",
                     (object?)model.CreatedDate ?? DBNull.Value);
 
-                return Convert.ToInt32(
-                    await command.ExecuteScalarAsync());
+                await command.ExecuteNonQueryAsync();
             }
             catch (SqlException sqlEx)
             {
@@ -308,7 +307,7 @@ namespace ItemManager.Infrastructure.Repositories
             }
         }
 
-        public async Task<bool> UpdateAsync(Unit model)
+        public async Task UpdateAsync(Unit model)
         {
             try
             {
@@ -343,10 +342,7 @@ namespace ItemManager.Infrastructure.Repositories
                     "@UpdatedDate",
                     (object?)model.UpdatedDate ?? DBNull.Value);
 
-                var affectedRows =
-                    await command.ExecuteNonQueryAsync();
-
-                return affectedRows > 0;
+                var affectedRows = await command.ExecuteNonQueryAsync();
             }
             catch (SqlException sqlEx)
             {
@@ -373,8 +369,7 @@ namespace ItemManager.Infrastructure.Repositories
 
                 command.Parameters.AddWithValue("@UnitID", id);
 
-                var affectedRows =
-                    await command.ExecuteNonQueryAsync();
+                var affectedRows = await command.ExecuteNonQueryAsync();
 
                 return affectedRows > 0;
             }
@@ -398,7 +393,8 @@ namespace ItemManager.Infrastructure.Repositories
                 var query = @"
                     SELECT COUNT(1)
                     FROM Items
-                    WHERE UnitID = @UnitID";
+                    WHERE BaseUnitID = @UnitID
+                        OR DisplayUnitID = @UnitID";
 
                 using var command = new SqlCommand(query, connection);
 

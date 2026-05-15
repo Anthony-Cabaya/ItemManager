@@ -25,14 +25,33 @@
             });
         });
 
-        const style = document.createElement('style');
-        style.innerHTML = `
-            .active-category {
-                background-color: #0d6efd;
-                color: #fff;
-                border-radius: 4px;
-            }
-        `;
-        document.head.appendChild(style);
+        if (!document.getElementById('unit-category-styles')) {
+
+            const style = document.createElement('style');
+
+            style.id = 'unit-category-styles';
+
+            style.innerHTML = `
+                .category-item {
+                    border-left: 3px solid transparent;
+                    border-radius: 4px;
+                    transition: background-color 0.15s;
+                }
+
+                .category-item:hover {
+                    background-color: #f0f4ff;
+                }
+
+                .active-category {
+                    background-color: #e7f1ff !important;
+                    border-left: 3px solid #0d6efd !important;
+                    color: #0d6efd !important;
+                    font-weight: 600;
+                    border-radius: 4px;
+                }
+            `;
+
+            document.head.appendChild(style);
+        }
     }
 };

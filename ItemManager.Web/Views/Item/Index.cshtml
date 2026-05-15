@@ -12,6 +12,8 @@
 </div>
 
 <div class="container-fluid px-4">
+    <h4 class="fw-bold text-uppercase mb-3">Item Management</h4>
+
     @await Html.PartialAsync("Partials/_ItemToolbar", itemTypes)
     @await Html.PartialAsync("Partials/_ItemTable")
     @await Html.PartialAsync("Partials/_ItemCreateModal")

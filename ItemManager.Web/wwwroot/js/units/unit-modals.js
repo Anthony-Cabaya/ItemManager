@@ -81,12 +81,11 @@
             Abbreviation: abbr,
             UnitCategoryID: categoryId,
             Sort: sort,
-            __RequestVerificationToken: getAntiForgeryToken()
         })
             .then(res => {
                 if (res.success) {
                     closeModal('createUnitModal');
-                    showToast(res.message, 'success');
+                    showToast(res.message, 'create');
 
                     UnitTable.loadByCategory(UnitState.selectedCategoryId);
                 } else {
@@ -122,13 +121,12 @@
             UnitName: name,
             Abbreviation: abbr,
             UnitCategoryID: categoryId,
-            Sort: sort,
-            __RequestVerificationToken: getAntiForgeryToken()
+            Sort: sort
         })
             .then(res => {
                 if (res.success) {
                     closeModal('editUnitModal');
-                    showToast(res.message, 'success');
+                    showToast(res.message, 'edit');
 
                     UnitTable.loadByCategory(UnitState.selectedCategoryId);
                 } else {
@@ -148,13 +146,12 @@
         const error = document.getElementById('delete-error');
 
         postJson('/Unit/Delete', {
-            id: id,
-            __RequestVerificationToken: getAntiForgeryToken()
+            id: id
         })
             .then(res => {
                 if (res.success) {
                     closeModal('deleteUnitModal');
-                    showToast(res.message, 'success');
+                    showToast(res.message, 'delete');
 
                     UnitState.selectedUnitId = null;
                     UnitState.selectedUnitName = '';

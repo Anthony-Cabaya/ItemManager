@@ -8,7 +8,8 @@
 }
 else
 {
-    <table class="table table-hover table-bordered align-middle table-sm" style="font-size:13px;">
+    <table class="table table-hover table-bordered align-middle table-sm"
+           style="font-size:13px;">
 
         <thead class="table-light">
             <tr>
@@ -16,8 +17,6 @@ else
                 <th>Unit Name</th>
                 <th>Abbreviation</th>
                 <th>Sort</th>
-                <th>Category</th>
-                <th>System</th>
 
                 <th class="audit-col">Created By</th>
                 <th class="audit-col">Created Date</th>
@@ -46,19 +45,15 @@ else
                     <td>@item.UnitName</td>
                     <td>@item.Abbreviation</td>
                     <td>@item.Sort</td>
-                    <td>@item.UnitCategoryName</td>
-
-                    <td>
-                        @if (item.IsSystem)
-                        {
-                            <span class="badge bg-primary">System</span>
-                        }
-                    </td>
 
                     <td class="audit-col">@item.CreatedBy</td>
-                    <td class="audit-col">@item.CreatedDate?.ToString("yyyy-MM-dd HH:mm")</td>
+                    <td class="audit-col">
+                        @item.CreatedDate?.ToString("yyyy-MM-dd HH:mm")
+                    </td>
                     <td class="audit-col">@item.UpdatedBy</td>
-                    <td class="audit-col">@item.UpdatedDate?.ToString("yyyy-MM-dd HH:mm")</td>
+                    <td class="audit-col">
+                        @item.UpdatedDate?.ToString("yyyy-MM-dd HH:mm")
+                    </td>
 
                 </tr>
 

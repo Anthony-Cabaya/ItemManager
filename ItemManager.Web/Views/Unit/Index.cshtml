@@ -5,17 +5,7 @@
 }
 
 <div class="container-fluid px-4 mt-3">
-
-    <!-- HEADER -->
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2 class="mb-0">UNIT MANAGEMENT</h2>
-
-        <!-- SINGLE CREATE BUTTON (MODAL FLOW ONLY) -->
-        <button id="btn-create-unit"
-                class="btn btn-primary">
-            CREATE
-        </button>
-    </div>
+    <h4 class="fw-bold text-uppercase mb-3">Unit Management</h4>
 
     <!-- ERROR MESSAGE -->
     @if (TempData["ErrorMessage"] != null)
@@ -30,7 +20,9 @@
         <!-- LEFT: CATEGORY PANEL -->
         <div class="col-3">
 
-            <div class="card">
+            <div class="card"
+                 style="box-shadow: 0 1px 4px rgba(0,0,0,0.08);">
+
                 <div class="card-header fw-bold">
                     Unit Categories
                 </div>
@@ -51,11 +43,6 @@
 
                                     <span>@c.CategoryName</span>
 
-                                    @if (c.IsSystem)
-                                    {
-                                        <span class="badge bg-primary">System</span>
-                                    }
-
                                 </div>
 
                             </div>
@@ -70,28 +57,8 @@
 
         <!-- RIGHT: UNIT PANEL -->
         <div class="col-9">
-
-            <!-- TOOLBAR -->
-            <div class="d-flex justify-content-between align-items-center mb-2">
-
-                <div class="d-flex gap-2">
-
-                    <button id="btn-edit-unit"
-                            class="btn btn-warning btn-sm"
-                            disabled>
-                        EDIT
-                    </button>
-
-                    <button id="btn-delete-unit"
-                            class="btn btn-danger btn-sm"
-                            disabled>
-                        DELETE
-                    </button>
-
-                </div>
-
-                <!-- SEARCH -->
-                <div class="d-flex gap-2 align-items-center">
+                <!-- SEARCH ROW -->
+            <div class="d-flex justify-content-start mb-2">
 
                     <div style="position:relative; width:250px;">
                         <input type="text"
@@ -111,11 +78,31 @@
                     </div>
 
                     <button id="btn-search-unit"
-                            class="btn btn-outline-secondary btn-sm">
+                            class="btn btn-outline-secondary btn-sm ms-2">
                         Search
                     </button>
 
-                </div>
+            </div>
+
+            <!-- ACTION ROW -->
+            <div class="d-flex justify-content-start mb-2">
+
+                <button id="btn-create-unit"
+                        class="btn btn-primary btn-sm me-1">
+                    CREATE
+                </button>
+
+                <button id="btn-edit-unit"
+                        class="btn btn-warning btn-sm me-1"
+                        disabled>
+                    EDIT
+                </button>
+
+                <button id="btn-delete-unit"
+                        class="btn btn-danger btn-sm"
+                        disabled>
+                    DELETE
+                </button>
 
             </div>
 
