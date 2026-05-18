@@ -1,0 +1,118 @@
+﻿@model ItemManager.Core.Helpers.PagedResult<ItemManager.Web.ViewModels.LocationViewModel>
+
+<div class="container-fluid px-4">
+
+    <h4 class="mb-3">LOCATION MANAGEMENT</h4>
+
+    <div class="d-flex justify-content-between mb-2">
+
+        <div>
+            <button class="btn btn-primary btn-sm" id="btn-create-location">CREATE</button>
+            <button class="btn btn-warning btn-sm" id="btn-edit-location" disabled>EDIT</button>
+            <button class="btn btn-danger btn-sm" id="btn-delete-location" disabled>DELETE</button>
+        </div>
+
+        <div class="d-flex align-items-center gap-1">
+
+            <div style="position:relative; width:250px;">
+                <input type="text" id="location-search" class="form-control form-control-sm" placeholder="Search..." />
+
+                <span id="clear-search"
+                      style="position:absolute; right:8px; top:50%; transform:translateY(-50%); cursor:pointer; display:none;">
+                    ✕
+                </span>
+            </div>
+
+            <button class="btn btn-outline-secondary btn-sm" id="btn-search">Search</button>
+        </div>
+
+    </div>
+
+    <table class="table table-hover table-bordered align-middle table-sm" style="font-size:13px;">
+        <thead class="table-light">
+            <tr>
+                <th>#</th>
+                <th>Location Name</th>
+                <th>Description</th>
+                <th>Active</th>
+                <th>Sort</th>
+                <th class="audit-col">Created By</th>
+                <th class="audit-col">Created Date</th>
+                <th class="audit-col">Updated By</th>
+                <th class="audit-col">Updated Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model?.Items != null && Model.Items.Any())
+            {
+                var i = 1;
+                foreach (var item in Model.Items)
+                {
+                    <tr class="location-row"
+                        data-id="@item.LocationID"
+                        data-name="@item.LocationName"
+                        data-description="@item.Description"
+                        data-is-active="@item.IsActive"
+                        data-sort="@item.Sort">
+
+                        <td>@i</td>
+                        <td>@item.LocationName</td>
+                        <td>@item.Description</td>
+                        <td>
+                            @if (item.IsActive)
+                            {
+                                <span class="badge bg-success">Active</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">Inactive</span>
+                            }
+                        </td>
+                        <td>@item.Sort</td>
+                        <td class="audit-col">@item.CreatedBy</td>
+                        <td class="audit-col">@item.CreatedDate</td>
+                        <td class="audit-col">@item.UpdatedBy</td>
+                        <td class="audit-col">@item.UpdatedDate</td>
+                    </tr>
+                    i++;
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="9" class="text-center text-muted py-4">No records found.</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            Page @Model.PageNumber of @Model.TotalPages (@Model.TotalCount total records)
+        </div>
+
+        <ul class="pagination pagination-sm justify-content-center mb-1">
+            <li class="page-item @(Model.HasPreviousPage ? "" : "disabled")">
+                <button class="page-link">Previous</button>
+            </li>
+            <li class="page-item @(Model.HasNextPage ? "" : "disabled")">
+                <button class="page-link">Next</button>
+            </li>
+        </ul>
+    </div>
+</div>
+
+@await Html.PartialAsync("Partials/_CreateLocationModal")
+@await Html.PartialAsync("Partials/_EditLocationModal")
+@await Html.PartialAsync("Partials/_DeleteLocationModal")
+
+@section Scripts {
+    <script src="/js/shared/fetch-helper.js"></script>
+    <script src="/js/shared/toast.js"></script>
+    <script src="/js/shared/modal-helper.js"></script>
+    <script src="/js/locations/location-state.js"></script>
+    <script src="/js/locations/location-table.js"></script>
+    <script src="/js/locations/location-toolbar.js"></script>
+    <script src="/js/locations/location-modals.js"></script>
+    <script src="/js/locations/location-init.js"></script>
+}

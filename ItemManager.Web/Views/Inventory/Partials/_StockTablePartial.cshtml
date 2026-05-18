@@ -1,0 +1,58 @@
+﻿@model List<ItemManager.Web.ViewModels.ItemStockViewModel>
+
+<table class="table table-hover table-bordered align-middle table-sm" style="font-size:13px;">
+    <thead class="table-light">
+        <tr>
+            <th>#</th>
+            <th>Item Code</th>
+            <th>Item Name</th>
+            <th>Location</th>
+            <th>Quantity</th>
+            <th>Min Stock</th>
+            <th>Last Updated</th>
+            <th class="audit-col">Created By</th>
+            <th class="audit-col">Created Date</th>
+            <th class="audit-col">Updated By</th>
+            <th class="audit-col">Updated Date</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        @if (Model != null && Model.Any())
+        {
+            var i = 1;
+            foreach (var item in Model)
+            {
+                <tr class="stock-row"
+                    data-id="@item.StockID"
+                    data-item-id="@item.ItemID"
+                    data-location-id="@item.LocationID"
+                    data-quantity="@item.Quantity"
+                    data-min-stock="@item.MinStock"
+                    data-item-name="@item.ItemName"
+                    data-item-code="@item.ItemCode"
+                    data-location-name="@item.LocationName">
+
+                    <td>@i</td>
+                    <td>@item.ItemCode</td>
+                    <td>@item.ItemName</td>
+                    <td>@item.LocationName</td>
+                    <td>@item.Quantity</td>
+                    <td>@item.MinStock</td>
+                    <td>@item.LastUpdated</td>
+                    <td class="audit-col">@item.CreatedBy</td>
+                    <td class="audit-col">@item.CreatedDate</td>
+                    <td class="audit-col">@item.UpdatedBy</td>
+                    <td class="audit-col">@item.UpdatedDate</td>
+                </tr>
+                i++;
+            }
+        }
+        else
+        {
+            <tr>
+                <td colspan="11" class="text-center text-muted py-4">No records found.</td>
+            </tr>
+        }
+    </tbody>
+</table>

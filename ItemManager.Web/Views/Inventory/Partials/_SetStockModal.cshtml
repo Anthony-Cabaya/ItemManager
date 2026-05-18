@@ -1,0 +1,48 @@
+﻿<div class="modal fade" id="setStockModal">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">SET STOCK</h5>
+            </div>
+
+            <div class="modal-body">
+
+                <div class="alert alert-danger d-none mb-3" id="set-stock-error"></div>
+
+                @Html.AntiForgeryToken()
+
+                <input type="hidden" id="set-stock-id" />
+                <input type="hidden" id="set-stock-item-id" />
+                <input type="hidden" id="set-stock-location-id" />
+
+                <div class="mb-2">
+                    <label>Item</label>
+                    <div id="set-stock-item-display" class="form-control form-control-sm bg-light"></div>
+                </div>
+
+                <div class="mb-2">
+                    <label>Location</label>
+                    <div id="set-stock-location-display" class="form-control form-control-sm bg-light"></div>
+                </div>
+
+                <div class="mb-2">
+                    <label>Quantity</label>
+                    <input type="number" class="form-control form-control-sm" id="set-stock-quantity" min="0" required />
+                </div>
+
+                <div class="mb-2">
+                    <label>Min Stock</label>
+                    <input type="number" class="form-control form-control-sm" id="set-stock-minstock" min="0" />
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">CANCEL</button>
+                <button class="btn btn-primary btn-sm" id="btn-save-stock">SAVE</button>
+            </div>
+
+        </div>
+    </div>
+</div>
