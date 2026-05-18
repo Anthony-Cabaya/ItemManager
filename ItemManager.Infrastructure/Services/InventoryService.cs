@@ -56,5 +56,11 @@ namespace ItemManager.Infrastructure.Services
 
             await _stockRepo.UpsertAsync(model);
         }
+
+        public async Task<IEnumerable<ItemStock>> GetTotalStockPerItemAsync()
+        {
+            return await _stockRepo.GetTotalStockPerItemAsync();
+        }
+
     }
 }

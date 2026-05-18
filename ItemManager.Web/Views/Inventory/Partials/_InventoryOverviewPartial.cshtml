@@ -1,0 +1,55 @@
+﻿@model List<ItemManager.Web.ViewModels.ItemStockViewModel>
+
+<div style="overflow-x:auto;">
+
+    <table class="table table-hover table-bordered table-sm align-middle">
+
+        <thead class="table-light">
+            <tr>
+                <th>#</th>
+                <th>Item Code</th>
+                <th>Item Name</th>
+                <th>Base Unit</th>
+                <th>Total Stock</th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+            @if (Model != null && Model.Any())
+            {
+                var i = 1;
+
+                foreach (var item in Model)
+                {
+                    <tr class="stock-overview-row"
+                        data-id="@item.ItemID"
+                        data-item-name="@item.ItemName"
+                        data-item-code="@item.ItemCode">
+
+                        <td>@i</td>
+                        <td>@item.ItemCode</td>
+                        <td>@item.ItemName</td>
+                        <td>@item.BaseUnit</td>
+                        <td>@item.Quantity</td>
+
+                    </tr>
+
+                    i++;
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="5"
+                        class="text-center text-muted py-4">
+                        No stock records found.
+                    </td>
+                </tr>
+            }
+
+        </tbody>
+
+    </table>
+
+</div>

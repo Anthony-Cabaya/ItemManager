@@ -32,5 +32,7 @@ namespace ItemManager.Web.ViewModels
         public string? UpdatedBy { get; set; }
 
         public DateTime? UpdatedDate { get; set; }
+
+        public string? BaseUnit { get; set; }
     }
 }

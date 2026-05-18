@@ -80,6 +80,18 @@ namespace ItemManager.Infrastructure.Repositories
             };
         }
 
+        private static ItemStock MapOverview(SqlDataReader reader)
+        {
+            return new ItemStock
+            {
+                ItemID = reader.GetInt32(reader.GetOrdinal("ItemID")),
+                ItemCode = reader.IsDBNull(reader.GetOrdinal("ItemCode")) ? null : reader.GetString(reader.GetOrdinal("ItemCode")),
+                ItemName = reader.IsDBNull(reader.GetOrdinal("ItemName")) ? null : reader.GetString(reader.GetOrdinal("ItemName")),
+                BaseUnit = reader.IsDBNull(reader.GetOrdinal("BaseUnit")) ? null : reader.GetString(reader.GetOrdinal("BaseUnit")),
+                Quantity = reader.GetDecimal(reader.GetOrdinal("Quantity"))
+            };
+        }
+
         private async Task<List<ItemStock>> ExecuteQueryAsync(
             string query,
             Action<SqlCommand>? paramBuilder = null)
@@ -89,11 +101,9 @@ namespace ItemManager.Infrastructure.Repositories
             try
             {
                 using var connection = _dbHelper.CreateConnection();
-
                 await connection.OpenAsync();
 
                 using var command = new SqlCommand(query, connection);
-
                 paramBuilder?.Invoke(command);
 
                 using var reader = await command.ExecuteReaderAsync();
@@ -137,9 +147,7 @@ namespace ItemManager.Infrastructure.Repositories
             });
         }
 
-        public async Task<ItemStock?> GetByItemAndLocationAsync(
-            int itemId,
-            int locationId)
+        public async Task<ItemStock?> GetByItemAndLocationAsync(int itemId, int locationId)
         {
             var query = $@"
                 {BaseSelect}
@@ -203,7 +211,6 @@ namespace ItemManager.Infrastructure.Repositories
                     );";
 
             using var connection = _dbHelper.CreateConnection();
-
             await connection.OpenAsync();
 
             using var command = new SqlCommand(query, connection);
@@ -229,18 +236,14 @@ namespace ItemManager.Infrastructure.Repositories
                 WHERE ItemID = @ItemID";
 
             using var connection = _dbHelper.CreateConnection();
-
             await connection.OpenAsync();
 
             using var command = new SqlCommand(query, connection);
-
             command.Parameters.AddWithValue("@ItemID", itemId);
 
             var result = await command.ExecuteScalarAsync();
 
-            return result != null
-                ? Convert.ToDecimal(result)
-                : 0;
+            return result != null ? Convert.ToDecimal(result) : 0;
         }
 
         public async Task<bool> DeleteAsync(int stockId)
@@ -250,16 +253,63 @@ namespace ItemManager.Infrastructure.Repositories
                 WHERE StockID = @StockID";
 
             using var connection = _dbHelper.CreateConnection();
-
             await connection.OpenAsync();
 
             using var command = new SqlCommand(query, connection);
-
             command.Parameters.AddWithValue("@StockID", stockId);
 
             var affected = await command.ExecuteNonQueryAsync();
 
             return affected > 0;
         }
+
+        public async Task<IEnumerable<ItemStock>> GetTotalStockPerItemAsync()
+        {
+            var sql = @"
+                SELECT
+                    i.ItemID,
+                    i.ItemCode,
+                    i.ItemName,
+                    u.Abbreviation AS BaseUnit,
+                    COALESCE(SUM(s.Quantity), 0) AS Quantity
+                FROM Items i
+                LEFT JOIN ItemStock s ON i.ItemID = s.ItemID
+                LEFT JOIN Units u ON i.BaseUnitID = u.UnitID
+                GROUP BY i.ItemID, i.ItemCode, i.ItemName, u.Abbreviation
+                ORDER BY i.ItemName";
+
+            return await ExecuteQueryAsync(sql, null, MapOverview);
+        }
+
+        private async Task<List<ItemStock>> ExecuteQueryAsync(
+            string query,
+            Action<SqlCommand>? paramBuilder,
+            Func<SqlDataReader, ItemStock> mapper)
+        {
+            var list = new List<ItemStock>();
+
+            try
+            {
+                using var connection = _dbHelper.CreateConnection();
+                await connection.OpenAsync();
+
+                using var command = new SqlCommand(query, connection);
+                paramBuilder?.Invoke(command);
+
+                using var reader = await command.ExecuteReaderAsync();
+
+                while (await reader.ReadAsync())
+                {
+                    list.Add(mapper(reader));
+                }
+            }
+            catch (SqlException ex)
+            {
+                throw new Exception("Database error occurred.", ex);
+            }
+
+            return list;
+        }
+
     }
 }

@@ -29,5 +29,7 @@
         public string? ItemCode { get; set; }
 
         public string? LocationName { get; set; }
+
+        public string? BaseUnit { get; set; }
     }
 }

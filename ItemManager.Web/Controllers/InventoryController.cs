@@ -68,7 +68,7 @@ namespace ItemManager.Web.Controllers
                     UpdatedDate = x.UpdatedDate
                 }).ToList();
 
-                return PartialView("_StockTablePartial", model);
+                return PartialView("Partials/_StockTablePartial", model);
             }
             catch (SqlException ex)
             {
@@ -104,7 +104,7 @@ namespace ItemManager.Web.Controllers
                     UpdatedDate = x.UpdatedDate
                 }).ToList();
 
-                return PartialView("_StockTablePartial", model);
+                return PartialView("Partials/_StockTablePartial", model);
             }
             catch (SqlException ex)
             {
@@ -174,5 +174,30 @@ namespace ItemManager.Web.Controllers
                 return Json(new { success = false, message = ex.Message, data = (object?)null });
             }
         }
+
+        [HttpGet]
+        public async Task<IActionResult> GetTotalStockPerItem()
+        {
+            try
+            {
+                var data = await _inventoryService.GetTotalStockPerItemAsync();
+
+                var model = data.Select(x => new ItemStockViewModel
+                {
+                    ItemID = x.ItemID,
+                    ItemCode = x.ItemCode,
+                    ItemName = x.ItemName,
+                    BaseUnit = x.BaseUnit,
+                    Quantity = x.Quantity
+                }).ToList();
+
+                return PartialView("Partials/_InventoryOverviewPartial", model);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+
     }
 }

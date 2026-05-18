@@ -42,6 +42,14 @@
 
         <div class="sb-divider"></div>
 
+        <a asp-controller="Inventory" asp-action="Index"
+           class="nav-item @(ctrl == "Inventory" ? "active" : "")">
+            <span class="nav-icon">🧮</span>
+            <span class="nav-label">Inventory</span>
+        </a>
+
+        <div class="sb-divider"></div>
+
         @if (role == "Admin")
         {
             <div class="nav-section-label">Configuration</div>
@@ -62,6 +70,12 @@
                class="nav-item @(ctrl == "Unit" ? "active" : "")">
                 <span class="nav-icon">⚖️</span>
                 <span class="nav-label">Units</span>
+            </a>
+
+            <a asp-controller="Location" asp-action="Index"
+               class="nav-item @(ctrl == "Location" ? "active" : "")">
+                <span class="nav-icon">📍</span>
+                <span class="nav-label">Locations</span>
             </a>
 
             <div class="sb-divider"></div>

@@ -8,6 +8,8 @@ namespace ItemManager.Core.Interfaces
 
         Task<IEnumerable<ItemStock>> GetStockByLocationAsync(int locationId);
 
+        Task<IEnumerable<ItemStock>> GetTotalStockPerItemAsync();
+
         Task SetStockAsync(
             int itemId,
             int locationId,
