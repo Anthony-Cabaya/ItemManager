@@ -28,6 +28,9 @@ builder.Services.AddScoped<IDashboardRepository, DashboardRepository>();
 builder.Services.AddScoped<IItemUnitConversionRepository, ItemUnitConversionRepository>();
 builder.Services.AddScoped<IItemCodeRepository, ItemCodeRepository>();
 builder.Services.AddScoped<IItemCodeService, ItemCodeService>();
+builder.Services.AddScoped<ILocationRepository, LocationRepository>();
+builder.Services.AddScoped<IItemStockRepository, ItemStockRepository>();
+builder.Services.AddScoped<IInventoryService, InventoryService>();
 
 // Add Session
 builder.Services.AddSession(options =>

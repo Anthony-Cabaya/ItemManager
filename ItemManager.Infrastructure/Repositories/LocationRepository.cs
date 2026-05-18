@@ -118,9 +118,7 @@ namespace ItemManager.Infrastructure.Repositories
                     IsActive,
                     Sort,
                     CreatedBy,
-                    CreatedDate,
-                    UpdatedBy,
-                    UpdatedDate
+                    CreatedDate
                 )
                 VALUES
                 (
@@ -129,9 +127,7 @@ namespace ItemManager.Infrastructure.Repositories
                     @IsActive,
                     @Sort,
                     @CreatedBy,
-                    @CreatedDate,
-                    @UpdatedBy,
-                    @UpdatedDate
+                    @CreatedDate
                 )";
 
             using var connection = _dbHelper.CreateConnection();
@@ -145,8 +141,6 @@ namespace ItemManager.Infrastructure.Repositories
             command.Parameters.AddWithValue("@Sort", model.Sort);
             command.Parameters.AddWithValue("@CreatedBy", (object?)model.CreatedBy ?? DBNull.Value);
             command.Parameters.AddWithValue("@CreatedDate", (object?)model.CreatedDate ?? DBNull.Value);
-            command.Parameters.AddWithValue("@UpdatedBy", (object?)model.UpdatedBy ?? DBNull.Value);
-            command.Parameters.AddWithValue("@UpdatedDate", (object?)model.UpdatedDate ?? DBNull.Value);
 
             await command.ExecuteNonQueryAsync();
         }
@@ -251,7 +245,16 @@ namespace ItemManager.Infrastructure.Repositories
                 var offset = (pageNumber - 1) * pageSize;
 
                 const string dataQuery = @"
-                    SELECT *
+                    SELECT
+                        LocationID,
+                        LocationName,
+                        Description,
+                        IsActive,
+                        Sort,
+                        CreatedBy,
+                        CreatedDate,
+                        UpdatedBy,
+                        UpdatedDate
                     FROM Locations
                     WHERE (@Search = '' OR LocationName LIKE @SearchPattern)
                     ORDER BY Sort
