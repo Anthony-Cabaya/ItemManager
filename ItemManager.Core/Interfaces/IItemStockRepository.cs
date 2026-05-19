@@ -19,5 +19,17 @@ namespace ItemManager.Core.Interfaces
         Task<decimal> GetTotalStockAsync(int itemId);
 
         Task<bool> DeleteAsync(int stockId);
+
+        Task UpdateQuantityAsync(
+            int itemId,
+            int locationId,
+            decimal quantityDelta,
+            string updatedBy);
+
+        Task UpdateReservedQuantityAsync(
+            int itemId,
+            int locationId,
+            decimal reservedDelta,
+            string updatedBy);
     }
 }

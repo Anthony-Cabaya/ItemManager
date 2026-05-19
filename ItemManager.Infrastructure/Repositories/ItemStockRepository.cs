@@ -20,6 +20,7 @@ namespace ItemManager.Infrastructure.Repositories
                 s.ItemID,
                 s.LocationID,
                 s.Quantity,
+                s.ReservedQuantity,
                 s.MinStock,
                 s.LastUpdated,
                 s.CreatedBy,
@@ -41,6 +42,7 @@ namespace ItemManager.Infrastructure.Repositories
                 ItemID = reader.GetInt32(reader.GetOrdinal("ItemID")),
                 LocationID = reader.GetInt32(reader.GetOrdinal("LocationID")),
                 Quantity = reader.GetDecimal(reader.GetOrdinal("Quantity")),
+                ReservedQuantity = reader.GetDecimal(reader.GetOrdinal("ReservedQuantity")),
 
                 MinStock = reader.IsDBNull(reader.GetOrdinal("MinStock"))
                     ? null
@@ -309,6 +311,88 @@ namespace ItemManager.Infrastructure.Repositories
             }
 
             return list;
+        }
+
+        public async Task UpdateQuantityAsync(
+            int itemId,
+            int locationId,
+            decimal quantityDelta,
+            string updatedBy)
+        {
+            const string query = @"
+                UPDATE ItemStock
+                SET
+                    Quantity = Quantity + @Delta,
+                    LastUpdated = @Now,
+                    UpdatedBy = @UpdatedBy,
+                    UpdatedDate = @Now
+                WHERE ItemID = @ItemID
+                AND LocationID = @LocationID";
+
+            try
+            {
+                using var connection = _dbHelper.CreateConnection();
+                await connection.OpenAsync();
+
+                using var command = new SqlCommand(query, connection);
+
+                command.Parameters.AddWithValue("@Delta", quantityDelta);
+                command.Parameters.AddWithValue("@Now", DateTime.Now);
+                command.Parameters.AddWithValue("@UpdatedBy", updatedBy);
+                command.Parameters.AddWithValue("@ItemID", itemId);
+                command.Parameters.AddWithValue("@LocationID", locationId);
+
+                await command.ExecuteNonQueryAsync();
+            }
+            catch (SqlException sqlEx)
+            {
+                throw new Exception("Database error occurred while updating stock quantity.", sqlEx);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("An error occurred while updating stock quantity.", ex);
+            }
+        }
+
+        public async Task UpdateReservedQuantityAsync(
+            int itemId,
+            int locationId,
+            decimal reservedDelta,
+            string updatedBy)
+        {
+            const string query = @"
+                UPDATE ItemStock
+                SET
+                    ReservedQuantity = ReservedQuantity + @Delta,
+                    LastUpdated = @Now,
+                    UpdatedBy = @UpdatedBy,
+                    UpdatedDate = @Now
+                WHERE ItemID = @ItemID
+                AND LocationID = @LocationID";
+
+            try
+            {
+                using var connection = _dbHelper.CreateConnection();
+                await connection.OpenAsync();
+
+                using var command = new SqlCommand(query, connection);
+
+                command.Parameters.AddWithValue("@Delta", reservedDelta);
+                command.Parameters.AddWithValue("@Now", DateTime.Now);
+                command.Parameters.AddWithValue("@UpdatedBy", updatedBy);
+                command.Parameters.AddWithValue("@ItemID", itemId);
+                command.Parameters.AddWithValue("@LocationID", locationId);
+
+                await command.ExecuteNonQueryAsync();
+            }
+            catch (SqlException sqlEx)
+            {
+                throw new Exception("Database error occurred while updating reserved stock quantity.", sqlEx);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("An error occurred while updating reserved stock quantity.", ex);
+            }
         }
 
     }
