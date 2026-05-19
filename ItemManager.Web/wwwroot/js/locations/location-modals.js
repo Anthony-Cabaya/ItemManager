@@ -1,108 +1,121 @@
 ﻿window.LocationModals = {
 
     openCreate: function () {
-        document.getElementById("create-location-name").value = "";
-        document.getElementById("create-location-description").value = "";
-        document.getElementById("create-location-isactive").checked = true;
-        document.getElementById("create-location-sort").value = 0;
 
-        openModal("createLocationModal");
+        document.getElementById('create-location-name').value = '';
+        document.getElementById('create-location-isactive').checked = true;
+        document.getElementById('create-location-sort').value = 0;
+        document.getElementById('create-location-error').classList.add('d-none');
+
+        openModal('createLocationModal');
     },
 
     openEdit: function () {
-        const id = LocationState.selectedIds[0];
-        const row = document.querySelector(`.location-row[data-id='${id}']`);
 
-        document.getElementById("edit-location-id").value = id;
-        document.getElementById("edit-location-name").value = row.dataset.name;
-        document.getElementById("edit-location-description").value = row.dataset.description;
-        document.getElementById("edit-location-isactive").checked = row.dataset.isActive === "true";
-        document.getElementById("edit-location-sort").value = row.dataset.sort;
+        const row = document.querySelector('.location-row.table-active');
 
-        openModal("editLocationModal");
+        if (!row) {
+            return;
+        }
+
+        document.getElementById('edit-location-id').value = row.dataset.id;
+        document.getElementById('edit-location-name').value = row.dataset.name;
+        document.getElementById('edit-location-sort').value = row.dataset.sort;
+        document.getElementById('edit-location-isactive').checked = row.dataset.active === 'true';
+        document.getElementById('edit-location-error').classList.add('d-none');
+
+        openModal('editLocationModal');
     },
 
-    openDelete: function () {
-        const ids = LocationState.selectedIds;
+    submitCreate: async function () {
 
-        const firstRow = document.querySelector(`.location-row[data-id='${ids[0]}']`);
+        const name =
+            document.getElementById('create-location-name')
+                .value
+                .trim();
 
-        document.getElementById("delete-location-id").value = ids.join(",");
-        document.getElementById("delete-location-name").innerText = firstRow.dataset.name;
+        if (!name) {
 
-        openModal("deleteLocationModal");
-    },
+            const error =
+                document.getElementById('create-location-error');
 
-    submitCreate: function () {
-        const name = document.getElementById("create-location-name").value;
+            error.textContent = 'Location name is required.';
+            error.classList.remove('d-none');
 
-        if (!name) return;
+            return;
+        }
 
-        postJson("/Location/Create", {
+        const response = await postJson('/Location/Create', {
             locationName: name,
-            description: document.getElementById("create-location-description").value,
-            isActive: document.getElementById("create-location-isactive").checked,
-            sort: document.getElementById("create-location-sort").value
-        }).then(res => {
-
-            if (res.success) {
-                closeModal("createLocationModal");
-                showToast(res.message, "create");
-                LocationTable.load(1, "");
-            } else {
-                const err = document.getElementById("create-location-error");
-                err.innerText = res.message;
-                err.classList.remove("d-none");
-            }
+            isActive: document.getElementById('create-location-isactive').checked,
+            sort: document.getElementById('create-location-sort').value
         });
+
+        if (response.success) {
+
+            closeModal('createLocationModal');
+
+            showToast(response.message, 'create');
+
+            if (window.LocationTable) {
+                LocationTable.reload();
+            }
+
+            return;
+        }
+
+        const error =
+            document.getElementById('create-location-error');
+
+        error.textContent = response.message;
+        error.classList.remove('d-none');
     },
 
-    submitEdit: function () {
-        const name = document.getElementById("edit-location-name").value;
+    submitEdit: async function () {
 
-        if (!name) return;
+        const id =
+            document.getElementById('edit-location-id').value;
 
-        postJson("/Location/Edit", {
-            locationID: document.getElementById("edit-location-id").value,
+        const name =
+            document.getElementById('edit-location-name')
+                .value
+                .trim();
+
+        if (!name) {
+
+            const error =
+                document.getElementById('edit-location-error');
+
+            error.textContent = 'Location name is required.';
+            error.classList.remove('d-none');
+
+            return;
+        }
+
+        const response = await postJson('/Location/Edit', {
+            locationId: id,
             locationName: name,
-            description: document.getElementById("edit-location-description").value,
-            isActive: document.getElementById("edit-location-isactive").checked,
-            sort: document.getElementById("edit-location-sort").value
-        }).then(res => {
-
-            if (res.success) {
-                closeModal("editLocationModal");
-                showToast(res.message, "edit");
-                LocationTable.load(LocationState.currentPage, LocationState.currentSearch);
-            } else {
-                const err = document.getElementById("edit-location-error");
-                err.innerText = res.message;
-                err.classList.remove("d-none");
-            }
+            isActive: document.getElementById('edit-location-isactive').checked,
+            sort: document.getElementById('edit-location-sort').value
         });
-    },
 
-    submitDelete: function () {
+        if (response.success) {
 
-        const ids = document.getElementById("delete-location-id").value.split(",");
+            closeModal('editLocationModal');
 
-        Promise.all(ids.map(id =>
-            postJson("/Location/Delete", { id: parseInt(id) })
-        )).then(results => {
+            showToast(response.message, 'edit');
 
-            const failed = results.find(r => !r.success);
-
-            if (failed) {
-                const err = document.getElementById("delete-location-error");
-                err.innerText = failed.message;
-                err.classList.remove("d-none");
-                return;
+            if (window.LocationTable) {
+                LocationTable.reload();
             }
 
-            closeModal("deleteLocationModal");
-            showToast("Deleted", "delete");
-            LocationState.selectedIds = [];
-            LocationTable.load(1, "");
-        });
+            return;
+        }
+
+        const error =
+            document.getElementById('edit-location-error');
+
+        error.textContent = response.message;
+        error.classList.remove('d-none');
     }
 };

@@ -1,44 +1,82 @@
-﻿<div class="modal fade" id="createLocationModal">
-    <div class="modal-dialog modal-dialog-centered">
+﻿<div class="modal fade"
+     id="createLocationModal"
+     tabindex="-1"
+     aria-hidden="true">
+
+    <div class="modal-dialog">
+
         <div class="modal-content">
 
             <div class="modal-header">
-                <h5 class="modal-title">CREATE LOCATION</h5>
+                <h5 class="modal-title">
+                    CREATE LOCATION
+                </h5>
+
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal">
+                </button>
             </div>
 
             <div class="modal-body">
 
-                <div class="alert alert-danger d-none mb-3" id="create-location-error"></div>
-
                 @Html.AntiForgeryToken()
+
+                <div id="create-location-error"
+                     class="alert alert-danger d-none mb-3">
+                </div>
 
                 <div class="mb-2">
                     <label>Location Name</label>
-                    <input type="text" class="form-control form-control-sm" id="create-location-name" required />
+
+                    <input type="text"
+                           class="form-control form-control-sm"
+                           id="create-location-name" />
                 </div>
 
                 <div class="mb-2">
-                    <label>Description</label>
-                    <textarea class="form-control form-control-sm" id="create-location-description"></textarea>
+                    <label>Sort Order</label>
+
+                    <input type="number"
+                           class="form-control form-control-sm"
+                           id="create-location-sort"
+                           value="0" />
                 </div>
 
-                <div class="form-check mb-2">
-                    <input type="checkbox" class="form-check-input" id="create-location-isactive" checked />
-                    <label class="form-check-label">Is Active</label>
-                </div>
+                <div class="form-check mt-3">
 
-                <div class="mb-2">
-                    <label>Sort</label>
-                    <input type="number" class="form-control form-control-sm" id="create-location-sort" value="0" />
+                    <input class="form-check-input"
+                           type="checkbox"
+                           id="create-location-isactive"
+                           checked />
+
+                    <label class="form-check-label"
+                           for="create-location-isactive">
+                        Active
+                    </label>
+
                 </div>
 
             </div>
 
             <div class="modal-footer">
-                <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">CANCEL</button>
-                <button class="btn btn-primary btn-sm" id="btn-save-location">SAVE</button>
+
+                <button type="button"
+                        class="btn btn-secondary btn-sm"
+                        data-bs-dismiss="modal">
+                    CANCEL
+                </button>
+
+                <button type="button"
+                        class="btn btn-primary btn-sm"
+                        id="btn-confirm-create-location">
+                    SAVE
+                </button>
+
             </div>
 
         </div>
+
     </div>
+
 </div>

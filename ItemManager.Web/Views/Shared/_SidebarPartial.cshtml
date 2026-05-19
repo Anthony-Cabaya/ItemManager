@@ -48,6 +48,13 @@
             <span class="nav-label">Inventory</span>
         </a>
 
+        <a asp-controller="Transaction"
+           asp-action="Index"
+           class="nav-item @(ctrl == "Transaction" ? "active" : "")">
+            <span class="nav-icon">🧾</span>
+            <span class="nav-label">Transactions</span>
+        </a>
+
         <div class="sb-divider"></div>
 
         @if (role == "Admin")
