@@ -1,0 +1,252 @@
+﻿@using Microsoft.AspNetCore.Mvc.Rendering
+
+@{
+    ViewData["Title"] = "Transactions";
+
+    var locations = ViewBag.Locations as List<SelectListItem>
+        ?? new List<SelectListItem>();
+}
+
+<style>
+    #transactionTabs {
+        border-bottom: 2px solid #94a3b8;
+    }
+
+        #transactionTabs .nav-link {
+            color: #64748b;
+            font-weight: 500;
+            border: 1px solid transparent;
+            border-bottom: none;
+            border-radius: 6px 6px 0 0;
+            padding: 8px 20px;
+            background: transparent;
+            transition: all 0.15s ease;
+        }
+
+            #transactionTabs .nav-link:hover {
+                color: #1e293b;
+                background-color: #f1f5f9;
+                border-color: #cbd5e1 #cbd5e1 transparent;
+            }
+
+            #transactionTabs .nav-link.active {
+                color: #ffffff;
+                background-color: #1e293b;
+                border-color: #1e293b #1e293b #ffffff;
+                font-weight: 600;
+            }
+</style>
+
+<div class="container-fluid px-4">
+
+    <h4 class="fw-bold text-uppercase mb-3">
+        Transactions
+    </h4>
+
+    <ul class="nav nav-tabs mb-3" id="transactionTabs">
+
+        <li class="nav-item">
+            <button class="nav-link active"
+                    id="tab-recent"
+                    type="button">
+                Recent
+            </button>
+        </li>
+
+        <li class="nav-item">
+            <button class="nav-link"
+                    id="tab-by-item"
+                    type="button">
+                By Item
+            </button>
+        </li>
+
+        <li class="nav-item">
+            <button class="nav-link"
+                    id="tab-by-location"
+                    type="button">
+                By Location
+            </button>
+        </li>
+
+    </ul>
+
+    <div id="pane-recent">
+
+        <div class="d-flex gap-2 align-items-center mb-3 flex-wrap">
+
+            <button class="btn btn-primary btn-sm"
+                    id="btn-stock-in">
+                STOCK IN
+            </button>
+
+            <button class="btn btn-warning btn-sm"
+                    id="btn-stock-out">
+                STOCK OUT
+            </button>
+
+            <button class="btn btn-info btn-sm text-white"
+                    id="btn-hold">
+                HOLD
+            </button>
+
+            <button class="btn btn-secondary btn-sm"
+                    id="btn-release-hold">
+                RELEASE HOLD
+            </button>
+
+        </div>
+
+        <div id="recent-table-container">
+
+            <div class="text-center text-muted py-4">
+                Loading transactions...
+            </div>
+
+        </div>
+
+    </div>
+
+    <div id="pane-by-item" style="display:none;">
+
+        <div class="d-flex gap-2 align-items-center mb-2 flex-wrap">
+
+            <div class="position-relative" style="width:250px;">
+
+                <input type="text"
+                       class="form-control form-control-sm"
+                       id="item-search-input"
+                       placeholder="Search item..." />
+
+                <span id="item-search-clear"
+                      style="position:absolute;
+                             right:8px;
+                             top:50%;
+                             transform:translateY(-50%);
+                             cursor:pointer;
+                             display:none;
+                             color:#999;">
+                    ✕
+                </span>
+
+            </div>
+
+            <button class="btn btn-outline-secondary btn-sm"
+                    id="btn-search-item">
+                Search
+            </button>
+
+        </div>
+
+        <div class="d-flex gap-2 align-items-center mb-3 flex-wrap">
+
+            <button class="btn btn-primary btn-sm"
+                    id="btn-stock-in-item">
+                STOCK IN
+            </button>
+
+            <button class="btn btn-warning btn-sm"
+                    id="btn-stock-out-item">
+                STOCK OUT
+            </button>
+
+            <button class="btn btn-info btn-sm text-white"
+                    id="btn-hold-item">
+                HOLD
+            </button>
+
+            <button class="btn btn-secondary btn-sm"
+                    id="btn-release-hold-item">
+                RELEASE HOLD
+            </button>
+
+        </div>
+
+        <div id="item-table-container">
+
+            <div class="text-center text-muted py-4">
+                Search for an item to view transactions.
+            </div>
+
+        </div>
+
+    </div>
+
+    <div id="pane-by-location" style="display:none;">
+
+        <div class="d-flex gap-2 align-items-center mb-2 flex-wrap">
+
+            <select class="form-select form-select-sm"
+                    id="location-filter-select"
+                    style="max-width:300px;">
+
+                <option value="">
+                    -- Select Location --
+                </option>
+
+                @foreach (var location in locations)
+                {
+                    <option value="@location.Value">
+                        @location.Text
+                    </option>
+                }
+
+            </select>
+
+        </div>
+
+        <div class="d-flex gap-2 align-items-center mb-3 flex-wrap">
+
+            <button class="btn btn-primary btn-sm"
+                    id="btn-stock-in-loc">
+                STOCK IN
+            </button>
+
+            <button class="btn btn-warning btn-sm"
+                    id="btn-stock-out-loc">
+                STOCK OUT
+            </button>
+
+            <button class="btn btn-info btn-sm text-white"
+                    id="btn-hold-loc">
+                HOLD
+            </button>
+
+            <button class="btn btn-secondary btn-sm"
+                    id="btn-release-hold-loc">
+                RELEASE HOLD
+            </button>
+
+        </div>
+
+        <div id="location-table-container">
+
+            <div class="text-center text-muted py-4">
+                Select a location to view transactions.
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+@await Html.PartialAsync("Partials/_StockInModal")
+@await Html.PartialAsync("Partials/_StockOutModal")
+@await Html.PartialAsync("Partials/_HoldModal")
+@await Html.PartialAsync("Partials/_ReleaseHoldModal")
+
+@section Scripts {
+
+    <script src="~/js/shared/fetch-helper.js" asp-append-version="true"></script>
+    <script src="~/js/shared/toast.js" asp-append-version="true"></script>
+    <script src="~/js/shared/modal-helper.js" asp-append-version="true"></script>
+
+    <script src="~/js/transaction/transaction-state.js" asp-append-version="true"></script>
+    <script src="~/js/transaction/transaction-table.js" asp-append-version="true"></script>
+
+    <script src="~/js/transaction/transaction-toolbar.js" asp-append-version="true"></script>
+    <script src="~/js/transaction/transaction-modals.js" asp-append-version="true"></script>
+
+    <script src="~/js/transaction/transaction-init.js" asp-append-version="true"></script>
+}

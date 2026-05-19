@@ -1,0 +1,107 @@
+﻿<div class="modal fade"
+     id="holdModal"
+     tabindex="-1"
+     aria-hidden="true">
+
+    <div class="modal-dialog">
+
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    HOLD STOCK
+                </h5>
+
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal">
+                </button>
+            </div>
+
+            <div class="modal-body">
+
+                @Html.AntiForgeryToken()
+
+                <div class="alert alert-danger d-none mb-3"
+                     id="hold-error">
+                </div>
+
+                <input type="hidden" id="hold-item-id" />
+                <input type="hidden" id="hold-location-id" />
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">
+                        Item
+                    </label>
+
+                    <div class="form-control bg-light"
+                         id="hold-item-display">
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">
+                        Location
+                    </label>
+
+                    <div class="form-control bg-light"
+                         id="hold-location-display">
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">
+                        Available Quantity
+                    </label>
+
+                    <div class="form-control bg-light"
+                         id="hold-available-display">
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">
+                        Quantity
+                    </label>
+
+                    <input type="number"
+                           class="form-control"
+                           id="hold-quantity"
+                           min="0.0001"
+                           step="0.0001"
+                           required />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">
+                        Reference Note
+                    </label>
+
+                    <textarea class="form-control"
+                              id="hold-note"
+                              rows="3"></textarea>
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+
+                <button type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal">
+                    CANCEL
+                </button>
+
+                <button type="button"
+                        class="btn btn-warning"
+                        id="btn-confirm-hold">
+                    CONFIRM
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

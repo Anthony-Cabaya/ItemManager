@@ -1,0 +1,97 @@
+﻿<div class="modal fade"
+     id="stockInModal"
+     tabindex="-1"
+     aria-hidden="true">
+
+    <div class="modal-dialog">
+
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    STOCK IN
+                </h5>
+
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal">
+                </button>
+            </div>
+
+            <div class="modal-body">
+
+                @Html.AntiForgeryToken()
+
+                <div class="alert alert-danger d-none mb-3"
+                     id="stock-in-error">
+                </div>
+
+                <input type="hidden" id="stock-in-item-id" />
+                <input type="hidden" id="stock-in-location-id" />
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">
+                        Item
+                    </label>
+
+                    <div class="form-control bg-light"
+                         id="stock-in-item-display">
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">
+                        Location
+                    </label>
+
+                    <div class="form-control bg-light"
+                         id="stock-in-location-display">
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">
+                        Quantity
+                    </label>
+
+                    <input type="number"
+                           class="form-control"
+                           id="stock-in-quantity"
+                           min="0.0001"
+                           step="0.0001"
+                           required />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">
+                        Reference Note
+                    </label>
+
+                    <textarea class="form-control"
+                              id="stock-in-note"
+                              rows="3"></textarea>
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+
+                <button type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal">
+                    CANCEL
+                </button>
+
+                <button type="button"
+                        class="btn btn-success"
+                        id="btn-confirm-stock-in">
+                    CONFIRM
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
