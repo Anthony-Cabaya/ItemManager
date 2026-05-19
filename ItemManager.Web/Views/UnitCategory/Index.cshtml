@@ -3,8 +3,7 @@
 }
 
 <div id="pageData"
-     data-is-admin="@((ViewBag.IsAdmin ?? false)
-             ? "true" : "false")">
+     data-is-admin="@((ViewBag.IsAdmin ?? false) ? "true" : "false")">
 </div>
 
 @Html.AntiForgeryToken()
@@ -12,20 +11,11 @@
 <div class="container-fluid px-4">
     <h4 class="fw-bold text-uppercase mb-3">Unit Category Management</h4>
 
-    @await Html.PartialAsync(
-        "Partials/_CategoryToolbar")
-
-    @await Html.PartialAsync(
-        "Partials/_CategoryTable")
-
-    @await Html.PartialAsync(
-        "Partials/_CategoryCreateModal")
-
-    @await Html.PartialAsync(
-        "Partials/_CategoryEditModal")
-
-    @await Html.PartialAsync(
-        "Partials/_CategoryDeleteModal")
+    @await Html.PartialAsync("Partials/_CategoryToolbar")
+    @await Html.PartialAsync("Partials/_CategoryTable")
+    @await Html.PartialAsync("Partials/_CategoryCreateModal")
+    @await Html.PartialAsync("Partials/_CategoryEditModal")
+    @await Html.PartialAsync("Partials/_CategoryDeleteModal")
 
 </div>
 

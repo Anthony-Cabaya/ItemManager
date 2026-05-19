@@ -10,6 +10,10 @@
 
         public decimal Quantity { get; set; }
 
+        public decimal ReservedQuantity { get; set; }
+
+        public decimal AvailableQuantity => Quantity - ReservedQuantity;
+
         public decimal? MinStock { get; set; }
 
         public DateTime? LastUpdated { get; set; }
