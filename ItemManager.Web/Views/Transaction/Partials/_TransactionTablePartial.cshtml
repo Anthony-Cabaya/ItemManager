@@ -8,7 +8,6 @@
         <thead class="table-light">
 
             <tr>
-                <th style="width:60px;">#</th>
                 <th>Date</th>
                 <th>Type</th>
                 <th>Item Code</th>
@@ -26,8 +25,6 @@
 
             @if (Model != null && Model.Any())
             {
-                var rowNumber = 1;
-
                 foreach (var item in Model)
                 {
                     var badgeClass = item.TransactionType switch
@@ -48,10 +45,6 @@
                         data-location-name="@item.LocationName"
                         data-quantity="@item.Quantity"
                         data-type="@item.TransactionType">
-
-                        <td>
-                            @rowNumber
-                        </td>
 
                         <td>
                             @item.TransactionDate.ToString("yyyy-MM-dd HH:mm")
@@ -91,20 +84,18 @@
                                                 : item.CreatedBy)
                 </td>
 
-                                    <td>
-                                        @(item.CreatedDate?.ToString("yyyy-MM-dd HH:mm") ?? "-")
-                                    </td>
+                        <td>
+                            @(item.CreatedDate?.ToString("yyyy-MM-dd HH:mm") ?? "-")
+                        </td>
 
-                                </tr>
-
-                                rowNumber++;
-                }
+                    </tr>
+                        }
             }
             else
             {
                 <tr>
 
-                    <td colspan="10"
+                    <td colspan="9"
                         class="text-center text-muted py-4">
 
                         No transactions found.

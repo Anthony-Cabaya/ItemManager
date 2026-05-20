@@ -1,7 +1,6 @@
 ﻿window.addEventListener("DOMContentLoaded", function () {
 
     LocationToolbar.update();
-
     LocationTable.initRows();
 
     const searchInput = document.getElementById("location-search");
@@ -12,6 +11,7 @@
         LocationState.currentSearch = searchInput.value;
     }
 
+    // Open Modal
     document
         .getElementById("btn-create-location")
         ?.addEventListener("click", LocationModals.openCreate);
@@ -24,12 +24,13 @@
         .getElementById("btn-delete-location")
         ?.addEventListener("click", LocationModals.openDelete);
 
+    // Actions
     document
-        .getElementById("btn-save-location")
+        .getElementById("btn-confirm-create-location")
         ?.addEventListener("click", LocationModals.submitCreate);
 
     document
-        .getElementById("btn-update-location")
+        .getElementById("btn-confirm-edit-location")
         ?.addEventListener("click", LocationModals.submitEdit);
 
     document
@@ -39,38 +40,32 @@
     document
         .getElementById("btn-search")
         ?.addEventListener("click", function () {
-
             const search = searchInput?.value || "";
-
             LocationTable.load(1, search);
         });
 
     searchInput?.addEventListener("keydown", function (e) {
-
         if (e.key === "Enter") {
-
             LocationTable.load(1, this.value);
         }
     });
 
     searchInput?.addEventListener("input", function () {
-
         if (clearSearch) {
-
-            clearSearch.style.display =
-                this.value ? "block" : "none";
+            clearSearch.style.display = this.value ? "block" : "none";
         }
     });
 
     clearSearch?.addEventListener("click", function () {
-
-        LocationTable.clearSearch();
+        searchInput.value = "";
+        LocationState.currentSearch = "";
+        LocationTable.load(1, "");
+        this.style.display = "none";
     });
 
     document
         .getElementById("btn-prev-page")
         ?.addEventListener("click", function () {
-
             if (this.closest(".disabled")) return;
 
             LocationTable.load(
@@ -82,7 +77,6 @@
     document
         .getElementById("btn-next-page")
         ?.addEventListener("click", function () {
-
             if (this.closest(".disabled")) return;
 
             LocationTable.load(
@@ -92,9 +86,7 @@
         });
 
     document.querySelectorAll(".page-number-btn").forEach(btn => {
-
         btn.addEventListener("click", function () {
-
             const page = parseInt(this.dataset.page);
 
             window.location.href =

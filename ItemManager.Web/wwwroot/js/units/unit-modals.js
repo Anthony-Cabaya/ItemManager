@@ -5,11 +5,14 @@
         document.getElementById('create-unit-name').value = '';
         document.getElementById('create-unit-abbr').value = '';
         document.getElementById('create-unit-sort').value = 0;
-
-        document.getElementById('create-unit-category-id').value =
-            UnitState.selectedCategoryId || '';
-
+        document.getElementById('create-unit-category-id').value = UnitState.selectedCategoryId || '';
         document.getElementById('create-error').classList.add('d-none');
+
+        const label = document.getElementById('create-unit-category-label');
+
+        if (label) {
+            label.textContent = UnitState.selectedCategoryName || '';
+        }
 
         openModal('createUnitModal');
     },

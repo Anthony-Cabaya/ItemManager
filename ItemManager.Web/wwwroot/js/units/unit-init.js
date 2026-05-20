@@ -22,6 +22,7 @@
 
     document.getElementById('btn-search-unit')
         .addEventListener('click', function () {
+
             UnitTable.filterRows(
                 document.getElementById('unit-search').value
             );
@@ -29,6 +30,7 @@
 
     document.getElementById('unit-search')
         .addEventListener('keydown', function (e) {
+
             if (e.key === 'Enter') {
                 UnitTable.filterRows(this.value);
             }
@@ -36,16 +38,20 @@
 
     document.getElementById('unit-search-clear')
         .addEventListener('click', function () {
+
             UnitTable.clearSearch();
         });
 
     document.getElementById('unit-search')
         .addEventListener('input', function () {
-            const clear = document.getElementById('unit-search-clear');
+
+            const clear =
+                document.getElementById('unit-search-clear');
 
             if (this.value.length === 0) {
                 UnitTable.clearSearch();
-            } else {
+            }
+            else {
                 clear.style.display = 'block';
             }
         });

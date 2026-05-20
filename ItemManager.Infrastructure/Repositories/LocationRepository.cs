@@ -19,7 +19,6 @@ namespace ItemManager.Infrastructure.Repositories
             SELECT
                 LocationID,
                 LocationName,
-                Description,
                 IsActive,
                 Sort,
                 CreatedBy,
@@ -34,11 +33,6 @@ namespace ItemManager.Infrastructure.Repositories
             {
                 LocationID = reader.GetInt32(reader.GetOrdinal("LocationID")),
                 LocationName = reader.GetString(reader.GetOrdinal("LocationName")),
-
-                Description = reader.IsDBNull(reader.GetOrdinal("Description"))
-                    ? null
-                    : reader.GetString(reader.GetOrdinal("Description")),
-
                 IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive")),
                 Sort = reader.GetInt32(reader.GetOrdinal("Sort")),
 
@@ -114,7 +108,6 @@ namespace ItemManager.Infrastructure.Repositories
                 INSERT INTO Locations
                 (
                     LocationName,
-                    Description,
                     IsActive,
                     Sort,
                     CreatedBy,
@@ -123,7 +116,6 @@ namespace ItemManager.Infrastructure.Repositories
                 VALUES
                 (
                     @LocationName,
-                    @Description,
                     @IsActive,
                     @Sort,
                     @CreatedBy,
@@ -136,7 +128,6 @@ namespace ItemManager.Infrastructure.Repositories
             using var command = new SqlCommand(query, connection);
 
             command.Parameters.AddWithValue("@LocationName", model.LocationName);
-            command.Parameters.AddWithValue("@Description", (object?)model.Description ?? DBNull.Value);
             command.Parameters.AddWithValue("@IsActive", model.IsActive);
             command.Parameters.AddWithValue("@Sort", model.Sort);
             command.Parameters.AddWithValue("@CreatedBy", (object?)model.CreatedBy ?? DBNull.Value);
@@ -151,7 +142,6 @@ namespace ItemManager.Infrastructure.Repositories
                 UPDATE Locations
                 SET
                     LocationName = @LocationName,
-                    Description = @Description,
                     IsActive = @IsActive,
                     Sort = @Sort,
                     UpdatedBy = @UpdatedBy,
@@ -165,7 +155,6 @@ namespace ItemManager.Infrastructure.Repositories
 
             command.Parameters.AddWithValue("@LocationID", model.LocationID);
             command.Parameters.AddWithValue("@LocationName", model.LocationName);
-            command.Parameters.AddWithValue("@Description", (object?)model.Description ?? DBNull.Value);
             command.Parameters.AddWithValue("@IsActive", model.IsActive);
             command.Parameters.AddWithValue("@Sort", model.Sort);
             command.Parameters.AddWithValue("@UpdatedBy", (object?)model.UpdatedBy ?? DBNull.Value);
@@ -248,7 +237,6 @@ namespace ItemManager.Infrastructure.Repositories
                     SELECT
                         LocationID,
                         LocationName,
-                        Description,
                         IsActive,
                         Sort,
                         CreatedBy,
@@ -286,5 +274,6 @@ namespace ItemManager.Infrastructure.Repositories
 
             return result;
         }
+
     }
 }

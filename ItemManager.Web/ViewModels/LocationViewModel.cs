@@ -10,9 +10,6 @@ namespace ItemManager.Web.ViewModels
         [MaxLength(100)]
         public string LocationName { get; set; } = string.Empty;
 
-        [MaxLength(255)]
-        public string? Description { get; set; }
-
         public bool IsActive { get; set; }
 
         [Range(0, 9999)]

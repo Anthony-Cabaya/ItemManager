@@ -1,29 +1,45 @@
 ﻿window.UnitCategory = {
 
     initCategoryList: function () {
+
         const items = document.querySelectorAll('.category-item');
 
         items.forEach(item => {
+
             item.addEventListener('click', () => {
 
-                // state
-                UnitState.selectedCategoryId = item.dataset.categoryId;
-                UnitState.selectedCategoryIsSystem = item.dataset.isSystem === 'True';
+                UnitState.selectedCategoryId =
+                    parseInt(item.dataset.categoryId);
+
+                UnitState.selectedCategoryName =
+                    item.dataset.name;
+
+                UnitState.selectedCategoryIsSystem =
+                    item.dataset.isSystem === 'True';
 
                 UnitState.selectedUnitId = null;
                 UnitState.selectedUnitName = '';
                 UnitState.selectedUnitIsSystem = '';
 
-                // UI highlight
-                items.forEach(x => x.classList.remove('active-category'));
+                items.forEach(x =>
+                    x.classList.remove('active-category'));
+
                 item.classList.add('active-category');
 
-                // load table
-                UnitTable.loadByCategory(UnitState.selectedCategoryId);
+                UnitTable.loadByCategory(
+                    UnitState.selectedCategoryId
+                );
 
                 UnitToolbar.update();
             });
         });
+
+        const firstCategory =
+            document.querySelector('.category-item');
+
+        if (firstCategory) {
+            firstCategory.click();
+        }
 
         if (!document.getElementById('unit-category-styles')) {
 

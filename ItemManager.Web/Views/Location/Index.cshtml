@@ -82,7 +82,7 @@
                         <input type="checkbox" id="selectAll" />
                     </th>
                     <th>Location Name</th>
-                    <th>Active</th>
+                    <th>Status</th>
                     <th>Sort</th>
                     <th class="audit-col">Created By</th>
                     <th class="audit-col">Created Date</th>
@@ -101,8 +101,7 @@
                         <tr class="location-row"
                             data-id="@item.LocationID"
                             data-name="@item.LocationName"
-                            data-description="@item.Description"
-                            data-is-active="@item.IsActive"
+                            data-is-active="@item.IsActive.ToString().ToLower()"
                             data-sort="@item.Sort">
 
                             <td>

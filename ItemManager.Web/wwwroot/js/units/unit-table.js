@@ -6,14 +6,40 @@
         const url = `/Unit/GetUnitsByCategory?categoryId=${categoryId}`;
 
         fetch(url)
-            .then(res => res.text())
+            .then(async res => {
+
+                const text = await res.text();
+
+                console.log("STATUS:", res.status);
+                console.log("RESPONSE:", text);
+
+                if (!res.ok) {
+                    throw new Error(`HTTP ${res.status}`);
+                }
+
+                return text;
+            })
             .then(html => {
+
+                if (!html || html.trim() === "") {
+                    container.innerHTML =
+                        `<div class="text-warning p-2">
+                        No units found for this category.
+                    </div>`;
+                    return;
+                }
+
                 container.innerHTML = html;
                 this.initRows();
             })
             .catch(err => {
+
+                console.error("loadByCategory FAILED:", err);
+
                 container.innerHTML =
-                    `<div class="text-danger p-2">${err}</div>`;
+                    `<div class="text-danger p-2">
+                    Failed to load units: ${err.message}
+                </div>`;
             });
     },
 
