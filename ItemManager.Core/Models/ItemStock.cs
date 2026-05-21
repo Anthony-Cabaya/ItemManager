@@ -8,6 +8,8 @@
 
         public int LocationID { get; set; }
 
+        public int? ItemVariantID { get; set; }
+
         public decimal Quantity { get; set; }
 
         public decimal ReservedQuantity { get; set; }
@@ -35,5 +37,7 @@
         public string? LocationName { get; set; }
 
         public string? BaseUnit { get; set; }
+
+        public string? VariantName { get; set; }
     }
 }

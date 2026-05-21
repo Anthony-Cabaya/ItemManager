@@ -8,6 +8,8 @@
 
         public int LocationID { get; set; }
 
+        public int? ItemVariantID { get; set; }
+
         public string TransactionType { get; set; } = string.Empty;
 
         public decimal Quantity { get; set; }
@@ -27,5 +29,7 @@
         public string? ItemCode { get; set; }
 
         public string? LocationName { get; set; }
+
+        public string? VariantName { get; set; }
     }
 }
