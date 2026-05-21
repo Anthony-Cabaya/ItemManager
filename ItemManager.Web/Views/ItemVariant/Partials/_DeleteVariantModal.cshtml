@@ -1,0 +1,40 @@
+﻿<div class="modal fade" id="deleteVariantModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h6 class="modal-title text-uppercase fw-bold">DELETE VARIANT</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+
+                <div id="delete-variant-error" class="alert alert-danger d-none"></div>
+
+                <input type="hidden" id="delete-variant-id" />
+
+                <p class="mb-0">
+                    Are you sure you want to delete variant
+                    <strong id="delete-variant-name"></strong>?
+                    This action cannot be undone.
+                </p>
+
+            </div>
+
+            <div class="modal-footer">
+                <button type="button"
+                        class="btn btn-danger btn-sm text-uppercase"
+                        id="btn-confirm-delete-variant">
+                    CONFIRM DELETE
+                </button>
+
+                <button type="button"
+                        class="btn btn-secondary btn-sm text-uppercase"
+                        data-bs-dismiss="modal">
+                    CANCEL
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>

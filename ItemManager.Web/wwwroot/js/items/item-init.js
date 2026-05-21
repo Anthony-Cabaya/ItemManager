@@ -59,6 +59,12 @@
                 cb.addEventListener("change", () =>
                     saveColumnPrefs("item-visible-cols-v1"));
             });
+        document.getElementById("btnVariants")
+            .addEventListener("click", () => {
+                if (ItemState.lastSelectedItemId)
+                    window.location.href =
+                        `/ItemVariant/Index?itemId=${ItemState.lastSelectedItemId}`;
+            });
 
         ItemModals.initModalListeners();
 

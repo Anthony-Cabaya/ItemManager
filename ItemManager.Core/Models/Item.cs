@@ -39,5 +39,6 @@ namespace ItemManager.Core.Models
         public string? BaseUnitAbbreviation { get; set; }
         public string? DisplayUnitAbbreviation { get; set; }
 
+        public int VariantCount { get; set; }
     }
 }

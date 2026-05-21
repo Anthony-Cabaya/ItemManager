@@ -36,6 +36,18 @@ namespace ItemManager.Web.Controllers
             public int VariantId { get; set; }
         }
 
+        public class SaveAttributesRequest
+        {
+            public int ItemID { get; set; }
+            public List<AttributeDto> Attributes { get; set; } = new();
+        }
+
+        public class AttributeDto
+        {
+            public string AttributeName { get; set; } = "";
+            public List<string> Values { get; set; } = new();
+        }
+
         public class SuggestCodeRequest
         {
             public string ParentCode { get; set; } = string.Empty;
@@ -80,7 +92,7 @@ namespace ItemManager.Web.Controllers
             ViewBag.Item = item;
             ViewBag.Attributes = attributes;
 
-            return View(model);
+            return View("Variants", model);
         }
 
         [HttpGet]
@@ -92,20 +104,74 @@ namespace ItemManager.Web.Controllers
             return PartialView("Partials/_VariantTablePartial", model);
         }
 
+        [IgnoreAntiforgeryToken]
         [HttpPost]
-        public async Task<JsonResult> BulkSave([FromBody] BulkSaveVariantsViewModel model)
+        public async Task<JsonResult> SaveAttributes(
+            [FromBody] SaveAttributesRequest request)
+        {
+            await _attributeRepo.DeleteByItemAsync(request.ItemID);
+
+            var result = new List<object>();
+
+            foreach (var attr in request.Attributes)
+            {
+                var attribute = new ItemAttribute
+                {
+                    ItemID = request.ItemID,
+                    AttributeName = attr.AttributeName,
+                    Sort = 0,
+                    Values = attr.Values.Select((v, i) =>
+                        new ItemAttributeValue
+                        {
+                            ValueLabel = v,
+                            Abbreviation = v.ToUpper().Replace(" ", ""),
+                            Sort = i
+                        }).ToList()
+                };
+
+                var attrId = await _attributeRepo.AddAsync(attribute, CurrentUsername);
+
+                var saved = await _attributeRepo.GetByIdAsync(attrId);
+
+                if (saved != null)
+                {
+                    result.Add(new
+                    {
+                        attributeId = saved.ItemAttributeID,
+                        attributeName = saved.AttributeName,
+                        values = saved.Values.Select(v => new
+                        {
+                            id = v.ItemAttributeValueID,
+                            label = v.ValueLabel
+                        })
+                    });
+                }
+            }
+
+            return JsonSuccess("Attributes saved.", result);
+        }
+
+        [IgnoreAntiforgeryToken]
+        [HttpPost]
+        public async Task<JsonResult> BulkSave(
+            [FromBody] BulkSaveVariantsViewModel model)
         {
             if (!ModelState.IsValid)
                 return JsonFail("Invalid request.");
 
-            var checkedRows = model.Rows.Where(x => x.IsChecked).ToList();
+            var checkedRows = model.Rows?
+                .Where(x => x.IsChecked)
+                .DistinctBy(x => x.VariantCode)
+                .ToList() ?? new();
+
             int saved = 0;
 
             foreach (var row in checkedRows)
             {
-                var exists = await _variantRepo.ExistsAsync(model.ItemID, row.VariantCode);
-                if (exists)
-                    continue;
+                var exists = await _variantRepo
+                    .ExistsAsync(model.ItemID, row.VariantCode);
+
+                if (exists) continue;
 
                 var variant = new ItemVariant
                 {
@@ -127,7 +193,10 @@ namespace ItemManager.Web.Controllers
                 saved++;
             }
 
-            return JsonSuccess($"{saved} variant(s) saved.", new { saved });
+            return JsonSuccess(
+                $"{saved} variant(s) saved.",
+                new { saved }
+            );
         }
 
         [HttpPost]

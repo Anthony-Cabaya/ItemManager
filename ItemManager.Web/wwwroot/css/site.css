@@ -237,3 +237,23 @@ body {
 #columnPanel .col-toggle:hover {
     border-color: #0d6efd !important;
 }
+
+.variant-tab {
+    color: #64748b;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    font-weight: 500;
+}
+
+.variant-tab:hover {
+    background: #f1f5f9;
+    color: #1e293b;
+}
+
+.variant-tab.active {
+    background: #1e293b !important;
+    color: white !important;
+    font-weight: 600;
+    border-bottom: 2px solid #1e293b;
+}

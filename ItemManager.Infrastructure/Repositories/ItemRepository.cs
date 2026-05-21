@@ -26,12 +26,18 @@ namespace ItemManager.Infrastructure.Repositories
                    it.ItemTypeName,
                    ist.SubTypeName,
                    bu.Abbreviation AS BaseUnitAbbreviation,
-                   du.Abbreviation AS DisplayUnitAbbreviation
+                   du.Abbreviation AS DisplayUnitAbbreviation,
+                   ISNULL(v.VariantCount,0) AS VariantCount
             FROM Items i
             INNER JOIN ItemType it ON i.ItemTypeID = it.ItemTypeID
             LEFT JOIN ItemSubType ist ON i.ItemSubTypeID = ist.ItemSubTypeID
             LEFT JOIN Units bu ON i.BaseUnitID = bu.UnitID
-            LEFT JOIN Units du ON i.DisplayUnitID = du.UnitID";
+            LEFT JOIN Units du ON i.DisplayUnitID = du.UnitID
+            LEFT JOIN (
+                SELECT ItemID, COUNT(*) AS VariantCount
+                FROM ItemVariants
+                GROUP BY ItemID
+            ) v ON i.ItemID = v.ItemID";
 
         private static Item Map(SqlDataReader reader)
         {
@@ -89,14 +95,17 @@ namespace ItemManager.Infrastructure.Repositories
                     ? null
                     : reader.GetString(reader.GetOrdinal("DisplayUnitAbbreviation")),
 
-                // MODIFY Map()
                 ItemCode = reader.IsDBNull(reader.GetOrdinal("ItemCode"))
                     ? null
                     : reader.GetString(reader.GetOrdinal("ItemCode")),
 
                 Condition = reader.IsDBNull(reader.GetOrdinal("Condition"))
                     ? null
-                    : reader.GetString(reader.GetOrdinal("Condition"))
+                    : reader.GetString(reader.GetOrdinal("Condition")),
+
+                VariantCount = reader.IsDBNull(reader.GetOrdinal("VariantCount"))
+                    ? 0
+                    : reader.GetInt32(reader.GetOrdinal("VariantCount"))
             };
         }
 
@@ -325,6 +334,9 @@ namespace ItemManager.Infrastructure.Repositories
                            i.ItemCode, i.Condition,
                            i.BaseUnitID, i.DisplayUnitID,
                            i.Sort,
+                           (SELECT COUNT(*) 
+                           FROM ItemVariants v 
+                           WHERE v.ItemID = i.ItemID) AS VariantCount,
                            i.CreatedBy, i.CreatedDate, i.UpdatedBy, i.UpdatedDate,
                            it.ItemTypeName,
                            ist.SubTypeName,

@@ -79,7 +79,11 @@ function renderTable(data) {
       <td data-col="col-6">
         ${item.itemSubTypeName ?? "—"}
       </td>
-      <td data-col="col-7">${item.variants}</td>
+      <td data-col="col-7">
+        ${item.variantCount > 0
+          ? `<span class="badge bg-primary">${item.variantCount}</span>`
+          : '<span class="text-muted">—</span>'}
+      </td>
       <td data-col="col-8">
         ${item.baseUnitAbbreviation ?? "—"}
       </td>
@@ -103,7 +107,7 @@ function renderTable(data) {
         ${item.updatedDate ?? "—"}
       </td>
     </tr>
-  `).join("");
+    `).join("");
 
     initRowCheckboxes();
     applyColumnVisibility(
@@ -114,8 +118,8 @@ function renderTable(data) {
 }
 
 function getDefaultColumns() {
-    return ["col-2", "col-3", "col-4", "col-5", "col-6",
-        "col-7", "col-8", "col-9", "col-10", "col-11"];
+    return ["col-2", "col-3", "col-4", "col-5", "col-6", "col-7",
+        "col-8", "col-9", "col-10", "col-11"];
 }
 
 function renderPagination(data) {
@@ -178,19 +182,36 @@ function initRowCheckboxes() {
             cb.addEventListener("change", function () {
                 const id = parseInt(this.value);
                 const row = this.closest("tr");
+
                 if (this.checked) {
                     if (!ItemState.selectedIds.includes(id))
                         ItemState.selectedIds.push(id);
+
                     row.classList.add("table-active");
+
                     ItemState.lastSelectedItemId = id;
                     ItemState.lastSelectedHasBaseUnit =
                         row.dataset.hasBaseUnit === "true";
                 } else {
                     ItemState.selectedIds =
-                        ItemState.selectedIds
-                            .filter(x => x !== id);
+                        ItemState.selectedIds.filter(x => x !== id);
+
                     row.classList.remove("table-active");
+
+                    if (ItemState.selectedIds.length === 1) {
+                        const remainingId = ItemState.selectedIds[0];
+                        const remainingRow = document.querySelector(
+                            `.row-checkbox[value="${remainingId}"]`
+                        )?.closest("tr");
+
+                        if (remainingRow) {
+                            ItemState.lastSelectedItemId = remainingId;
+                            ItemState.lastSelectedHasBaseUnit =
+                                remainingRow.dataset.hasBaseUnit === "true";
+                        }
+                    }
                 }
+
                 updateSelectAll();
                 updateToolbarButtons();
             });
@@ -199,20 +220,26 @@ function initRowCheckboxes() {
     document.getElementById("selectAll")
         .addEventListener("change", function () {
             const checked = this.checked;
+
             document.querySelectorAll(".row-checkbox")
                 .forEach(cb => {
                     cb.checked = checked;
+
                     const id = parseInt(cb.value);
                     const row = cb.closest("tr");
+
                     if (checked) {
                         if (!ItemState.selectedIds.includes(id))
                             ItemState.selectedIds.push(id);
+
                         row.classList.add("table-active");
                     } else {
                         row.classList.remove("table-active");
                     }
                 });
+
             if (!checked) ItemState.selectedIds = [];
+
             updateToolbarButtons();
         });
 }
@@ -243,6 +270,18 @@ function updateToolbarButtons() {
         document.getElementById("btnConversions");
     const selectedCount =
         document.getElementById("selectedCount");
+    const btnVariants =
+        document.getElementById("btnVariants");
+
+    if (btnVariants) {
+        if (count === 1) {
+            btnVariants.style.display = "";
+            btnVariants.disabled = false;
+        } else {
+            btnVariants.style.display = "none";
+            btnVariants.disabled = true;
+        }
+    }
 
     btnEdit.disabled = count !== 1;
     btnDelete.disabled = count === 0;

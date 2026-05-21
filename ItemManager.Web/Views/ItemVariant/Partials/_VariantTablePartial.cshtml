@@ -1,0 +1,100 @@
+﻿@model List<ItemVariantViewModel>
+
+@if (Model == null || !Model.Any())
+{
+    <div class="text-center text-muted py-4">
+        No variants found.
+    </div>
+}
+else
+{
+    <table class="table table-hover table-bordered align-middle table-sm" style="font-size:13px;">
+        <thead class="table-light">
+            <tr>
+                <th style="width:36px;"></th>
+                <th>Variant Code</th>
+                <th>Variant Name</th>
+                <th>Attributes</th>
+                <th class="text-end">Qty</th>
+                <th class="text-end">Reserved</th>
+                <th class="text-end">Available</th>
+                <th>Status</th>
+                <th>Active</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            @foreach (var v in Model)
+            {
+                <tr class="variant-row"
+                    data-id="@v.ItemVariantID"
+                    data-item-id="@v.ItemID"
+                    data-variant-code="@v.VariantCode"
+                    data-variant-name="@v.VariantName"
+                    data-is-active="@v.IsActive.ToString().ToLower()"
+                    data-sort="@v.Sort">
+
+                    <td>
+                        <input type="checkbox"
+                               class="variant-select"
+                               value="@v.ItemVariantID" />
+                    </td>
+
+                    <td class="fw-semibold font-monospace">
+                        @v.VariantCode
+                    </td>
+
+                    <td>
+                        @v.VariantName
+                    </td>
+
+                    <td>
+                        @if (v.AttributeValues != null && v.AttributeValues.Any())
+                        {
+                            foreach (var a in v.AttributeValues)
+                            {
+                                <span class="badge bg-secondary me-1">
+                                    @($"{a.AttributeName}: {a.ValueLabel}")
+                                </span>
+                            }
+                        }
+                    </td>
+
+                    <td class="text-end">
+                        @v.Quantity
+                    </td>
+
+                    <td class="text-end">
+                        @v.ReservedQuantity
+                    </td>
+
+                    <td class="text-end">
+                        @v.AvailableQuantity
+                    </td>
+
+                    <td>
+                        @if (v.IsActive)
+                        {
+                            <span class="badge bg-success">Active</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">Inactive</span>
+                        }
+                    </td>
+
+                    <td>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input variant-toggle"
+                                   type="checkbox"
+                                   id="toggle-@v.ItemVariantID"
+                                   data-variant-id="@v.ItemVariantID"
+                                   data-is-active="@v.IsActive.ToString().ToLower()"
+                                   @(v.IsActive ? "checked" : "") />
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
