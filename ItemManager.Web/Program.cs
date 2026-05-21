@@ -33,6 +33,9 @@ builder.Services.AddScoped<IItemStockRepository, ItemStockRepository>();
 builder.Services.AddScoped<IInventoryService, InventoryService>();
 builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
 builder.Services.AddScoped<ITransactionService, TransactionService>();
+builder.Services.AddScoped<IItemAttributeRepository, ItemAttributeRepository>();
+builder.Services.AddScoped<IItemVariantRepository, ItemVariantRepository>();
+builder.Services.AddScoped<IVariantCodeService, VariantCodeService>();
 
 // Add Session
 builder.Services.AddSession(options =>
