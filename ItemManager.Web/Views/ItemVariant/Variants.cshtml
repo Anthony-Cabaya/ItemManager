@@ -3,23 +3,21 @@
     var item = ViewBag.Item as Item;
 }
 
-<!-- HEADER (CHANGE 4) -->
-<div class="d-flex align-items-center mb-1">
+<!-- HEADER -->
+<div class="d-flex align-items-center gap-3 mb-1">
     <a href="/Item/Index"
-       class="d-inline-flex align-items-center
-              link-secondary text-decoration-none
-              text-uppercase fw-semibold small me-2">
+       class="btn btn-sm btn-secondary
+              text-uppercase fw-semibold"
+       style="white-space:nowrap;">
         ← BACK TO ITEMS
     </a>
 
-    <span class="text-muted me-2 small">/</span>
-
     <h4 class="fw-bold text-uppercase mb-0">
-        MANAGE VARIANTS
+        VARIANTS LIST
     </h4>
 </div>
 
-<div class="small text-muted text-uppercase font-monospace mb-3">
+<div class="small text-muted font-monospace mb-3">
     @item?.ItemCode — @item?.ItemName
 </div>
 
@@ -30,109 +28,124 @@
      data-item-code="@item?.ItemCode">
 </div>
 
-<input type="hidden" id="page-item-id"
+<input type="hidden"
+       id="page-item-id"
        value="@((ViewBag.Item as Item)?.ItemID)" />
 
-<input type="hidden" id="page-item-code"
+<input type="hidden"
+       id="page-item-code"
        value="@((ViewBag.Item as Item)?.ItemCode)" />
 
-<input type="hidden" id="variant-item-id" value="@item?.ItemID" />
+<input type="hidden"
+       id="variant-item-id"
+       value="@item?.ItemID" />
 
-<!-- TABS -->
-<ul class="nav nav-tabs mb-3"
-    style="border-bottom: 2px solid #94a3b8;">
+<!-- TOOLBAR -->
+<div class="d-flex gap-2 align-items-center mb-3 flex-wrap">
 
-    <li class="nav-item">
-        <a class="nav-link variant-tab active"
-           data-bs-toggle="tab"
-           href="#tab-variants">
-            VARIANTS LIST
-        </a>
-    </li>
+    <button id="btn-add-variant"
+            class="btn btn-primary btn-sm
+                   text-uppercase">
+        ADD VARIANT
+    </button>
 
-    <li class="nav-item">
-        <a class="nav-link variant-tab"
-           data-bs-toggle="tab"
-           href="#tab-add">
-            ADD VARIANTS
-        </a>
-    </li>
-</ul>
+    <button id="btn-edit-variant"
+            class="btn btn-warning btn-sm
+                   text-uppercase"
+            disabled>
+        EDIT
+    </button>
 
-<div class="tab-content">
+    <button id="btn-delete-variant"
+            class="btn btn-danger btn-sm
+                   text-uppercase"
+            disabled>
+        DELETE
+    </button>
 
-    <!-- TAB 1 -->
-    <div class="tab-pane fade show active" id="tab-variants">
+    <button id="btn-activate-variant"
+            class="btn btn-success btn-sm
+                   text-uppercase"
+            style="display:none;">
+        ACTIVE
+    </button>
 
-        <div class="d-flex gap-2 mb-3">
-            <button id="btn-edit-variant"
-                    class="btn btn-warning btn-sm text-uppercase"
-                    disabled>
-                EDIT
-            </button>
+    <button id="btn-deactivate-variant"
+            class="btn btn-secondary btn-sm
+                   text-uppercase"
+            style="display:none;">
+        INACTIVE
+    </button>
 
-            <button id="btn-delete-variant"
-                    class="btn btn-danger btn-sm text-uppercase"
-                    disabled>
-                DELETE
-            </button>
+    <span id="selectedCount"
+          class="text-muted small ms-2"></span>
 
-            <span id="selectedCount"
-                  class="text-muted small ms-2"></span>
-        </div>
+</div>
 
-        <div id="variant-table-container">
-            @await Html.PartialAsync(
-            "Partials/_VariantTablePartial",
-                        (List<ItemVariantViewModel>)Model)
-        </div>
+<!-- VARIANTS TABLE -->
+<div id="variant-table-container">
+    @await Html.PartialAsync(
+    "Partials/_VariantTablePartial",
+        (List<ItemVariantViewModel>)Model)
+</div>
 
+<!-- ADD VARIANT SECTION -->
+<div id="add-variant-section"
+     class="mt-4"
+     style="display:none;">
+
+    <hr />
+
+    <h6 class="fw-bold text-uppercase mb-2">
+        DEFINE ATTRIBUTES
+    </h6>
+
+    <div class="form-text text-muted small mb-3">
+        Maximum 3 attributes. Combinations
+        generate rows exponentially.
     </div>
 
-    <!-- TAB 2 -->
-    <div class="tab-pane fade" id="tab-add">
+    <div id="attribute-builder"></div>
 
-        <h6 class="fw-bold text-uppercase mb-2">DEFINE ATTRIBUTES</h6>
+    <button id="btn-add-attribute"
+            class="btn btn-link btn-sm
+                   text-uppercase text-secondary
+                   text-decoration-none fw-semibold
+                   p-0 small">
+        + ADD ATTRIBUTE
+    </button>
 
-        <div class="form-text text-muted small mb-3">
-            Maximum 3 attributes. Combinations generate rows exponentially.
+    <hr class="my-4" />
+
+    <h6 class="fw-bold text-uppercase mb-2">
+        VARIANT MATRIX PREVIEW
+    </h6>
+
+    <div id="matrix-section" style="display:none;">
+
+        <div id="matrix-table-container"></div>
+
+        <div id="save-result"
+             class="alert d-none mb-2 py-2 px-3 small">
         </div>
 
-        <div id="attribute-builder"></div>
+        <div class="d-flex justify-content-end
+                    gap-2 mt-3 pt-3 border-top
+                    border-light">
 
-        <!-- CHANGE 5 -->
-        <button id="btn-add-attribute"
-                class="btn btn-link btn-sm text-uppercase
-                       text-decoration-none fw-semibold
-                       small p-0 text-secondary">
-            + ADD ATTRIBUTE
-        </button>
+            <button id="btn-cancel-add"
+                    class="btn btn-sm btn-outline-secondary
+                           text-uppercase">
+                CANCEL
+            </button>
 
-        <hr class="my-4" />
-
-        <h6 class="fw-bold text-uppercase mb-2">
-            VARIANT MATRIX PREVIEW
-        </h6>
-
-        <div id="matrix-section" style="display:none;">
-            <div id="matrix-table-container"></div>
-
-            <div id="save-result"
-                 class="alert d-none mb-2 py-2 px-3 small">
-            </div>
-
-            <div class="d-flex justify-content-end
-                        gap-2 mt-3 pt-3 border-top
-                        border-light">
-
-                <button id="btn-save-variants"
-                        class="btn btn-sm text-white text-uppercase"
-                        style="background-color:#1e293b;
-                               border-color:#1e293b;">
-                    SAVE VARIANTS
-                </button>
-
-            </div>
+            <button id="btn-save-variants"
+                    class="btn btn-sm text-white
+                           text-uppercase"
+                    style="background-color:#1e293b;
+                           border-color:#1e293b;">
+                SAVE VARIANTS
+            </button>
 
         </div>
 
@@ -140,28 +153,36 @@
 
 </div>
 
-<!-- ATTRIBUTE TEMPLATE (CHANGE 2) -->
+<!-- ATTRIBUTE TEMPLATE -->
 <div id="attribute-row-template" class="d-none">
 
     <div class="card bg-light border-0 p-0 mb-3 attribute-card">
+
         <div class="card-body p-3">
 
-            <div class="d-flex justify-content-between align-items-start mb-2">
+            <div class="d-flex justify-content-between
+                        align-items-start mb-2">
 
                 <div class="flex-grow-1 me-2">
 
-                    <label class="form-label text-uppercase fw-semibold text-muted mb-1"
-                           style="font-size:11px; letter-spacing:0.05em;">
+                    <label class="form-label text-uppercase
+                                  fw-semibold text-muted mb-1"
+                           style="font-size:11px;
+                                  letter-spacing:0.05em;">
                         ATTRIBUTE NAME
                     </label>
 
                     <input type="text"
-                           class="form-control form-control-sm attribute-name"
+                           class="form-control form-control-sm
+                                  attribute-name"
                            placeholder="e.g. Size" />
+
                 </div>
 
                 <button type="button"
-                        class="btn btn-sm btn-link text-danger mt-4 pt-1 remove-attribute">
+                        class="btn btn-sm btn-link
+                               text-danger mt-4 pt-1
+                               remove-attribute">
                     × Remove
                 </button>
 
@@ -170,34 +191,40 @@
             <div class="values-container mb-2 mt-2"></div>
 
             <button type="button"
-                    class="btn btn-link btn-sm text-uppercase
-                           text-secondary text-decoration-none fw-semibold
+                    class="btn btn-link btn-sm
+                           text-uppercase text-secondary
+                           text-decoration-none fw-semibold
                            p-0 small add-value">
                 + ADD VALUE
             </button>
 
         </div>
+
     </div>
 
 </div>
 
-<!-- VALUE TEMPLATE (CHANGE 1) -->
+<!-- VALUE TEMPLATE -->
 <div id="value-input-template" class="d-none">
 
-    <div class="d-flex gap-2 align-items-center mb-2 value-input-row">
+    <div class="d-flex gap-2 align-items-center
+                mb-2 value-input-row">
 
         <input type="text"
-               class="form-control form-control-sm value-label"
+               class="form-control form-control-sm
+                      value-label"
                placeholder="e.g. US 10"
                maxlength="50" />
 
         <button type="button"
-                class="btn btn-sm btn-success confirm-value">
+                class="btn btn-sm btn-success
+                       confirm-value">
             ✓
         </button>
 
         <button type="button"
-                class="btn btn-sm btn-secondary cancel-value">
+                class="btn btn-sm btn-secondary
+                       cancel-value">
             ×
         </button>
 
@@ -213,7 +240,6 @@
 <script src="~/js/shared/fetch-helper.js" asp-append-version="true"></script>
 <script src="~/js/shared/toast.js" asp-append-version="true"></script>
 <script src="~/js/shared/modal-helper.js" asp-append-version="true"></script>
-
 <script src="~/js/variants/variant-state.js" asp-append-version="true"></script>
 <script src="~/js/variants/variant-table.js" asp-append-version="true"></script>
 <script src="~/js/variants/variant-toolbar.js" asp-append-version="true"></script>

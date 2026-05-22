@@ -73,7 +73,16 @@ namespace ItemManager.Web.Controllers
                 ItemName = v.ItemName,
                 ItemCode = v.ItemCode,
                 Quantity = v.Quantity,
-                ReservedQuantity = v.ReservedQuantity
+                ReservedQuantity = v.ReservedQuantity,
+                AttributeValues = v.AttributeValues
+                    .Select(av => new ItemAttributeValueViewModel
+                    {
+                        ItemAttributeValueID = av.ItemAttributeValueID,
+                        ItemAttributeID = av.ItemAttributeID,
+                        ValueLabel = av.ValueLabel,
+                        Abbreviation = av.Abbreviation,
+                        AttributeName = av.AttributeName
+                    }).ToList()
             };
         }
 
@@ -106,10 +115,12 @@ namespace ItemManager.Web.Controllers
 
         [IgnoreAntiforgeryToken]
         [HttpPost]
-        public async Task<JsonResult> SaveAttributes(
-            [FromBody] SaveAttributesRequest request)
+        public async Task<JsonResult> SaveAttributes([FromBody] SaveAttributesRequest request)
         {
-            await _attributeRepo.DeleteByItemAsync(request.ItemID);
+            var existingVariants = await _variantRepo.GetByItemAsync(request.ItemID);
+
+            if (!existingVariants.Any())
+                await _attributeRepo.DeleteByItemAsync(request.ItemID);
 
             var result = new List<object>();
 
@@ -130,7 +141,6 @@ namespace ItemManager.Web.Controllers
                 };
 
                 var attrId = await _attributeRepo.AddAsync(attribute, CurrentUsername);
-
                 var saved = await _attributeRepo.GetByIdAsync(attrId);
 
                 if (saved != null)

@@ -207,12 +207,8 @@ namespace ItemManager.Infrastructure.Repositories
             command.Parameters.AddWithValue("@BaseUnitID", (object?)item.BaseUnitID ?? DBNull.Value);
             command.Parameters.AddWithValue("@DisplayUnitID", (object?)item.DisplayUnitID ?? DBNull.Value);
             command.Parameters.AddWithValue("@Sort", item.Sort);
-            command.Parameters.AddWithValue(
-                "@ItemCode",
-                (object?)item.ItemCode ?? DBNull.Value);
-            command.Parameters.AddWithValue(
-                "@Condition",
-                (object?)item.Condition ?? DBNull.Value);
+            command.Parameters.AddWithValue("@ItemCode", (object?)item.ItemCode ?? DBNull.Value);
+            command.Parameters.AddWithValue("@Condition", (object?)item.Condition ?? DBNull.Value);
             command.Parameters.AddWithValue("@CreatedBy", (object?)item.CreatedBy ?? DBNull.Value);
             command.Parameters.AddWithValue("@CreatedDate", (object?)item.CreatedDate ?? DBNull.Value);
 
@@ -247,12 +243,8 @@ namespace ItemManager.Infrastructure.Repositories
             command.Parameters.AddWithValue("@BaseUnitID", (object?)item.BaseUnitID ?? DBNull.Value);
             command.Parameters.AddWithValue("@DisplayUnitID", (object?)item.DisplayUnitID ?? DBNull.Value);
             command.Parameters.AddWithValue("@Sort", item.Sort);
-            command.Parameters.AddWithValue(
-                "@ItemCode",
-                (object?)item.ItemCode ?? DBNull.Value);
-            command.Parameters.AddWithValue(
-                "@Condition",
-                (object?)item.Condition ?? DBNull.Value);
+            command.Parameters.AddWithValue("@ItemCode", (object?)item.ItemCode ?? DBNull.Value);
+            command.Parameters.AddWithValue("@Condition", (object?)item.Condition ?? DBNull.Value);
             command.Parameters.AddWithValue("@UpdatedBy", (object?)item.UpdatedBy ?? DBNull.Value);
             command.Parameters.AddWithValue("@UpdatedDate", (object?)item.UpdatedDate ?? DBNull.Value);
 

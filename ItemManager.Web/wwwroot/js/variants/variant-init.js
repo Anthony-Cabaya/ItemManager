@@ -121,7 +121,22 @@
                 showResult(true, data.message || "Saved successfully.");
                 toastSuccess(data.message || "Saved successfully.");
 
-                setTimeout(() => location.reload(), 800);
+                const tableContainer = document.getElementById("variant-table-container");
+
+                if (tableContainer) {
+                    const itemId = getItemId();
+                    fetch(`/ItemVariant/GetByItem?itemId=${itemId}`)
+                        .then(r => r.text())
+                        .then(html => {
+                            tableContainer.innerHTML = html;
+                            if (window.VariantTable?.initRows)
+                                window.VariantTable.initRows();
+                            if (window.VariantState)
+                                VariantState.selectedIds.clear();
+                            if (window.VariantState)
+                                VariantState.updateUI();
+                        });
+                }
 
             } catch (err) {
                 console.error(err);

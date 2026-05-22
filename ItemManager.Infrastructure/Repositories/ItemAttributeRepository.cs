@@ -248,42 +248,91 @@ namespace ItemManager.Infrastructure.Repositories
         {
             using var connection = _dbHelper.CreateConnection();
             await connection.OpenAsync();
-
             using var transaction = connection.BeginTransaction();
 
             try
             {
-                var ids = new List<int>();
+                var attrIds = new List<int>();
 
                 using (var cmd = new SqlCommand(
-                    "SELECT ItemAttributeID FROM ItemAttributes WHERE ItemID = @ItemID",
+                    "SELECT ItemAttributeID FROM ItemAttributes " +
+                    "WHERE ItemID = @ItemID",
                     connection, transaction))
                 {
                     cmd.Parameters.AddWithValue("@ItemID", itemId);
-
                     using var reader = await cmd.ExecuteReaderAsync();
+
                     while (await reader.ReadAsync())
+                        attrIds.Add(reader.GetInt32(0));
+                }
+
+                if (attrIds.Count > 0)
+                {
+                    var valueIds = new List<int>();
+
+                    var inClause = string.Join(",",
+                        attrIds.Select((_, i) => $"@Aid{i}"));
+
+                    var valueQuery =
+                        $"SELECT ItemAttributeValueID " +
+                        $"FROM ItemAttributeValues " +
+                        $"WHERE ItemAttributeID IN ({inClause})";
+
+                    using (var cmd = new SqlCommand(
+                        valueQuery, connection, transaction))
                     {
-                        ids.Add(reader.GetInt32(0));
+                        for (int i = 0; i < attrIds.Count; i++)
+                            cmd.Parameters.AddWithValue(
+                                $"@Aid{i}", attrIds[i]);
+
+                        using var reader =
+                            await cmd.ExecuteReaderAsync();
+
+                        while (await reader.ReadAsync())
+                            valueIds.Add(reader.GetInt32(0));
+                    }
+
+                    if (valueIds.Count > 0)
+                    {
+                        var vInClause = string.Join(",",
+                            valueIds.Select((_, i) => $"@Vid{i}"));
+
+                        using var cmd = new SqlCommand(
+                            $"DELETE FROM ItemVariantAttributeValues " +
+                            $"WHERE ItemAttributeValueID IN ({vInClause})",
+                            connection, transaction);
+
+                        for (int i = 0; i < valueIds.Count; i++)
+                            cmd.Parameters.AddWithValue(
+                                $"@Vid{i}", valueIds[i]);
+
+                        await cmd.ExecuteNonQueryAsync();
+                    }
+
+                    var avInClause = string.Join(",",
+                        attrIds.Select((_, i) => $"@Aid{i}"));
+
+                    using (var cmd = new SqlCommand(
+                        $"DELETE FROM ItemAttributeValues " +
+                        $"WHERE ItemAttributeID IN ({avInClause})",
+                        connection, transaction))
+                    {
+                        for (int i = 0; i < attrIds.Count; i++)
+                            cmd.Parameters.AddWithValue(
+                                $"@Aid{i}", attrIds[i]);
+
+                        await cmd.ExecuteNonQueryAsync();
                     }
                 }
 
-                foreach (var id in ids)
+                using (var cmd = new SqlCommand(
+                    "DELETE FROM ItemAttributes " +
+                    "WHERE ItemID = @ItemID",
+                    connection, transaction))
                 {
-                    using var cmd1 = new SqlCommand(
-                        "DELETE FROM ItemAttributeValues WHERE ItemAttributeID = @Id",
-                        connection, transaction);
-
-                    cmd1.Parameters.AddWithValue("@Id", id);
-                    await cmd1.ExecuteNonQueryAsync();
+                    cmd.Parameters.AddWithValue("@ItemID", itemId);
+                    await cmd.ExecuteNonQueryAsync();
                 }
-
-                using var cmd2 = new SqlCommand(
-                    "DELETE FROM ItemAttributes WHERE ItemID = @ItemID",
-                    connection, transaction);
-
-                cmd2.Parameters.AddWithValue("@ItemID", itemId);
-                await cmd2.ExecuteNonQueryAsync();
 
                 transaction.Commit();
             }
@@ -293,5 +342,6 @@ namespace ItemManager.Infrastructure.Repositories
                 throw;
             }
         }
+
     }
 }

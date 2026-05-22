@@ -1,65 +1,45 @@
-﻿document.addEventListener("DOMContentLoaded", () => {
+﻿window.VariantTable = {
 
-    // Checkbox selection handling
-    document.addEventListener("change", (e) => {
+    initRows() {
 
-        if (e.target.classList.contains("variant-checkbox")) {
-            const row = e.target.closest(".variant-row");
-            const id = parseInt(e.target.value);
+        VariantState.clear();
 
-            if (e.target.checked) {
-                VariantState.selectedIds.add(id);
-                row.classList.add("table-active");
-            } else {
-                VariantState.selectedIds.delete(id);
-                row.classList.remove("table-active");
-            }
+        const rows = document.querySelectorAll(
+            ".variant-row"
+        );
 
-            VariantState.updateUI();
-        }
+        rows.forEach(row => {
 
-        // Active toggle switch
-        if (e.target.classList.contains("variant-toggle")) {
+            const cb = row.querySelector(
+                ".variant-select"
+            );
 
-            const variantId = parseInt(e.target.dataset.variantId);
-            const isActive = e.target.checked;
+            if (!cb) return;
 
-            fetch("/ItemVariant/SetActive", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "RequestVerificationToken": getAntiForgeryToken()
-                },
-                body: JSON.stringify({
-                    variantId: variantId,
-                    isActive: isActive
-                })
-            })
-                .then(r => r.json())
-                .then(res => {
-                    if (!res.success) {
-                        e.target.checked = !isActive;
-                        toastError(res.message || "Failed to update status.");
-                        return;
+            const newCb = cb.cloneNode(true);
+            cb.parentNode.replaceChild(newCb, cb);
+
+            newCb.addEventListener("change",
+                function () {
+
+                    const id = parseInt(this.value);
+
+                    const isActive =
+                        row.dataset.isActive === "true";
+
+                    if (this.checked) {
+                        row.classList.add("table-active");
+                    } else {
+                        row.classList.remove("table-active");
                     }
 
-                    const row = e.target.closest(".variant-row");
-                    row.dataset.isActive = isActive;
-
-                    const statusCell = row.querySelector("td:nth-child(8)");
-                    if (statusCell) {
-                        statusCell.innerHTML = isActive
-                            ? `<span class="badge bg-success">Active</span>`
-                            : `<span class="badge bg-secondary">Inactive</span>`;
-                    }
-
-                    toastSuccess(res.message);
-                })
-                .catch(() => {
-                    e.target.checked = !isActive;
-                    toastError("Server error.");
+                    VariantState.toggle(id, isActive);
                 });
-        }
-    });
+        });
+    }
+};
 
+document.addEventListener("DOMContentLoaded", () => {
+    if (window.VariantTable?.initRows)
+        VariantTable.initRows();
 });
