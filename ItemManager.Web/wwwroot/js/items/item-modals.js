@@ -55,14 +55,12 @@ function validateCreate(payload) {
     return null;
 }
 
-// Load all units from server
 async function loadAllUnits() {
     if (_allUnits.length > 0) return;
     const res = await getJson("/Item/GetUnitsForItem?unitCategoryId=0");
     if (res.success) _allUnits = res.data;
 }
 
-// Reusable Validator
 function validateRequired(prefix, fieldName, message) {
     const id = `${prefix}_${fieldName}`;
     const el = document.getElementById(id);
@@ -75,7 +73,6 @@ function validateRequired(prefix, fieldName, message) {
     return null;
 }
 
-// Populate a select element with units
 function populateUnitDropdown(selectId, units, selectedValue = "") {
     const sel = document.getElementById(selectId);
     sel.innerHTML = '<option value="">-- No Unit --</option>';
@@ -89,7 +86,6 @@ function populateUnitDropdown(selectId, units, selectedValue = "") {
     });
 }
 
-// CREATE MODAL FUNCTIONS
 async function openCreateModal() {
     resetForm("create");
 
@@ -98,28 +94,38 @@ async function openCreateModal() {
 
     const pageData = document.getElementById("pageData");
     const itemTypes = JSON.parse(pageData.dataset.itemTypes);
+
     itemTypes.forEach(t => {
+
         const opt = document.createElement("option");
+
         opt.value = t.value;
         opt.textContent = t.text;
+
         typeSelect.appendChild(opt);
     });
 
-    document.getElementById("create_subType").innerHTML = '<option value="">-- Select Sub Type --</option>';
+    document.getElementById(
+        "create_subType"
+    ).innerHTML =
+        '<option value="">-- Select Sub Type --</option>';
+
     document.getElementById("create_subType").disabled = true;
 
     await loadAllUnits();
+
     populateUnitDropdown("create_baseUnit", _allUnits);
     populateUnitDropdown("create_displayUnit", _allUnits);
 
+    document.getElementById("create_displayUnit").disabled = false;
+
     openModal("createModal");
+
     clearValidation("create");
 }
 
-// Handle change of ItemType in create modal
 function initModalListeners() {
 
-    // CREATE ITEM TYPE
     document.getElementById("create_itemType")
         .addEventListener("change", async function () {
 
@@ -159,42 +165,31 @@ function initModalListeners() {
             }
         });
 
-    // CREATE SUBTYPE
     document.getElementById("create_subType")
         .addEventListener("change", async function () {
 
             await refreshCreateCode();
         });
 
-    // CREATE BASE UNIT
     document.getElementById("create_baseUnit")
         .addEventListener("change", async function () {
 
-            const opt =
-                this.options[this.selectedIndex];
-
-            const categoryId =
-                opt.dataset.categoryId;
+            const opt = this.options[this.selectedIndex];
+            const categoryId = opt.dataset.categoryId;
 
             if (!categoryId) {
 
                 await loadAllUnits();
 
-                populateUnitDropdown(
-                    "create_baseUnit",
-                    _allUnits,
-                    this.value);
+                populateUnitDropdown("create_baseUnit", _allUnits, this.value);
+                populateUnitDropdown("create_displayUnit", _allUnits);
 
-                populateUnitDropdown(
-                    "create_displayUnit",
-                    _allUnits);
+                document.getElementById("create_displayUnit").disabled = false;
 
                 return;
             }
 
-            const res =
-                await getJson(
-                    `/Item/GetUnitsForItem?unitCategoryId=${categoryId}`);
+            const res =await getJson(`/Item/GetUnitsForItem?unitCategoryId=${categoryId}`);
 
             if (res.success) {
 
@@ -209,10 +204,13 @@ function initModalListeners() {
                     "create_displayUnit",
                     res.data,
                     currentBase);
+
+                document.getElementById(
+                    "create_displayUnit"
+                ).disabled = false;
             }
         });
 
-    // EDIT BASE UNIT
     document.getElementById("edit_baseUnit")
         .addEventListener("change", async function () {
 
@@ -246,7 +244,6 @@ function initModalListeners() {
         });
 }
 
-// Refresh the auto-generated Item Code in create modal
 async function refreshCreateCode() {
     const typeId = parseInt(document.getElementById("create_itemType").value) || 0;
     const subId = parseInt(document.getElementById("create_subType").value) || null;
@@ -294,8 +291,11 @@ async function saveCreate() {
 
 // EDIT MODAL FUNCTIONS
 async function openEditModal(itemId) {
+
     const res = await getJson(`/Item/GetItemForEdit?id=${itemId}`);
-    if (!res.success) return showToast(res.message, "error");
+
+    if (!res.success)
+        return showToast(res.message, "error");
 
     const d = res.data;
 
@@ -307,32 +307,66 @@ async function openEditModal(itemId) {
     document.getElementById("editErrorMsg").classList.add("d-none");
 
     const typeSelect = document.getElementById("edit_itemType");
-    typeSelect.innerHTML = '<option value="">-- Select Item Type --</option>';
+
+    typeSelect.innerHTML =
+        '<option value="">-- Select Item Type --</option>';
+
     d.itemTypeOptions.forEach(t => {
+
         const opt = document.createElement("option");
+
         opt.value = t.value;
         opt.textContent = t.text;
-        if (t.value === d.itemTypeID) opt.selected = true;
+
+        if (t.value === d.itemTypeID)
+            opt.selected = true;
+
         typeSelect.appendChild(opt);
     });
 
     const subSelect = document.getElementById("edit_subType");
-    subSelect.innerHTML = '<option value="">-- Select Sub Type --</option>';
-    if (d.subTypeOptions && d.subTypeOptions.length > 0) {
+
+    subSelect.innerHTML =
+        '<option value="">-- Select Sub Type --</option>';
+
+    if (d.subTypeOptions &&
+        d.subTypeOptions.length > 0) {
+
         d.subTypeOptions.forEach(st => {
+
             const opt = document.createElement("option");
+
             opt.value = st.value;
             opt.textContent = st.text;
-            if (st.value === d.itemSubTypeID) opt.selected = true;
+
+            if (st.value === d.itemSubTypeID)
+                opt.selected = true;
+
             subSelect.appendChild(opt);
         });
-        subSelect.disabled = false;
-    } else subSelect.disabled = true;
 
-    populateUnitDropdown("edit_baseUnit", d.unitOptions, d.baseUnitID);
-    populateUnitDropdown("edit_displayUnit", d.unitOptions, d.displayUnitID);
+        subSelect.disabled = false;
+    }
+    else {
+        subSelect.disabled = true;
+    }
+
+    populateUnitDropdown(
+        "edit_baseUnit",
+        d.unitOptions,
+        d.baseUnitID);
+
+    populateUnitDropdown(
+        "edit_displayUnit",
+        d.unitOptions,
+        d.displayUnitID);
+
+    document.getElementById(
+        "edit_displayUnit"
+    ).disabled = !d.baseUnitID;
 
     openModal("editModal");
+
     clearValidation("edit");
 }
 

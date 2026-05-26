@@ -30,6 +30,8 @@
 
         public List<ItemAttributeValue> AttributeValues { get; set; } = new();
 
+        public string? AttributesText { get; set; }
+
         public decimal Quantity { get; set; }
 
         public decimal ReservedQuantity { get; set; }

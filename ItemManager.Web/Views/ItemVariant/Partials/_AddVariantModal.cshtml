@@ -1,0 +1,129 @@
+﻿<div class="modal fade"
+     id="addVariantModal"
+     tabindex="-1"
+     aria-hidden="true">
+
+    <div class="modal-dialog">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title
+                           text-uppercase fw-bold">
+                    ADD VARIANT
+                </h5>
+
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Close">
+                </button>
+            </div>
+
+            <div class="modal-body">
+
+                @Html.AntiForgeryToken()
+
+                <div id="add-variant-error"
+                     class="alert alert-danger d-none">
+                </div>
+
+                <input type="hidden"
+                       id="add-variant-item-id" />
+
+                <div class="mb-3">
+
+                    <label class="form-label
+                                  text-uppercase small">
+                        VARIANT CODE
+                    </label>
+
+                    <input type="text"
+                           id="add-variant-code"
+                           class="form-control
+                                  form-control-sm"
+                           maxlength="100" />
+
+                    <div class="form-text
+                                text-muted small">
+                        Auto-generated from item code.
+                        You may override.
+                    </div>
+
+                </div>
+
+                <div class="mb-3">
+
+                    <label class="form-label
+                                  text-uppercase small">
+                        VARIANT NAME
+                    </label>
+
+                    <input type="text"
+                           id="add-variant-name"
+                           class="form-control
+                                  form-control-sm"
+                           maxlength="255"
+                           placeholder="e.g. Grey / US 10" />
+
+                </div>
+
+                <div class="mb-3">
+
+                    <label class="form-label
+                                  text-uppercase small">
+                        ATTRIBUTES
+                    </label>
+
+                    <textarea id="add-variant-attributes"
+                              class="form-control
+                                     form-control-sm"
+                              rows="3"
+                              placeholder="e.g. Color: Grey, Size: US 10, Material: Mesh"></textarea>
+
+                    <div class="form-text
+                                text-muted small">
+                        Optional. Format: Key: Value,
+                        Key: Value. Stored as display
+                        text only.
+                    </div>
+
+                </div>
+
+                <div class="form-check
+                            form-switch mb-2">
+
+                    <input class="form-check-input"
+                           type="checkbox"
+                           id="add-variant-is-active"
+                           checked />
+
+                    <label class="form-check-label
+                                  text-uppercase small">
+                        ACTIVE
+                    </label>
+
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+
+                <button type="button"
+                        class="btn btn-primary
+                               btn-sm text-uppercase"
+                        id="btn-confirm-add-variant">
+                    ADD VARIANT
+                </button>
+
+                <button type="button"
+                        class="btn btn-secondary
+                               btn-sm text-uppercase"
+                        data-bs-dismiss="modal">
+                    CANCEL
+                </button>
+
+            </div>
+
+        </div>
+    </div>
+</div>

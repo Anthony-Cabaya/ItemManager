@@ -27,6 +27,8 @@ namespace ItemManager.Web.ViewModels
 
         public List<ItemAttributeValueViewModel> AttributeValues { get; set; } = new();
 
+        public string? AttributesText { get; set; }
+
         public decimal Quantity { get; set; }
 
         public decimal ReservedQuantity { get; set; }

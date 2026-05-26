@@ -18,8 +18,8 @@ namespace ItemManager.Infrastructure.Repositories
         private const string BaseSelect = @"
             SELECT v.ItemVariantID, v.ItemID, v.VariantCode, v.VariantName,
                    v.IsActive, v.Sort,
-                   v.CreatedBy, v.CreatedDate, v.UpdatedBy, v.UpdatedDate,
-                   i.ItemName, i.ItemCode
+                   i.ItemName, i.ItemCode,
+                   v.AttributesText
             FROM ItemVariants v
             INNER JOIN Items i ON i.ItemID = v.ItemID";
 
@@ -35,6 +35,7 @@ namespace ItemManager.Infrastructure.Repositories
                 Sort = reader.GetInt32(reader.GetOrdinal("Sort")),
                 ItemName = reader.IsDBNull(reader.GetOrdinal("ItemName")) ? null : reader.GetString(reader.GetOrdinal("ItemName")),
                 ItemCode = reader.IsDBNull(reader.GetOrdinal("ItemCode")) ? null : reader.GetString(reader.GetOrdinal("ItemCode")),
+                AttributesText = reader.IsDBNull(reader.GetOrdinal("AttributesText")) ? null : reader.GetString(reader.GetOrdinal("AttributesText")),
                 AttributeValues = new List<ItemAttributeValue>()
             };
         }
@@ -137,9 +138,9 @@ namespace ItemManager.Infrastructure.Repositories
             {
                 var query = @"
                     INSERT INTO ItemVariants
-                    (ItemID, VariantCode, VariantName, IsActive, Sort, CreatedBy, CreatedDate)
+                    (ItemID, VariantCode, VariantName, IsActive, Sort, CreatedBy, CreatedDate, AttributesText)
                     VALUES
-                    (@ItemID, @VariantCode, @VariantName, @IsActive, @Sort, @CreatedBy, GETDATE());
+                    (@ItemID, @VariantCode, @VariantName, @IsActive, @Sort, @CreatedBy, GETDATE(), @AttributesText);
                     SELECT SCOPE_IDENTITY();";
 
                 using var cmd = new SqlCommand(query, connection, transaction);
@@ -150,6 +151,7 @@ namespace ItemManager.Infrastructure.Repositories
                 cmd.Parameters.AddWithValue("@IsActive", variant.IsActive);
                 cmd.Parameters.AddWithValue("@Sort", variant.Sort);
                 cmd.Parameters.AddWithValue("@CreatedBy", (object?)username ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@AttributesText", (object?)variant.AttributesText ?? DBNull.Value);
 
                 var id = Convert.ToInt32(await cmd.ExecuteScalarAsync());
 
@@ -187,13 +189,14 @@ namespace ItemManager.Infrastructure.Repositories
 
             var query = @"
                 UPDATE ItemVariants
-                SET VariantCode = @VariantCode,
-                    VariantName = @VariantName,
-                    IsActive = @IsActive,
-                    Sort = @Sort,
-                    UpdatedBy = @UpdatedBy,
-                    UpdatedDate = GETDATE()
-                WHERE ItemVariantID = @Id";
+                SET VariantCode=@VariantCode,
+                    VariantName=@VariantName,
+                    IsActive=@IsActive,
+                    Sort=@Sort,
+                    AttributesText=@AttributesText,
+                    UpdatedBy=@UpdatedBy,
+                    UpdatedDate=GETDATE()
+                WHERE ItemVariantID=@Id";
 
             using var cmd = new SqlCommand(query, connection);
 
@@ -203,6 +206,7 @@ namespace ItemManager.Infrastructure.Repositories
             cmd.Parameters.AddWithValue("@IsActive", variant.IsActive);
             cmd.Parameters.AddWithValue("@Sort", variant.Sort);
             cmd.Parameters.AddWithValue("@UpdatedBy", (object?)username ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@AttributesText", (object?)variant.AttributesText ?? DBNull.Value);
 
             await cmd.ExecuteNonQueryAsync();
         }

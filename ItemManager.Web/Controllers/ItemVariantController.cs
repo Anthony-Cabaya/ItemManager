@@ -36,6 +36,15 @@ namespace ItemManager.Web.Controllers
             public int VariantId { get; set; }
         }
 
+        public class AddVariantRequest
+        {
+            public int ItemID { get; set; }
+            public string VariantCode { get; set; } = "";
+            public string VariantName { get; set; } = "";
+            public string? AttributesText { get; set; }
+            public bool IsActive { get; set; } = true;
+        }
+
         public class SaveAttributesRequest
         {
             public int ItemID { get; set; }
@@ -74,6 +83,7 @@ namespace ItemManager.Web.Controllers
                 ItemCode = v.ItemCode,
                 Quantity = v.Quantity,
                 ReservedQuantity = v.ReservedQuantity,
+                AttributesText = v.AttributesText,
                 AttributeValues = v.AttributeValues
                     .Select(av => new ItemAttributeValueViewModel
                     {
@@ -111,6 +121,31 @@ namespace ItemManager.Web.Controllers
             var model = variants.Select(Map).ToList();
 
             return PartialView("Partials/_VariantTablePartial", model);
+        }
+
+        [HttpGet]
+        public async Task<JsonResult> GetNextVariantCode(int itemId)
+        {
+            var item = await _itemRepo.GetByIdAsync(itemId);
+
+            if (item == null)
+                return Json(new { success = false, message = "Item not found" });
+
+            int attempt = 1;
+            string code;
+
+            do
+            {
+                code = $"{item.ItemCode}-V{attempt:D3}";
+                attempt++;
+            }
+            while (await _variantRepo.ExistsAsync(itemId, code) && attempt <= 999);
+
+            return Json(new
+            {
+                success = true,
+                data = new { code }
+            });
         }
 
         [IgnoreAntiforgeryToken]
@@ -163,8 +198,7 @@ namespace ItemManager.Web.Controllers
 
         [IgnoreAntiforgeryToken]
         [HttpPost]
-        public async Task<JsonResult> BulkSave(
-            [FromBody] BulkSaveVariantsViewModel model)
+        public async Task<JsonResult> BulkSave([FromBody] BulkSaveVariantsViewModel model)
         {
             if (!ModelState.IsValid)
                 return JsonFail("Invalid request.");
@@ -237,8 +271,8 @@ namespace ItemManager.Web.Controllers
                 ItemID = model.ItemID,
                 VariantCode = model.VariantCode,
                 VariantName = model.VariantName,
+                AttributesText = model.AttributesText?.Trim(),
                 IsActive = model.IsActive,
-                Sort = model.Sort,
                 UpdatedBy = CurrentUsername,
                 UpdatedDate = DateTime.Now
             };
@@ -246,6 +280,47 @@ namespace ItemManager.Web.Controllers
             await _variantRepo.UpdateAsync(variant, CurrentUsername);
 
             return JsonSuccess("Variant updated successfully.");
+        }
+
+        [HttpPost]
+        public async Task<JsonResult> AddSingle([FromBody] AddVariantRequest request)
+        {
+            if (string.IsNullOrWhiteSpace(request.VariantCode))
+            {
+                return JsonFail("Variant Code is required.");
+            }
+
+            if (string.IsNullOrWhiteSpace(request.VariantName))
+            {
+                return JsonFail("Variant Name is required.");
+            }
+
+            var exists = await _variantRepo.ExistsAsync(
+                    request.ItemID,
+                    request.VariantCode);
+
+            if (exists)
+            {
+                return JsonFail("Variant Code already exists.");
+            }
+
+            var variant = new ItemVariant
+            {
+                ItemID = request.ItemID,
+                VariantCode = request.VariantCode.Trim().ToUpper(),
+                VariantName = request.VariantName.Trim(),
+                AttributesText = request.AttributesText?.Trim(),
+                IsActive = request.IsActive,
+                Sort = 0,
+                CreatedBy = CurrentUsername,
+                CreatedDate = DateTime.Now,
+
+                AttributeValues = new()
+            };
+
+            await _variantRepo.AddAsync(variant, CurrentUsername);
+
+            return JsonSuccess("Variant added successfully.");
         }
 
         [HttpPost]

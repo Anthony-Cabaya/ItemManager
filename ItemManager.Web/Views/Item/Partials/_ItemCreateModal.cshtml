@@ -88,24 +88,48 @@
                         Measurement
                     </div>
                     <div class="card-body">
+
                         <div class="mb-3">
                             <label class="form-label">
-                                Base Unit
+                                UNIT CATEGORY
                             </label>
+
                             <select id="create_baseUnit"
                                     class="form-select">
-                                <option value="">-- No Unit --</option>
+                                <option value="">
+                                    -- Select Unit --
+                                </option>
                             </select>
+
+                            <div class="form-text text-muted small">
+                                Select a unit category
+                                (e.g. Count, Mass, Volume).
+                                Display Unit options
+                                will filter to match.
+                            </div>
                         </div>
+
                         <div class="mb-3">
                             <label class="form-label">
-                                Display Unit
+                                UNIT NAME
                             </label>
+
                             <select id="create_displayUnit"
-                                    class="form-select">
-                                <option value="">-- No Unit --</option>
+                                    class="form-select"
+                                    disabled
+                                    data-locked="true">
+                                <option value="">
+                                    -- Select Unit --
+                                </option>
                             </select>
+
+                            <div class="form-text text-muted small">
+                                The unit shown in the
+                                Items table (e.g. Piece,
+                                Kilogram, Liter).
+                            </div>
                         </div>
+
                     </div>
                 </div>
 
