@@ -21,17 +21,17 @@ namespace ItemManager.Infrastructure.Services
             int locationId,
             decimal quantity,
             string? referenceNote,
-            string createdBy)
+            string createdBy,
+            int? itemVariantId = null)
         {
             if (quantity <= 0)
-            {
                 throw new InvalidOperationException("Quantity must be greater than zero.");
-            }
 
             await _stockRepo.UpsertAsync(new ItemStock
             {
                 ItemID = itemId,
                 LocationID = locationId,
+                ItemVariantID = itemVariantId,
                 Quantity = 0,
                 ReservedQuantity = 0,
                 LastUpdated = DateTime.Now,
@@ -45,7 +45,8 @@ namespace ItemManager.Infrastructure.Services
                 itemId,
                 locationId,
                 quantity,
-                createdBy);
+                createdBy,
+                itemVariantId);
 
             await _transactionRepo.AddAsync(
                 BuildTransactionLog(
@@ -54,7 +55,8 @@ namespace ItemManager.Infrastructure.Services
                     "StockIn",
                     quantity,
                     referenceNote,
-                    createdBy));
+                    createdBy,
+                    itemVariantId));
         }
 
         public async Task StockOutAsync(
@@ -62,30 +64,29 @@ namespace ItemManager.Infrastructure.Services
             int locationId,
             decimal quantity,
             string? referenceNote,
-            string createdBy)
+            string createdBy,
+            int? itemVariantId = null)
         {
             if (quantity <= 0)
-            {
                 throw new InvalidOperationException("Quantity must be greater than zero.");
-            }
 
-            var stock = await _stockRepo.GetByItemAndLocationAsync(itemId, locationId);
+            var stock = await _stockRepo.GetByItemAndVariantAsync(
+                itemId,
+                locationId,
+                itemVariantId);
 
             if (stock == null || stock.AvailableQuantity < quantity)
-            {
                 throw new InvalidOperationException("Insufficient available stock.");
-            }
 
             if ((stock.Quantity - quantity) < 0)
-            {
                 throw new InvalidOperationException("Quantity cannot go below zero.");
-            }
 
             await _stockRepo.UpdateQuantityAsync(
                 itemId,
                 locationId,
                 -quantity,
-                createdBy);
+                createdBy,
+                itemVariantId);
 
             await _transactionRepo.AddAsync(
                 BuildTransactionLog(
@@ -94,7 +95,8 @@ namespace ItemManager.Infrastructure.Services
                     "StockOut",
                     quantity,
                     referenceNote,
-                    createdBy));
+                    createdBy,
+                    itemVariantId));
         }
 
         public async Task HoldAsync(
@@ -102,25 +104,26 @@ namespace ItemManager.Infrastructure.Services
             int locationId,
             decimal quantity,
             string? referenceNote,
-            string createdBy)
+            string createdBy,
+            int? itemVariantId = null)
         {
             if (quantity <= 0)
-            {
                 throw new InvalidOperationException("Quantity must be greater than zero.");
-            }
 
-            var stock = await _stockRepo.GetByItemAndLocationAsync(itemId, locationId);
+            var stock = await _stockRepo.GetByItemAndVariantAsync(
+                itemId,
+                locationId,
+                itemVariantId);
 
             if (stock == null || stock.AvailableQuantity < quantity)
-            {
                 throw new InvalidOperationException("Insufficient available stock to hold.");
-            }
 
             await _stockRepo.UpdateReservedQuantityAsync(
                 itemId,
                 locationId,
                 quantity,
-                createdBy);
+                createdBy,
+                itemVariantId);
 
             await _transactionRepo.AddAsync(
                 BuildTransactionLog(
@@ -129,7 +132,8 @@ namespace ItemManager.Infrastructure.Services
                     "Hold",
                     quantity,
                     referenceNote,
-                    createdBy));
+                    createdBy,
+                    itemVariantId));
         }
 
         public async Task ReleaseHoldAsync(
@@ -137,30 +141,29 @@ namespace ItemManager.Infrastructure.Services
             int locationId,
             decimal quantity,
             string? referenceNote,
-            string createdBy)
+            string createdBy,
+            int? itemVariantId = null)
         {
             if (quantity <= 0)
-            {
                 throw new InvalidOperationException("Quantity must be greater than zero.");
-            }
 
-            var stock = await _stockRepo.GetByItemAndLocationAsync(itemId, locationId);
+            var stock = await _stockRepo.GetByItemAndVariantAsync(
+                itemId,
+                locationId,
+                itemVariantId);
 
             if (stock == null || stock.ReservedQuantity < quantity)
-            {
                 throw new InvalidOperationException("Insufficient reserved stock to release.");
-            }
 
             if ((stock.ReservedQuantity - quantity) < 0)
-            {
                 throw new InvalidOperationException("Reserved quantity cannot go below zero.");
-            }
 
             await _stockRepo.UpdateReservedQuantityAsync(
                 itemId,
                 locationId,
                 -quantity,
-                createdBy);
+                createdBy,
+                itemVariantId);
 
             await _transactionRepo.AddAsync(
                 BuildTransactionLog(
@@ -169,7 +172,8 @@ namespace ItemManager.Infrastructure.Services
                     "ReleaseHold",
                     quantity,
                     referenceNote,
-                    createdBy));
+                    createdBy,
+                    itemVariantId));
         }
 
         public async Task<IEnumerable<TransactionLog>> GetByItemAsync(int itemId)
@@ -193,7 +197,8 @@ namespace ItemManager.Infrastructure.Services
             string type,
             decimal quantity,
             string? note,
-            string createdBy)
+            string createdBy,
+            int? itemVariantId)
         {
             var now = DateTime.Now;
 
@@ -201,6 +206,7 @@ namespace ItemManager.Infrastructure.Services
             {
                 ItemID = itemId,
                 LocationID = locationId,
+                ItemVariantID = itemVariantId,
                 TransactionType = type,
                 Quantity = quantity,
                 ReferenceNote = note,
@@ -209,6 +215,5 @@ namespace ItemManager.Infrastructure.Services
                 CreatedDate = now
             };
         }
-
     }
 }

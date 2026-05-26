@@ -19,6 +19,7 @@ namespace ItemManager.Infrastructure.Repositories
                 s.StockID,
                 s.ItemID,
                 s.LocationID,
+                s.ItemVariantID,
                 s.Quantity,
                 s.ReservedQuantity,
                 s.MinStock,
@@ -29,19 +30,29 @@ namespace ItemManager.Infrastructure.Repositories
                 s.UpdatedDate,
                 i.ItemName,
                 i.ItemCode,
-                l.LocationName
+                l.LocationName,
+                iv.VariantName
             FROM ItemStock s
             INNER JOIN Items i ON s.ItemID = i.ItemID
-            INNER JOIN Locations l ON s.LocationID = l.LocationID";
+            INNER JOIN Locations l ON s.LocationID = l.LocationID
+            LEFT JOIN ItemVariants iv ON iv.ItemVariantID = s.ItemVariantID";
 
         private static ItemStock Map(SqlDataReader reader)
         {
             return new ItemStock
             {
                 StockID = reader.GetInt32(reader.GetOrdinal("StockID")),
+
                 ItemID = reader.GetInt32(reader.GetOrdinal("ItemID")),
+
                 LocationID = reader.GetInt32(reader.GetOrdinal("LocationID")),
+
+                ItemVariantID = reader.IsDBNull(reader.GetOrdinal("ItemVariantID"))
+                    ? null
+                    : reader.GetInt32(reader.GetOrdinal("ItemVariantID")),
+
                 Quantity = reader.GetDecimal(reader.GetOrdinal("Quantity")),
+
                 ReservedQuantity = reader.GetDecimal(reader.GetOrdinal("ReservedQuantity")),
 
                 MinStock = reader.IsDBNull(reader.GetOrdinal("MinStock"))
@@ -78,7 +89,11 @@ namespace ItemManager.Infrastructure.Repositories
 
                 LocationName = reader.IsDBNull(reader.GetOrdinal("LocationName"))
                     ? null
-                    : reader.GetString(reader.GetOrdinal("LocationName"))
+                    : reader.GetString(reader.GetOrdinal("LocationName")),
+
+                VariantName = reader.IsDBNull(reader.GetOrdinal("VariantName"))
+                    ? null
+                    : reader.GetString(reader.GetOrdinal("VariantName"))
             };
         }
 
@@ -154,12 +169,37 @@ namespace ItemManager.Infrastructure.Repositories
             var query = $@"
                 {BaseSelect}
                 WHERE s.ItemID = @ItemID
-                AND s.LocationID = @LocationID";
+                AND s.LocationID = @LocationID
+                AND s.ItemVariantID IS NULL";
 
             var result = await ExecuteQueryAsync(query, cmd =>
             {
                 cmd.Parameters.AddWithValue("@ItemID", itemId);
                 cmd.Parameters.AddWithValue("@LocationID", locationId);
+            });
+
+            return result.FirstOrDefault();
+        }
+
+        public async Task<ItemStock?> GetByItemAndVariantAsync(
+            int itemId,
+            int locationId,
+            int? variantId)
+        {
+            var query = $@"
+                {BaseSelect}
+                WHERE s.ItemID = @ItemID
+                AND s.LocationID = @LocationID
+                AND ((@VariantID IS NULL AND s.ItemVariantID IS NULL)
+                    OR s.ItemVariantID = @VariantID)";
+
+            var result = await ExecuteQueryAsync(query, cmd =>
+            {
+                cmd.Parameters.AddWithValue("@ItemID", itemId);
+                cmd.Parameters.AddWithValue("@LocationID", locationId);
+                cmd.Parameters.AddWithValue(
+                    "@VariantID",
+                    (object?)variantId ?? DBNull.Value);
             });
 
             return result.FirstOrDefault();
@@ -173,10 +213,14 @@ namespace ItemManager.Infrastructure.Repositories
                 (
                     SELECT
                         @ItemID AS ItemID,
-                        @LocationID AS LocationID
+                        @LocationID AS LocationID,
+                        @ItemVariantID AS ItemVariantID
                 ) AS source
                 ON target.ItemID = source.ItemID
                 AND target.LocationID = source.LocationID
+                AND ((source.ItemVariantID IS NULL AND target.ItemVariantID IS NULL)
+                    OR target.ItemVariantID = source.ItemVariantID
+                )
 
                 WHEN MATCHED THEN
                     UPDATE SET
@@ -191,6 +235,7 @@ namespace ItemManager.Infrastructure.Repositories
                     (
                         ItemID,
                         LocationID,
+                        ItemVariantID,
                         Quantity,
                         MinStock,
                         LastUpdated,
@@ -203,6 +248,7 @@ namespace ItemManager.Infrastructure.Repositories
                     (
                         @ItemID,
                         @LocationID,
+                        @ItemVariantID,
                         @Quantity,
                         @MinStock,
                         @LastUpdated,
@@ -219,6 +265,7 @@ namespace ItemManager.Infrastructure.Repositories
 
             command.Parameters.AddWithValue("@ItemID", model.ItemID);
             command.Parameters.AddWithValue("@LocationID", model.LocationID);
+            command.Parameters.AddWithValue("@ItemVariantID", (object?)model.ItemVariantID ?? DBNull.Value);
             command.Parameters.AddWithValue("@Quantity", model.Quantity);
             command.Parameters.AddWithValue("@MinStock", (object?)model.MinStock ?? DBNull.Value);
             command.Parameters.AddWithValue("@LastUpdated", (object?)model.LastUpdated ?? DBNull.Value);
@@ -317,7 +364,8 @@ namespace ItemManager.Infrastructure.Repositories
             int itemId,
             int locationId,
             decimal quantityDelta,
-            string updatedBy)
+            string updatedBy,
+            int? variantId = null)
         {
             const string query = @"
                 UPDATE ItemStock
@@ -327,7 +375,9 @@ namespace ItemManager.Infrastructure.Repositories
                     UpdatedBy = @UpdatedBy,
                     UpdatedDate = @Now
                 WHERE ItemID = @ItemID
-                AND LocationID = @LocationID";
+                AND LocationID = @LocationID
+                AND ((@VariantID IS NULL AND ItemVariantID IS NULL)
+                    OR ItemVariantID = @VariantID)";
 
             try
             {
@@ -341,6 +391,7 @@ namespace ItemManager.Infrastructure.Repositories
                 command.Parameters.AddWithValue("@UpdatedBy", updatedBy);
                 command.Parameters.AddWithValue("@ItemID", itemId);
                 command.Parameters.AddWithValue("@LocationID", locationId);
+                command.Parameters.AddWithValue("@VariantID", (object?)variantId ?? DBNull.Value);
 
                 await command.ExecuteNonQueryAsync();
             }
@@ -358,7 +409,8 @@ namespace ItemManager.Infrastructure.Repositories
             int itemId,
             int locationId,
             decimal reservedDelta,
-            string updatedBy)
+            string updatedBy,
+            int? variantId = null)
         {
             const string query = @"
                 UPDATE ItemStock
@@ -368,7 +420,9 @@ namespace ItemManager.Infrastructure.Repositories
                     UpdatedBy = @UpdatedBy,
                     UpdatedDate = @Now
                 WHERE ItemID = @ItemID
-                AND LocationID = @LocationID";
+                AND LocationID = @LocationID
+                AND ((@VariantID IS NULL AND ItemVariantID IS NULL)
+                    OR ItemVariantID = @VariantID)";
 
             try
             {
@@ -382,6 +436,7 @@ namespace ItemManager.Infrastructure.Repositories
                 command.Parameters.AddWithValue("@UpdatedBy", updatedBy);
                 command.Parameters.AddWithValue("@ItemID", itemId);
                 command.Parameters.AddWithValue("@LocationID", locationId);
+                command.Parameters.AddWithValue("@VariantID", (object?)variantId ?? DBNull.Value);
 
                 await command.ExecuteNonQueryAsync();
             }

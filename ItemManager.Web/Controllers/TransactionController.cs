@@ -9,22 +9,58 @@ namespace ItemManager.Web.Controllers
     {
         private readonly ITransactionService _transactionService;
         private readonly ILocationRepository _locationRepository;
-        private readonly IItemRepository _itemRepository;
+        private readonly IItemRepository _itemRepo;
+        private readonly IItemVariantRepository _variantRepo;
 
         public TransactionController(
             ITransactionService transactionService,
             ILocationRepository locationRepository,
-            IItemRepository itemRepository)
+            IItemRepository itemRepo,
+            IItemVariantRepository variantRepo)
         {
             _transactionService = transactionService;
             _locationRepository = locationRepository;
-            _itemRepository = itemRepository;
+            _itemRepo = itemRepo;
+            _variantRepo = variantRepo;
+        }
+
+        private JsonResult JsonSuccess(string message)
+            => Json(new { success = true, message });
+
+        private JsonResult JsonFail(string message)
+            => Json(new { success = false, message });
+
+        private class TransactionValidationResult
+        {
+            public bool IsValid { get; set; }
+            public string? ErrorMessage { get; set; }
+
+            public static TransactionValidationResult Success()
+                => new() { IsValid = true };
+
+            public static TransactionValidationResult Fail(string message)
+                => new() { IsValid = false, ErrorMessage = message };
+        }
+
+        private async Task<TransactionValidationResult> ValidateAsync(TransactionLogViewModel model)
+        {
+            if (model.Quantity <= 0)
+                return TransactionValidationResult.Fail("Quantity must be greater than zero.");
+
+            var item = await _itemRepo.GetByIdAsync(model.ItemID);
+
+            if (item != null &&
+                item.VariantCount > 0 &&
+                model.ItemVariantID == null)
+            {
+                return TransactionValidationResult.Fail("Please select a variant for this item.");
+            }
+
+            return TransactionValidationResult.Success();
         }
 
         [HttpGet]
-        public async Task<IActionResult> Index(
-            int? itemId,
-            int? locationId)
+        public async Task<IActionResult> Index(int? itemId, int? locationId)
         {
             var locations = await _locationRepository.GetAllAsync();
 
@@ -52,6 +88,7 @@ namespace ItemManager.Web.Controllers
                 TransactionID = x.TransactionID,
                 ItemID = x.ItemID,
                 LocationID = x.LocationID,
+                ItemVariantID = x.ItemVariantID,
                 TransactionType = x.TransactionType,
                 Quantity = x.Quantity,
                 ReferenceNote = x.ReferenceNote,
@@ -76,6 +113,7 @@ namespace ItemManager.Web.Controllers
                 TransactionID = x.TransactionID,
                 ItemID = x.ItemID,
                 LocationID = x.LocationID,
+                ItemVariantID = x.ItemVariantID,
                 TransactionType = x.TransactionType,
                 Quantity = x.Quantity,
                 ReferenceNote = x.ReferenceNote,
@@ -100,6 +138,7 @@ namespace ItemManager.Web.Controllers
                 TransactionID = x.TransactionID,
                 ItemID = x.ItemID,
                 LocationID = x.LocationID,
+                ItemVariantID = x.ItemVariantID,
                 TransactionType = x.TransactionType,
                 Quantity = x.Quantity,
                 ReferenceNote = x.ReferenceNote,
@@ -115,188 +154,124 @@ namespace ItemManager.Web.Controllers
         }
 
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> StockIn(TransactionLogViewModel model)
+        [IgnoreAntiforgeryToken]
+        public async Task<IActionResult> StockIn([FromBody] TransactionLogViewModel model)
         {
+            var validation = await ValidateAsync(model);
+            if (!validation.IsValid)
+                return JsonFail(validation.ErrorMessage!);
+
             try
             {
-                if (model.Quantity <= 0)
-                {
-                    return Json(new
-                    {
-                        success = false,
-                        message = "Quantity must be greater than zero."
-                    });
-                }
-
                 await _transactionService.StockInAsync(
                     model.ItemID,
                     model.LocationID,
                     model.Quantity,
                     model.ReferenceNote,
-                    CurrentUsername);
+                    CurrentUsername,
+                    model.ItemVariantID);
 
-                return Json(new
-                {
-                    success = true,
-                    message = "Stock in recorded."
-                });
-            }
-            catch (InvalidOperationException ex)
-            {
-                return Json(new
-                {
-                    success = false,
-                    message = ex.Message
-                });
+                return JsonSuccess("Stock in recorded.");
             }
             catch (Exception ex)
             {
-                return Json(new
-                {
-                    success = false,
-                    message = ex.Message
-                });
+                return JsonFail(ex.Message);
             }
         }
 
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> StockOut(TransactionLogViewModel model)
+        [IgnoreAntiforgeryToken]
+        public async Task<IActionResult> StockOut([FromBody] TransactionLogViewModel model)
         {
+            var validation = await ValidateAsync(model);
+            if (!validation.IsValid)
+                return JsonFail(validation.ErrorMessage!);
+
             try
             {
-                if (model.Quantity <= 0)
-                {
-                    return Json(new
-                    {
-                        success = false,
-                        message = "Quantity must be greater than zero."
-                    });
-                }
-
                 await _transactionService.StockOutAsync(
                     model.ItemID,
                     model.LocationID,
                     model.Quantity,
                     model.ReferenceNote,
-                    CurrentUsername);
+                    CurrentUsername,
+                    model.ItemVariantID);
 
-                return Json(new
-                {
-                    success = true,
-                    message = "Stock out recorded."
-                });
-            }
-            catch (InvalidOperationException ex)
-            {
-                return Json(new
-                {
-                    success = false,
-                    message = ex.Message
-                });
+                return JsonSuccess("Stock out recorded.");
             }
             catch (Exception ex)
             {
-                return Json(new
-                {
-                    success = false,
-                    message = ex.Message
-                });
+                return JsonFail(ex.Message);
             }
         }
 
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Hold(TransactionLogViewModel model)
+        [IgnoreAntiforgeryToken]
+        public async Task<IActionResult> Hold([FromBody] TransactionLogViewModel model)
         {
+            var validation = await ValidateAsync(model);
+            if (!validation.IsValid)
+                return JsonFail(validation.ErrorMessage!);
+
             try
             {
-                if (model.Quantity <= 0)
-                {
-                    return Json(new
-                    {
-                        success = false,
-                        message = "Quantity must be greater than zero."
-                    });
-                }
-
                 await _transactionService.HoldAsync(
                     model.ItemID,
                     model.LocationID,
                     model.Quantity,
                     model.ReferenceNote,
-                    CurrentUsername);
+                    CurrentUsername,
+                    model.ItemVariantID);
 
-                return Json(new
-                {
-                    success = true,
-                    message = "Stock hold recorded."
-                });
-            }
-            catch (InvalidOperationException ex)
-            {
-                return Json(new
-                {
-                    success = false,
-                    message = ex.Message
-                });
+                return JsonSuccess("Stock hold recorded.");
             }
             catch (Exception ex)
             {
-                return Json(new
-                {
-                    success = false,
-                    message = ex.Message
-                });
+                return JsonFail(ex.Message);
             }
         }
 
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ReleaseHold(TransactionLogViewModel model)
+        [IgnoreAntiforgeryToken]
+        public async Task<IActionResult> ReleaseHold([FromBody] TransactionLogViewModel model)
         {
+            var validation = await ValidateAsync(model);
+            if (!validation.IsValid)
+                return JsonFail(validation.ErrorMessage!);
+
             try
             {
-                if (model.Quantity <= 0)
-                {
-                    return Json(new
-                    {
-                        success = false,
-                        message = "Quantity must be greater than zero."
-                    });
-                }
-
                 await _transactionService.ReleaseHoldAsync(
                     model.ItemID,
                     model.LocationID,
                     model.Quantity,
                     model.ReferenceNote,
-                    CurrentUsername);
+                    CurrentUsername,
+                    model.ItemVariantID);
 
-                return Json(new
-                {
-                    success = true,
-                    message = "Stock hold released."
-                });
-            }
-            catch (InvalidOperationException ex)
-            {
-                return Json(new
-                {
-                    success = false,
-                    message = ex.Message
-                });
+                return JsonSuccess("Stock hold released.");
             }
             catch (Exception ex)
             {
-                return Json(new
-                {
-                    success = false,
-                    message = ex.Message
-                });
+                return JsonFail(ex.Message);
             }
         }
 
+        [HttpGet]
+        public async Task<IActionResult> GetVariantsByItem(int itemId)
+        {
+            var variants = await _variantRepo.GetByItemAsync(itemId);
+
+            var result = variants
+                .Where(x => x.IsActive)
+                .Select(x => new
+                {
+                    itemVariantId = x.ItemVariantID,
+                    variantCode = x.VariantCode,
+                    variantName = x.VariantName
+                });
+
+            return Json(result);
+        }
     }
 }

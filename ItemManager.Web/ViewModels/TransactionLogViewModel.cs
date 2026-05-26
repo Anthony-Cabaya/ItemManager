@@ -11,6 +11,8 @@ namespace ItemManager.Web.ViewModels
 
         public int LocationID { get; set; }
 
+        public int? ItemVariantID { get; set; }
+
         [Required]
         public string TransactionType { get; set; } = string.Empty;
 

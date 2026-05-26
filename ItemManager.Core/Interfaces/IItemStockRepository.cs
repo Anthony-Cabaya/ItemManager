@@ -24,13 +24,15 @@ namespace ItemManager.Core.Interfaces
             int itemId,
             int locationId,
             decimal quantityDelta,
-            string updatedBy);
+            string updatedBy,
+            int? variantId = null);
 
         Task UpdateReservedQuantityAsync(
             int itemId,
             int locationId,
             decimal reservedDelta,
-            string updatedBy);
+            string updatedBy,
+            int? variantId = null);
 
         Task<ItemStock?> GetByItemAndVariantAsync(
             int itemId,
