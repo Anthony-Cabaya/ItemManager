@@ -19,7 +19,17 @@ namespace ItemManager.Infrastructure.Repositories
             SELECT v.ItemVariantID, v.ItemID, v.VariantCode, v.VariantName,
                    v.IsActive, v.Sort,
                    i.ItemName, i.ItemCode,
-                   v.AttributesText
+                   v.AttributesText,
+
+                   -- ADDED: aggregated stock values (safe for multi-location)
+                   (SELECT COALESCE(SUM(s.Quantity), 0)
+                    FROM ItemStock s
+                    WHERE s.ItemVariantID = v.ItemVariantID) AS Quantity,
+
+                   (SELECT COALESCE(SUM(s.ReservedQuantity), 0)
+                    FROM ItemStock s
+                    WHERE s.ItemVariantID = v.ItemVariantID) AS ReservedQuantity
+
             FROM ItemVariants v
             INNER JOIN Items i ON i.ItemID = v.ItemID";
 
@@ -36,6 +46,13 @@ namespace ItemManager.Infrastructure.Repositories
                 ItemName = reader.IsDBNull(reader.GetOrdinal("ItemName")) ? null : reader.GetString(reader.GetOrdinal("ItemName")),
                 ItemCode = reader.IsDBNull(reader.GetOrdinal("ItemCode")) ? null : reader.GetString(reader.GetOrdinal("ItemCode")),
                 AttributesText = reader.IsDBNull(reader.GetOrdinal("AttributesText")) ? null : reader.GetString(reader.GetOrdinal("AttributesText")),
+                Quantity = reader.IsDBNull(reader.GetOrdinal("Quantity"))
+                    ? 0
+                    : reader.GetDecimal(reader.GetOrdinal("Quantity")),
+                ReservedQuantity = reader.IsDBNull(reader.GetOrdinal("ReservedQuantity"))
+                    ? 0
+                    : reader.GetDecimal(reader.GetOrdinal("ReservedQuantity")),
+
                 AttributeValues = new List<ItemAttributeValue>()
             };
         }

@@ -13,6 +13,8 @@ namespace ItemManager.Web.ViewModels
 
         public int? ItemVariantID { get; set; }
 
+        public string? VariantName { get; set; }
+
         [Required]
         public string TransactionType { get; set; } = string.Empty;
 

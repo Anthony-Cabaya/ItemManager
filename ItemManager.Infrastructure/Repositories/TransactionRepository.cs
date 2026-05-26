@@ -20,6 +20,7 @@ namespace ItemManager.Infrastructure.Repositories
                 t.TransactionID,
                 t.ItemID,
                 t.LocationID,
+                t.ItemVariantID,
                 t.TransactionType,
                 t.Quantity,
                 t.ReferenceNote,
@@ -28,10 +29,12 @@ namespace ItemManager.Infrastructure.Repositories
                 t.CreatedDate,
                 i.ItemName,
                 i.ItemCode,
-                l.LocationName
+                l.LocationName,
+                v.VariantName
             FROM TransactionLog t
             INNER JOIN Items i ON t.ItemID = i.ItemID
-            INNER JOIN Locations l ON t.LocationID = l.LocationID";
+            INNER JOIN Locations l ON t.LocationID = l.LocationID
+            LEFT JOIN ItemVariants v ON t.ItemVariantID = v.ItemVariantID";
 
         private static TransactionLog Map(SqlDataReader reader)
         {
@@ -40,6 +43,9 @@ namespace ItemManager.Infrastructure.Repositories
                 TransactionID = reader.GetInt32(reader.GetOrdinal("TransactionID")),
                 ItemID = reader.GetInt32(reader.GetOrdinal("ItemID")),
                 LocationID = reader.GetInt32(reader.GetOrdinal("LocationID")),
+                ItemVariantID = reader.IsDBNull(reader.GetOrdinal("ItemVariantID"))
+                    ? null
+                    : reader.GetInt32(reader.GetOrdinal("ItemVariantID")),
                 TransactionType = reader.GetString(reader.GetOrdinal("TransactionType")),
                 Quantity = reader.GetDecimal(reader.GetOrdinal("Quantity")),
 
@@ -67,7 +73,10 @@ namespace ItemManager.Infrastructure.Repositories
 
                 LocationName = reader.IsDBNull(reader.GetOrdinal("LocationName"))
                     ? null
-                    : reader.GetString(reader.GetOrdinal("LocationName"))
+                    : reader.GetString(reader.GetOrdinal("LocationName")),
+                VariantName = reader.IsDBNull(reader.GetOrdinal("VariantName"))
+                    ? null
+                    : reader.GetString(reader.GetOrdinal("VariantName"))
             };
         }
 
@@ -78,6 +87,7 @@ namespace ItemManager.Infrastructure.Repositories
                 (
                     ItemID,
                     LocationID,
+                    ItemVariantID,
                     TransactionType,
                     Quantity,
                     ReferenceNote,
@@ -89,6 +99,7 @@ namespace ItemManager.Infrastructure.Repositories
                 (
                     @ItemID,
                     @LocationID,
+                    @ItemVariantID,
                     @TransactionType,
                     @Quantity,
                     @ReferenceNote,
@@ -106,6 +117,7 @@ namespace ItemManager.Infrastructure.Repositories
 
                 command.Parameters.AddWithValue("@ItemID", transaction.ItemID);
                 command.Parameters.AddWithValue("@LocationID", transaction.LocationID);
+                command.Parameters.AddWithValue("@ItemVariantID", (object?)transaction.ItemVariantID ?? DBNull.Value);
                 command.Parameters.AddWithValue("@TransactionType", transaction.TransactionType);
                 command.Parameters.AddWithValue("@Quantity", transaction.Quantity);
                 command.Parameters.AddWithValue("@ReferenceNote", (object?)transaction.ReferenceNote ?? DBNull.Value);
@@ -201,11 +213,12 @@ namespace ItemManager.Infrastructure.Repositories
         {
             var list = new List<TransactionLog>();
 
-            var query = $@"
+            var query = @"
                 SELECT TOP (@Count)
                     t.TransactionID,
                     t.ItemID,
                     t.LocationID,
+                    t.ItemVariantID,
                     t.TransactionType,
                     t.Quantity,
                     t.ReferenceNote,
@@ -214,10 +227,12 @@ namespace ItemManager.Infrastructure.Repositories
                     t.CreatedDate,
                     i.ItemName,
                     i.ItemCode,
-                    l.LocationName
+                    l.LocationName,
+                    v.VariantName
                 FROM TransactionLog t
                 INNER JOIN Items i ON t.ItemID = i.ItemID
                 INNER JOIN Locations l ON t.LocationID = l.LocationID
+                LEFT JOIN ItemVariants v ON t.ItemVariantID = v.ItemVariantID
                 ORDER BY t.TransactionDate DESC";
 
             try
