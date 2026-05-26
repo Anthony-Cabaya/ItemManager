@@ -31,5 +31,10 @@ namespace ItemManager.Core.Interfaces
             int locationId,
             decimal reservedDelta,
             string updatedBy);
+
+        Task<ItemStock?> GetByItemAndVariantAsync(
+            int itemId,
+            int locationId,
+            int? variantId);
     }
 }
