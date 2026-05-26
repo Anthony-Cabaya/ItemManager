@@ -118,7 +118,35 @@ namespace ItemManager.Web.Controllers
         public async Task<IActionResult> GetByItem(int itemId)
         {
             var variants = await _variantRepo.GetByItemAsync(itemId);
-            var model = variants.Select(Map).ToList();
+
+            var model = variants.Select(v =>
+            {
+                return new ItemVariantViewModel
+                {
+                    ItemVariantID = v.ItemVariantID,
+                    ItemID = v.ItemID,
+                    VariantCode = v.VariantCode,
+                    VariantName = v.VariantName,
+                    IsActive = v.IsActive,
+                    Sort = v.Sort,
+                    ItemName = v.ItemName,
+                    ItemCode = v.ItemCode,
+                    AttributesText = v.AttributesText,
+
+                    AttributeValues = v.AttributeValues?
+                        .Select(av => new ItemAttributeValueViewModel
+                        {
+                            ItemAttributeValueID = av.ItemAttributeValueID,
+                            ItemAttributeID = av.ItemAttributeID,
+                            ValueLabel = av.ValueLabel,
+                            Abbreviation = av.Abbreviation,
+                            AttributeName = av.AttributeName
+                        }).ToList() ?? new List<ItemAttributeValueViewModel>(),
+
+                    Quantity = v.Quantity,
+                    ReservedQuantity = v.ReservedQuantity
+                };
+            }).ToList();
 
             return PartialView("Partials/_VariantTablePartial", model);
         }

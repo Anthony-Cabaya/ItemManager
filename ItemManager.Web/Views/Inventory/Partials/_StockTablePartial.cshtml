@@ -6,6 +6,7 @@
             <th>#</th>
             <th>Item Code</th>
             <th>Item Name</th>
+            <th>VARIANT</th>
             <th>Location</th>
             <th>Quantity</th>
             <th>Min Stock</th>
@@ -21,6 +22,7 @@
         @if (Model != null && Model.Any())
         {
             var i = 1;
+
             foreach (var item in Model)
             {
                 <tr class="stock-row"
@@ -31,11 +33,25 @@
                     data-min-stock="@item.MinStock"
                     data-item-name="@item.ItemName"
                     data-item-code="@item.ItemCode"
-                    data-location-name="@item.LocationName">
+                    data-location-name="@item.LocationName"
+                    data-variant-id="@item.ItemVariantID"
+                    data-variant-name="@item.VariantName">
 
                     <td>@i</td>
                     <td>@item.ItemCode</td>
                     <td>@item.ItemName</td>
+
+                    <td>
+                        @if (!string.IsNullOrWhiteSpace(item.VariantName))
+                        {
+                            @item.VariantName
+                        }
+                        else
+                        {
+                            <span class="text-muted">—</span>
+                        }
+                    </td>
+
                     <td>@item.LocationName</td>
                     <td>@item.Quantity</td>
                     <td>@item.MinStock</td>
@@ -45,13 +61,16 @@
                     <td class="audit-col">@item.UpdatedBy</td>
                     <td class="audit-col">@item.UpdatedDate</td>
                 </tr>
+
                 i++;
             }
         }
         else
         {
             <tr>
-                <td colspan="11" class="text-center text-muted py-4">No records found.</td>
+                <td colspan="12" class="text-center text-muted py-4">
+                    No records found.
+                </td>
             </tr>
         }
     </tbody>

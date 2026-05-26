@@ -10,6 +10,10 @@ namespace ItemManager.Web.ViewModels
 
         public int LocationID { get; set; }
 
+        public int? ItemVariantID { get; set; }
+
+        public string? VariantName { get; set; }
+
         [Required]
         [Range(0, 999999)]
         public decimal Quantity { get; set; }
