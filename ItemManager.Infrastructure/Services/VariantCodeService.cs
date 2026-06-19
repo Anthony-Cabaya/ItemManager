@@ -1,5 +1,4 @@
 ﻿using ItemManager.Core.Interfaces;
-using System.Linq;
 
 namespace ItemManager.Infrastructure.Services
 {

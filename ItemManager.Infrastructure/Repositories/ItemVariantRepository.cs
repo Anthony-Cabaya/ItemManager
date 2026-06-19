@@ -1,5 +1,4 @@
-﻿using ItemManager.Core.Helpers;
-using ItemManager.Core.Interfaces;
+﻿using ItemManager.Core.Interfaces;
 using ItemManager.Core.Models;
 using ItemManager.Infrastructure.Helpers;
 using Microsoft.Data.SqlClient;

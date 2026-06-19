@@ -13,10 +13,5 @@ namespace ItemManager.Core.Interfaces
 
         Task<IEnumerable<TransactionLog>> GetRecentAsync(int count = 50);
 
-        Task<PagedResult<TransactionLog>> GetPagedAsync(
-            int pageNumber,
-            int pageSize,
-            string search = "",
-            string transactionType = "");
     }
 }

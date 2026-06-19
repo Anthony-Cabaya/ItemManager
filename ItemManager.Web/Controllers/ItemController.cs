@@ -67,7 +67,7 @@ namespace ItemManager.Web.Controllers
             updatedBy = x.UpdatedBy,
             updatedDate = x.UpdatedDate?.ToString("yyyy-MM-dd HH:mm"),
             baseUnitID = x.BaseUnitID,
-            variants = "—",
+            variants = x.VariantCount,
             currentStock = "—",
             unitCost = "—"
         };
