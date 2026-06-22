@@ -32,6 +32,10 @@
                 InventoryState.selectedLocationName = this.dataset.locationName;
                 InventoryState.currentQuantity = parseFloat(this.dataset.quantity);
                 InventoryState.currentMinStock = parseFloat(this.dataset.minStock || 0);
+                InventoryState.selectedVariantId =
+                    this.dataset.variantId
+                        ? parseInt(this.dataset.variantId)
+                        : null;
 
                 InventoryToolbar.update();
             });

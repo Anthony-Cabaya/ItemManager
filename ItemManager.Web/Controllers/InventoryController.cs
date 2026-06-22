@@ -21,6 +21,15 @@ namespace ItemManager.Web.Controllers
             _itemStockRepository = itemStockRepository;
         }
 
+        public class SetStockRequest
+        {
+            public int ItemId { get; set; }
+            public int LocationId { get; set; }
+            public decimal Quantity { get; set; }
+            public decimal? MinStock { get; set; }
+            public int? ItemVariantId { get; set; }
+        }
+
         [HttpGet]
         public async Task<IActionResult> Index(int? itemId = null, int? locationId = null)
         {
@@ -123,19 +132,17 @@ namespace ItemManager.Web.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> SetStock(
-            int itemId,
-            int locationId,
-            decimal quantity,
-            decimal? minStock)
+            [FromBody] SetStockRequest request)
         {
             try
             {
                 await _inventoryService.SetStockAsync(
-                    itemId,
-                    locationId,
-                    quantity,
-                    minStock,
-                    CurrentUsername);
+                    request.ItemId,
+                    request.LocationId,
+                    request.Quantity,
+                    request.MinStock,
+                    CurrentUsername,
+                    request.ItemVariantId);
 
                 return Json(new
                 {
@@ -146,11 +153,21 @@ namespace ItemManager.Web.Controllers
             }
             catch (SqlException ex)
             {
-                return Json(new { success = false, message = ex.Message, data = (object?)null });
+                return Json(new
+                {
+                    success = false,
+                    message = ex.Message,
+                    data = (object?)null
+                });
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message, data = (object?)null });
+                return Json(new
+                {
+                    success = false,
+                    message = ex.Message,
+                    data = (object?)null
+                });
             }
         }
 
@@ -202,6 +219,5 @@ namespace ItemManager.Web.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
-
     }
 }

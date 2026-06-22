@@ -15,7 +15,8 @@ namespace ItemManager.Core.Interfaces
             int locationId,
             decimal quantity,
             decimal? minStock,
-            string updatedBy);
+            string updatedBy,
+            int? itemVariantId = null);
 
         Task<decimal> GetTotalStockAsync(int itemId);
 

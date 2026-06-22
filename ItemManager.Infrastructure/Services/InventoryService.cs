@@ -7,13 +7,16 @@ namespace ItemManager.Infrastructure.Services
     {
         private readonly IItemStockRepository _stockRepo;
         private readonly ITransactionService _transactionService;
+        private readonly IItemVariantRepository _itemVariantRepo;
 
         public InventoryService(
             IItemStockRepository stockRepo,
-            ITransactionService transactionService)
+            ITransactionService transactionService,
+            IItemVariantRepository itemVariantRepo)
         {
             _stockRepo = stockRepo;
             _transactionService = transactionService;
+            _itemVariantRepo = itemVariantRepo;
         }
 
         public async Task<IEnumerable<ItemStock>> GetStockByItemAsync(int itemId)
@@ -36,10 +39,23 @@ namespace ItemManager.Infrastructure.Services
             int locationId,
             decimal quantity,
             decimal? minStock,
-            string updatedBy)
+            string updatedBy,
+            int? itemVariantId = null)
         {
             if (quantity < 0)
                 throw new ArgumentException("Quantity cannot be negative.");
+
+            if (itemVariantId.HasValue)
+            {
+                var variant = await _itemVariantRepo
+                    .GetByIdAsync(itemVariantId.Value);
+
+                if (variant == null || variant.ItemID != itemId)
+                {
+                    throw new ArgumentException(
+                        "Variant does not belong to the specified item.");
+                }
+            }
 
             var now = DateTime.Now;
 
@@ -47,6 +63,7 @@ namespace ItemManager.Infrastructure.Services
             {
                 ItemID = itemId,
                 LocationID = locationId,
+                ItemVariantID = itemVariantId,
                 Quantity = quantity,
                 MinStock = minStock,
                 LastUpdated = now,

@@ -26,6 +26,17 @@
                     <div id="set-stock-location-display" class="form-control form-control-sm bg-light"></div>
                 </div>
 
+                <div id="set-stock-variant-wrapper" class="mb-2" style="display:none;">
+                    <label class="form-label fw-semibold">Variant</label>
+                    <select id="set-stock-variant-id" class="form-select form-select-sm">
+                        <option value="">-- Select Variant --</option>
+                    </select>
+                    <div id="set-stock-variant-error"
+                         class="text-danger small mt-1"
+                         style="visibility:hidden;">
+                    </div>
+                </div>
+
                 <div class="mb-2">
                     <label>Quantity</label>
                     <input type="number" class="form-control form-control-sm" id="set-stock-quantity" min="0" required />

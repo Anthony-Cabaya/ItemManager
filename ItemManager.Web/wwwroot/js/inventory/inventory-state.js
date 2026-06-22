@@ -2,6 +2,7 @@
     activeTab: 'by-item',
     viewMode: 'item',
     selectedStockId: null,
+    selectedVariantId: null,
     selectedItemId: null,
     selectedLocationId: null,
     selectedItemName: '',
